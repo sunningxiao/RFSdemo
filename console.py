@@ -59,9 +59,15 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.lab_logo.setPixmap(pix)
         self.ui.lab_logo.setScaledContents(True)
 
+        ico = QtGui.QIcon()
+        ico.addPixmap(QtGui.QPixmap('ui/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(ico)
+
         self.ui.btn_connect.clicked.connect(self.click_connect)
         self.ui.btn_start.clicked.connect(self.click_record)
         self.ui.btn_stop.clicked.connect(self.click_stoprecord)
+
+        self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
 
         # 关联界面参数与json
         self.ui.txt_dds_fc.editingFinished.connect(self.change_param('dds0中心频率', self.ui.txt_dds_fc))
@@ -72,7 +78,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.select_adc_sample.currentIndexChanged.connect(self.change_param('ADC采样率', self.ui.select_adc_sample, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
-        self.ui.select_dac_sample.currentIndexChanged.connect(self.change_param('ADC 奈奎斯特区', self.ui.select_dac_sample, int))
+        self.ui.select_dac_sample.currentIndexChanged.connect(self.change_param('DAC采样率', self.ui.select_dac_sample, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
 
@@ -439,8 +445,25 @@ class JGFConsole(QtWidgets.QWidget):
                 printWarning('不受支持的控件类型')
         return _func
 
+    def select_dds(self, dds=0):
+        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
+        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
+        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
+
+        self.ui.txt_dds_fc.editingFinished.disconnect()
+        self.ui.txt_dds_band.editingFinished.disconnect()
+        self.ui.txt_dds_pulse.editingFinished.disconnect()
+        self.ui.txt_dds_fc.editingFinished.connect(self.change_param(f'dds{dds}中心频率', self.ui.txt_dds_fc))
+        self.ui.txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', self.ui.txt_dds_band))
+        self.ui.txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', self.ui.txt_dds_pulse))
+
 
 if __name__ == '__main__':
+    import platform
+    if platform.system() == 'Windows':
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("naishu")
+
     app = QApplication(sys.argv)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     jgf = JGFConsole()

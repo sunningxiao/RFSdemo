@@ -5,43 +5,10 @@ from utils import *
 __all__ = ["connect", "start_record", "stop_record", "get_files", "data_format", "start_unload", "stop_unload",
            "status_echo_data", "filtering_factor_issue", "send_block_size"]
 
-value_type = {
-    "uint8": "B",
-    "int8": "b",
-    "uint16": "H",
-    "int16": "h",
-    "uint32": "I",
-    "int32": "i",
-    "float": "f",
-    "double": "d"
-}
-
-type_size = {
-    "uint8": 1,
-    "int8": 1,
-    "uint16": 2,
-    "int16": 2,
-    "uint32": 4,
-    "int32": 4,
-    "float": 4,
-    "double": 8
-}
-
-feedback_value_fmt = {
-    "uint8": "%#x",
-    "int8": "%d",
-    "uint16": "%#x",
-    "int16": "%d",
-    "uint32": "%#x",
-    "int32": "%d",
-    "float": "%f",
-    "double": "%f"
-}
-
 send_block_size = 1024  # 单次发送或接收大小
 recv_block_size = 1024
 max_sample_channel_count = 6  # 最大采集通道数
-_fmt_mode = "<"  # pack/unpack 大小端模式
+_fmt_mode = "="  # pack/unpack 大小端模式
 _reply_cmd_type = 0x6A
 COMMON_MSG = "失败原因未知"
 

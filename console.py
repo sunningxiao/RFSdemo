@@ -47,7 +47,6 @@ class JGFConsole(QtWidgets.QWidget):
 
         self.icd_param = icd_parser.ICDParams()
 
-        self.upload_ctl = UploadCtl(self.update_record_status)
         self.selectedlist = np.array([], dtype='u1')  # tableWidget内显示的控件
         # self.check_all_btn = self.ui.btn_checkall
         # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
@@ -62,10 +61,6 @@ class JGFConsole(QtWidgets.QWidget):
         ico = QtGui.QIcon()
         ico.addPixmap(QtGui.QPixmap('ui/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
-
-        self.ui.btn_connect.clicked.connect(self.click_connect)
-        self.ui.btn_start.clicked.connect(self.click_record)
-        self.ui.btn_stop.clicked.connect(self.click_stoprecord)
 
         self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
 
@@ -90,7 +85,6 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
 
-        self.checkboxs = self.gen_CheckBox()
         self.lplt = pg.PlotWidget()
         self.ui.grid_graph.addWidget(self.lplt)
         # self.lplt.setYRange(-1.5, 1.5)
@@ -100,7 +94,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.channel_plots = {self.chk_channels[i]: [self.lplt.plot(name=f'chnl{i}'), self.plot_color[i]]
                               for i in range(self.max_channel_count)}
         pg.mkPen()
-        self.gui_state(1)
+        self.gui_state(0)
         self.ui.tabWidget.setCurrentIndex(0)
         self.ui.tabWidget.setTabEnabled(1, False)
         self.show()
@@ -109,19 +103,6 @@ class JGFConsole(QtWidgets.QWidget):
         # self.close(程序退出)触发
         # self.icd_param.param.pop('DDS_RAM')
         self.icd_param.save_icd()
-        if self._status == 2:
-            self.click_stopunload()
-        elif self._status == 3:
-            self.click_stoprecord()
-
-    def gen_CheckBox(self):
-        # 创建page_size个CheckBox 在tableWidget使用
-        cks = []
-        for _ in range(self.page_size):
-            ck = QtWidgets.QCheckBox()
-            ck.clicked.connect(self.update_checkbox)
-            cks.append(ck)
-        return cks
 
     def update_textlog(self, msg):
         try:
@@ -140,131 +121,6 @@ class JGFConsole(QtWidgets.QWidget):
         else:
             self.gui_state(0)
             printError(f"记录系统连接失败（{_pg.get_err_msg()}）")
-
-    def click_getlist(self):
-        try:
-            self.ui.textBrowser.clear()  # 清空消息栏信息
-            self.check_all_btn.setText("全选")
-            if not pgdialog(self, self._get_file_list, label="获取文件列表", withcancel=False).perform():
-                printError("获取文件列表失败")
-                return
-            self.page.file_list = self.upload_ctl.filelist  # 更新分页参数
-            printInfo("获取文件列表成功")
-        except Exception as e:
-            printException(e)
-
-    def _get_file_list(self, pthread=None):
-        try:
-            result = self.upload_ctl.get_filelist()
-            self.selectedlist = np.zeros(len(self.upload_ctl.filelist), dtype='u1')
-        except Exception as e:
-            result = False
-            printException(e)
-        finally:
-            pthread.update_state(result)
-
-    def update_table(self, file_list):
-        qtable = self.ui.tableWidget
-        qtable.setRowCount(self.page_size)
-        cur_file_count = len(file_list)
-        # 将多出的行隐藏，避免 RuntimeError: wrapped C/C++ object has been deleted
-        for i in range(self.page_size):
-            if i < cur_file_count:
-                info = file_list[i]
-                self.checkboxs[i].setChecked(self.selectedlist[self.page.get_current_index() + i])
-                qtable.setCellWidget(i, 0, self.checkboxs[i])  # 当setRowCount行数少于之前行时, setCellWidget的Widget将被删除
-                qtable.setItem(i, 1, QTableWidgetItem(str(info[0])))
-                qtable.setItem(i, 2, QTableWidgetItem(info[1]))
-                qtable.setItem(i, 3, QTableWidgetItem(str("{:.2f}".format(info[3] / 1024))))
-                qtable.showRow(i)
-            else:
-                qtable.hideRow(i)
-
-        header = qtable.horizontalHeader()
-        header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        qtable.clearSelection()
-        qtable.verticalScrollBar().setSliderPosition(0)  # 设置滚动条位置
-        qtable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        qtable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        qtable.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        qtable.horizontalHeader().setSectionResizeMode(3, QHeaderView.Interactive)
-
-    def update_checkbox(self):
-        # tableWidget内CheckBox状态改变触发
-        current_row = self.ui.tableWidget.currentRow()  # 获取table当前行, 从0开始
-        # printDebug(self.checkboxs[current_row].isChecked())
-
-        self.selectedlist[self.page.get_current_index() + current_row] = self.checkboxs[current_row].isChecked()
-
-    def click_format(self):
-        _pg = pgdialog(self, self.upload_ctl.format, label="系统格式化", withcancel=False)
-        if _pg.perform():
-            printInfo("系统格式化成功")
-        else:
-            printError(f"系统格式化失败（{_pg.get_err_msg()}）")
-
-    def click_unload(self):
-        # 选中的文件列表
-        sel_files = [self.upload_ctl.filelist[index].copy() for index, state in enumerate(self.selectedlist) if state]
-        de_interleave = self.ui.chk_unpack.isChecked()  # 解交织
-        if not sel_files:
-            return
-        elif len(sel_files) == 1 and not de_interleave and sel_files[0][3]:
-            # 解交织全文件卸载
-            total = sel_files[0][3]
-            start, ok = QInputDialog.getInt(self, '卸载信息', "请输入起始偏移（0MB~%dMB）" % (total - 1), 0, 0, total - 1, 1)
-            if ok is False:
-                return
-            stop, ok = QInputDialog.getInt(self, '卸载信息', "请输入截止偏移（%dMB~%dMB）" % (start, total), total, start + 1,
-                                           total, 1)
-            if ok is False:
-                return
-
-            if (stop - start) != total:
-                start = start - start % 128
-                sel_files[0].append(start)
-                cut_size = stop - start
-                left_size = cut_size % 128
-                cut_size = cut_size + 128 - left_size if left_size else cut_size
-                if cut_size > total - start:
-                    cut_size = total - start
-                sel_files[0].append(cut_size)
-                sel_files[0][3] = cut_size
-                printInfo(f"起始偏移(MB): {start}, 截取(MB): {cut_size}")
-            # _weave_length_byte = self.upload_ctl.processor.get_weave_length()
-            # if de_interleave and sel_files[0][3] % (_weave_length_byte * sel_files[0][2]):
-            #     printError(f"解交织在未来将失败的, 无法整除"
-            #                f"(交织长度: {_weave_length_byte}, 采集通道数:{sel_files[0][2]}, 截取的大小:{stop - start}MB)")
-            #     return
-        for i in sel_files:
-            printDebug(f"Id: {i[0]}, file name: {i[1]}, file size: {i[3]}MB")
-        is_save = self.ui.chk_save.isChecked()  # 是否存盘
-        if is_save:
-            filepath = QtWidgets.QFileDialog.getExistingDirectory(self, "请选择导出文件路径", "./")
-            if not filepath:
-                return
-        else:
-            filepath = None
-
-        speed = self.ui.label_speed  # 卸载处理速率
-        file_process = self.ui.label_file_process  # 卸载文件进度
-        label_show = [speed, file_process]
-        if self.upload_ctl.start_unload(sel_files, filepath, de_interleave, label_show, finally_call=self.unload_stopped):
-            self.gui_state(2)
-            self.disable_tab(0)
-            printInfo("数据卸载已启动")
-
-    def click_stopunload(self):
-        if pgdialog(self, self.upload_ctl.stop_unload, label="卸载停止", withcancel=False).perform():
-            self.unload_stopped()
-            printInfo("数据卸载已停止")
-        else:
-            printError("数据卸载停止失败")
-
-    def unload_stopped(self):
-        self.gui_state(1)
-        self.disable_tab(0, True)
-        us_signal.status_trigger.emit([0])
 
     def show_unload_status(self, status):
         """
@@ -285,107 +141,6 @@ class JGFConsole(QtWidgets.QWidget):
             self.ui.bar_percent.setValue(0)
             self.ui.label_speed.setText("")
             self.ui.label_file_process.setText("")
-
-    def click_record(self):
-        try:
-            work_mode = int(self.ui.txt_p2_3.text().strip())    # 工作模式
-            sample_chnl_cnt = int(self.ui.txt_p2.text().strip())    # 采样通道数
-            sample_count = int(self.ui.txt_p3.text().strip())   # 采样点数
-            prf = int(self.ui.txt_p3_3.text().strip())          # PRF
-            pretreat = int(self.ui.checkBox.isChecked())        # 预处理使能
-        except ValueError as e:
-            printError(f"参数输入非纯数字, {e}")
-            return
-        _pg = pgdialog(self, self.upload_ctl.start_record,
-                       args=([work_mode, sample_chnl_cnt, sample_count, prf, pretreat], ),
-                       label="采集启动", withcancel=False)
-        if _pg.perform():
-            self.gui_state(3)
-            self.disable_tab(1)
-            self.upload_ctl.start_get_record_status()
-
-            self.chk_update(sample_chnl_cnt)
-            printInfo("数据记录启动成功")
-        else:
-            printError(f"数据记录启动失败（{_pg.get_err_msg()}）")
-
-    def click_stoprecord(self):
-        _pg = pgdialog(self, self.upload_ctl.stop_record, label="采集停止", withcancel=False)
-        if _pg.perform():
-            self.gui_state(1)
-            self.disable_tab(1, True)
-            self.upload_ctl.stop_get_record_status()
-            # self.record_status_timer.stop()
-            printInfo("数据记录停止成功")
-        else:
-            printError(f"数据记录停止失败（{_pg.get_err_msg()}）")
-
-    def click_updatecoe(self):
-        filename, filetype = QtWidgets.QFileDialog.getOpenFileName(self, "选择待更新因子文件", './', "file(*)")
-        if not filename:
-            return
-        coe_count = int(self.ui.txt_p7.text().strip()) * 1024  # 滤波因子点数
-        _pg = pgdialog(self, self.upload_ctl.update_coe, args=(filename, coe_count), label="更新因子", mode=1)
-        if _pg.perform():
-            printInfo("滤波因子系数更新成功")
-        else:
-            printError(f"滤波因子系数更新失败（{_pg.get_err_msg()}）")
-
-    def update_record_status(self, event: threading.Event):
-        # [self.ui.chk1, self.ui.chk2, self.ui.chk3, self.ui.chk4, self.ui.chk5, self.ui.chk6]
-        interval = self._update_record_status_interval
-        run_start = time.time()
-        event.wait()
-        while True:
-            sleep(interval - (time.time() - run_start))
-            run_start = time.time()
-            result, state, graph = self.upload_ctl.record_status()
-            if result:
-                if state:
-                    self.ui.lab_p1.setText(str(state['state']))                 # 记录状态
-                    self.ui.lab_p2.setText(str(state['mode']))                  # 工作模式
-                    self.ui.lab_p3.setText(str(state['left']) + 'GB')           # 剩余容量
-                    self.ui.lab_p4.setText(str(state['bandwidth']) + 'MB/s')    # 记录带宽
-                    self.ui.label.setText(f"{state['round_number']: 10}")           # SSD历史读写轮次
-                    self.ui.label_3.setText(f"{state['fpga_temperature']: 8}℃")      # FPGA温度
-                if graph:
-                    channel_number, *graph = graph
-                    for index, chk in enumerate(self.enable_chk_channels):
-                        plots_info = self.channel_plots[chk]
-                        if index + 1 == channel_number and chk.isChecked():
-                            plots_info[0].setData(graph, pen=plots_info[1])
-                            plots_info[0].show()
-                        else:
-                            plots_info[0].hide()
-
-    def chk_update(self, count):
-        # 通道勾选使能
-        self.enable_chk_channels.clear()
-        for i, chk in enumerate(self.chk_channels):
-            if i < count:
-                state = True
-                self.enable_chk_channels.append(chk)
-            else:
-                state = False
-            chk.setEnabled(state)
-
-    def select_all(self):
-        try:
-            if self.check_all_btn.text() == "全选":
-                state = True
-                status_comment = "取消全选"
-            else:
-                state = False
-                status_comment = "全选"
-
-            self.selectedlist[:] = state
-            for i in self.checkboxs:
-                i.setChecked(state)
-
-            if len(self.selectedlist):
-                self.check_all_btn.setText(status_comment)
-        except Exception as e:
-            printException(e)
 
     def gui_state(self, state=1):
         # 未连接状态
@@ -415,18 +170,6 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.btn_dss_cfg.setEnabled(state[5])         # DSS设置
         self.ui.btn_framwork_up.setEnabled(state[6])     # 固件更新
         self.ui.btn_auto_command.setEnabled(state[7])    # 自定义指令
-
-    def disable_tab(self, index, cancel: bool = False):
-        """
-            非使能tabWidget，控制udp接收只能存在一个
-        """
-        pass
-        # if index:
-        #     self.ui.tabWidget.setCurrentIndex(1)
-        #     self.ui.tabWidget.setTabEnabled(0, cancel)
-        # else:
-        #     self.ui.tabWidget.setCurrentIndex(0)
-        #     self.ui.tabWidget.setTabEnabled(1, cancel)
 
     def load_param(self):
         self.icd_param.load_icd()

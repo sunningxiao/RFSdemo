@@ -1,30 +1,84 @@
 import json
 import os
+import struct
+from netconn import CommandTCPServer
 
 from printLog import *
+
+file_context_flag = '__file__'
+file_length_flag = '__filelength__'
+COMMAND_LENGTH = slice(12, 16)
+
+_fmt_mode = "="  # pack/unpack 大小端模式
+
+value_type = {
+    "uint8": "B",
+    "int8": "b",
+    "uint16": "H",
+    "int16": "h",
+    "uint32": "I",
+    "int32": "i",
+    "float": "f",
+    "double": "d"
+}
+
+type_size = {
+    "uint8": 1,
+    "int8": 1,
+    "uint16": 2,
+    "int16": 2,
+    "uint32": 4,
+    "int32": 4,
+    "float": 4,
+    "double": 8
+}
+
+feedback_value_fmt = {
+    "uint8": "%#x",
+    "int8": "%d",
+    "uint16": "%#x",
+    "int16": "%d",
+    "uint32": "%#x",
+    "int32": "%d",
+    "float": "%f",
+    "double": "%f"
+}
 
 
 class ICDParams:
     def __init__(self, file_name='icd.json'):
+        self._connected = False
         self._file_name = file_name
         self.icd_data = {}
         self.button = {}
         self.param = {}
         self.command = {}
+        self.server = None
+        self.recv_header = b''
+
+    def connect(self):
+        self.server: CommandTCPServer = CommandTCPServer()
+        self._connected = True
 
     def load_icd(self):
         file_path = \
             self._file_name.split('.')[0] + '_run.json' \
-            if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
-            else self._file_name
+                if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
+                else self._file_name
         with open(file_path, 'r', encoding='utf-8') as fp:
             try:
                 self.icd_data = json.load(fp)
             except json.decoder.JSONDecodeError as e:
                 printWarning('icd.json文件不可用')
-        self.button = self.icd_data['button']
-        self.param = self.icd_data['param']
-        self.command = self.icd_data['command']
+        try:
+            self.button = self.icd_data['button']
+            self.param = self.icd_data['param']
+            self.command = self.icd_data['command']
+            CommandTCPServer._remote_port = self.icd_data['remote_port']
+            CommandTCPServer._conn_ip = self.icd_data['remote_ip']
+            self.recv_header = struct.pack(_fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
+        except Exception as e:
+            printException(e, f'{file_path}不可用')
 
     def save_icd(self):
         with open(self._file_name.split('.')[0] + '_run.json', 'w', encoding='utf-8') as fp:
@@ -45,3 +99,90 @@ class ICDParams:
         param = self.param.get(param_name, [param_name, 'uint32', value])
         param[2] = fmt_type(value)
         self.param.update({param_name: param})
+
+    def send_command(self, button_name: str, need_feedback=True, file_name=None) -> bool:
+        if not self._connected:
+            printWarning('未连接板卡')
+            return False
+        self.server: CommandTCPServer
+        _commands = self.button.get(button_name, None)
+        if _commands is None:
+            printWarning(f'没有此按钮')
+            return False
+        for _command_name in _commands:
+            if _command_name not in self.command:
+                printWarning(f'指令{_command_name}未找到')
+                return False
+            command_bak = command = self._fmt_command(_command_name, file_name)
+            command_len = len(command)
+            try:
+                while command_len > 0:
+                    sent = self.server.send(command)
+                    command = command[sent:]
+                    command_len -= sent
+                if need_feedback:
+                    _feedback = self.server.recv()
+                    if not _feedback.startswith(self.recv_header):
+                        printWarning('返回指令包头错误')
+                        return False
+                    if command_bak[4:8] != _feedback[4:8]:
+                        printWarning('返回指令ID错误')
+                        return False
+                    _feedback = struct.unpack(_fmt_mode + 'IIIII', _feedback)
+                    if _feedback[4] != 0:
+                        printWarning('指令成功下发，但执行失败')
+                        return False
+            except Exception as e:
+                printException(e, f'指令{_command_name}发送失败')
+                return False
+        printInfo(f'成功执行指令{_commands}')
+        return True
+
+    def _fmt_command(self, command_name, file_name=None) -> bytes:
+        file_data = command = b''
+        file_length = 0
+        if isinstance(file_name, str):
+            file_data, file_length = self.__get_file(file_name)
+        try:
+            for register in self.command[command_name]:
+                if isinstance(register, list):
+                    value, _fmt = self.__fmt_register(register)
+                    command += struct.pack(_fmt_mode + _fmt, value)
+                elif isinstance(register, str):
+                    if register == file_context_flag:
+                        command += file_data
+                    elif register == file_length_flag:
+                        command += struct.pack(_fmt_mode + 'I', file_length)
+                    elif register in self.param:
+                        value, _fmt = self.__fmt_register(self.param[register])
+                        command += struct.pack(_fmt_mode + _fmt, value)
+                    else:
+                        printWarning(f'指令{command_name}的{register}不存在')
+                else:
+                    printWarning(f'指令{command_name}的{register}格式不正确')
+        except Exception as e:
+            printException(e, '指令转码失败')
+        assert len(command) >= 16, f'指令{command_name}不正确'
+        return command[0: 12] + struct.pack(_fmt_mode + 'I', len(command)) + command[16:]
+
+    @staticmethod
+    def __fmt_register(register: list):
+        try:
+            value = register[2]
+            if isinstance(value, str) and value.startswith('0x'):
+                value = int(value, 16)
+            fmt_str = value_type[register[1]]
+            return int(value), fmt_str
+        except Exception as e:
+            printException(e, f'寄存器{register[0]}有误')
+        return 0, 'I'
+
+    @staticmethod
+    def __get_file(file_name):
+        try:
+            with open(file_name, 'rb') as fp:
+                data = fp.read()
+            return data, len(data)
+        except Exception as e:
+            printException(e, '文件读取失败')
+        return b'', 0

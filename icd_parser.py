@@ -1,4 +1,5 @@
 import json
+import os
 
 from printLog import *
 
@@ -12,7 +13,11 @@ class ICDParams:
         self.command = {}
 
     def load_icd(self):
-        with open(self._file_name, 'r', encoding='utf-8') as fp:
+        file_path = \
+            self._file_name.split('.')[0] + '_run.json' \
+            if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
+            else self._file_name
+        with open(file_path, 'r', encoding='utf-8') as fp:
             try:
                 self.icd_data = json.load(fp)
             except json.decoder.JSONDecodeError as e:

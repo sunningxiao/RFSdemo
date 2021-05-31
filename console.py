@@ -70,11 +70,19 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
 
         # 关联界面参数与json
+        self.ui.select_source.currentIndexChanged.connect(self.change_param('DAC0播放数据来源', self.ui.select_source, int, 'index'))
+        self.ui.txt_gate_delay.editingFinished.connect(self.change_param('DAC0播放波门延迟', self.ui.txt_gate_delay))
+        self.ui.txt_gate_width.editingFinished.connect(self.change_param('DAC0播放波门宽度', self.ui.txt_gate_width))
+        self.ui.txt_sampling_delay.editingFinished.connect(self.change_param('ADC0采样延迟', self.ui.txt_sampling_delay))
+        self.ui.txt_sampling_points.editingFinished.connect(self.change_param('ADC0采样点数', self.ui.txt_sampling_points))
+
         self.ui.txt_dds_fc.editingFinished.connect(self.change_param('dds0中心频率', self.ui.txt_dds_fc))
         self.ui.txt_dds_band.editingFinished.connect(self.change_param('dds0带宽', self.ui.txt_dds_band))
         self.ui.txt_dds_pulse.editingFinished.connect(self.change_param('dds0脉宽', self.ui.txt_dds_pulse))
 
-        self.ui.select_clock.currentIndexChanged.connect(self.change_param('dds0脉宽', self.ui.select_clock, int))
+        self.ui.txt_prf_cyc.editingFinished.connect(self.change_param('基准PRF周期', self.ui.txt_prf_cyc))
+        self.ui.txt_prf_cnt.editingFinished.connect(self.change_param('基准PRF数量', self.ui.txt_prf_cnt))
+        self.ui.select_clock.currentIndexChanged.connect(self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
         self.ui.select_adc_sample.currentIndexChanged.connect(self.change_param('ADC采样率', self.ui.select_adc_sample, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
@@ -99,6 +107,7 @@ class JGFConsole(QtWidgets.QWidget):
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # self.close(程序退出)触发
+        # self.icd_param.param.pop('DDS_RAM')
         self.icd_param.save_icd()
         if self._status == 2:
             self.click_stopunload()
@@ -424,9 +433,14 @@ class JGFConsole(QtWidgets.QWidget):
         self.show_param()
 
     def show_param(self):
-        self.ui.txt_dds_fc.setText(self.icd_param.get_param('dds0中心频率', 0, str))
-        self.ui.txt_dds_band.setText(self.icd_param.get_param('dds0带宽', 100, str))
-        self.ui.txt_dds_pulse.setText(self.icd_param.get_param('dds0脉宽', 1.1, str))
+        dds = self.icd_param.get_param('DDS_RAM', 0, int)
+        self.ui.dds_chose.setCurrentIndex(dds)
+        self.select_dds(dds)
+        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
+        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
+        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
+        self.ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
+        self.ui.txt_prf_cnt.setText(self.icd_param.get_param('基准PRF数量', 1000, str))
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
         self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2}[self.icd_param.get_param('ADC采样率', 1000)])
         self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
@@ -435,12 +449,21 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
 
-    def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=float):
+        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
+        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 2000, str))
+        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 10000, str))
+        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 2000, str))
+        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 32, str))
+
+    def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str, combo_flag='text'):
         def _func(*args, **kwargs):
             if isinstance(param_label, QtWidgets.QLineEdit):
                 self.icd_param.set_param(param_name, param_label.text(), type_fmt)
             elif isinstance(param_label, QtWidgets.QComboBox):
-                self.icd_param.set_param(param_name, param_label.currentText(), type_fmt)
+                if combo_flag == 'text':
+                    self.icd_param.set_param(param_name, param_label.currentText(), type_fmt)
+                elif combo_flag == 'index':
+                    self.icd_param.set_param(param_name, param_label.currentIndex(), type_fmt)
             else:
                 printWarning('不受支持的控件类型')
         return _func
@@ -449,13 +472,29 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
         self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
         self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
+        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
+        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
+        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
+        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
+        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
 
         self.ui.txt_dds_fc.editingFinished.disconnect()
         self.ui.txt_dds_band.editingFinished.disconnect()
         self.ui.txt_dds_pulse.editingFinished.disconnect()
+        self.ui.select_source.currentIndexChanged.disconnect()
+        self.ui.txt_gate_delay.editingFinished.disconnect()
+        self.ui.txt_gate_width.editingFinished.disconnect()
+        self.ui.txt_sampling_delay.editingFinished.disconnect()
+        self.ui.txt_sampling_points.editingFinished.disconnect()
         self.ui.txt_dds_fc.editingFinished.connect(self.change_param(f'dds{dds}中心频率', self.ui.txt_dds_fc))
         self.ui.txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', self.ui.txt_dds_band))
         self.ui.txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', self.ui.txt_dds_pulse))
+        self.ui.select_source.currentIndexChanged.connect(
+            self.change_param(f'DAC{dds}播放数据来源', self.ui.select_source, int, 'index'))
+        self.ui.txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}播放波门宽度', self.ui.txt_gate_width))
+        self.ui.txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', self.ui.txt_gate_delay))
+        self.ui.txt_sampling_delay.editingFinished.connect(self.change_param(f'ADC{dds}采样延迟', self.ui.txt_sampling_delay))
+        self.ui.txt_sampling_points.editingFinished.connect(self.change_param(f'ADC{dds}采样点数', self.ui.txt_sampling_points))
 
 
 if __name__ == '__main__':

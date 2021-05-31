@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1073</width>
-    <height>900</height>
+    <height>969</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -216,6 +216,9 @@
      </item>
      <item row="1" column="0" colspan="7">
       <widget class="QTabWidget" name="tabWidget">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="currentIndex">
         <number>0</number>
        </property>
@@ -415,108 +418,6 @@
                 <property name="spacing">
                  <number>7</number>
                 </property>
-                <item row="1" column="3">
-                 <widget class="QLabel" name="label_8">
-                  <property name="maximumSize">
-                   <size>
-                    <width>1000</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>DAC采样率(MHz)</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="btn_rf_cfg">
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>RF配置</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="2">
-                 <widget class="QLineEdit" name="txt_dds_fc">
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="7">
-                 <widget class="QLabel" name="label_22">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>1000</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>ADC奈奎斯特区</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QPushButton" name="btn_stop">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>系统停止</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLabel" name="lab_clock">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>参考时钟</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="3">
                  <widget class="QLabel" name="label_20">
                   <property name="minimumSize">
@@ -539,72 +440,31 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="5">
-                 <widget class="QLabel" name="label_7">
-                  <property name="text">
-                   <string>脉宽</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="7">
-                 <widget class="QLabel" name="label_10">
-                  <property name="maximumSize">
-                   <size>
-                    <width>1000</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>DAC奈奎斯特区</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="5">
-                 <widget class="QLabel" name="label_21">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>1000</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>ADC NOC频率</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QPushButton" name="btn_start">
+                <item row="4" column="4">
+                 <widget class="QLineEdit" name="txt_gate_delay">
                   <property name="maximumSize">
                    <size>
                     <width>100</width>
                     <height>16777215</height>
                    </size>
                   </property>
-                  <property name="text">
-                   <string>系统开启</string>
+                 </widget>
+                </item>
+                <item row="5" column="6">
+                 <widget class="QLineEdit" name="txt_sampling_points">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="8">
-                 <widget class="QPushButton" name="btn_wave">
+                <item row="0" column="8">
+                 <widget class="QLineEdit" name="txt_adc_nyq">
                   <property name="minimumSize">
                    <size>
-                    <width>100</width>
+                    <width>80</width>
                     <height>0</height>
                    </size>
                   </property>
@@ -615,56 +475,8 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>波形装载</string>
+                   <string>1</string>
                   </property>
-                 </widget>
-                </item>
-                <item row="3" column="7">
-                 <widget class="QPushButton" name="btn_dss_cfg">
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>DSS设置</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="4">
-                 <widget class="QLineEdit" name="txt_dds_band">
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="4">
-                 <widget class="QComboBox" name="select_dac_sample">
-                  <property name="maximumSize">
-                   <size>
-                    <width>100</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>1000</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>2000</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>4000</string>
-                   </property>
-                  </item>
                  </widget>
                 </item>
                 <item row="3" column="0">
@@ -717,6 +529,54 @@
                   </item>
                  </widget>
                 </item>
+                <item row="1" column="5">
+                 <widget class="QLabel" name="label_9">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>DAC NCO频率</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="lab_clock">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>参考时钟</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="6">
+                 <widget class="QLineEdit" name="txt_gate_width">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
                 <item row="0" column="6">
                  <widget class="QLineEdit" name="txt_adc_noc_f">
                   <property name="minimumSize">
@@ -733,6 +593,91 @@
                   </property>
                   <property name="text">
                    <string>100</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLabel" name="label_11">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>播放数据来源</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="5">
+                 <widget class="QLabel" name="label_15">
+                  <property name="text">
+                   <string>采样点数</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="3">
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>采样延迟</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="8">
+                 <widget class="QPushButton" name="btn_wave">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>波形装载</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QLineEdit" name="txt_prf_cnt">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="label_16">
+                  <property name="text">
+                   <string>基准PRF周期</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLabel" name="label_17">
+                  <property name="text">
+                   <string>基准PRF数量</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -761,23 +706,105 @@
                   </item>
                  </widget>
                 </item>
-                <item row="0" column="8">
-                 <widget class="QLineEdit" name="txt_adc_nyq">
-                  <property name="minimumSize">
-                   <size>
-                    <width>80</width>
-                    <height>0</height>
-                   </size>
+                <item row="3" column="3">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>带宽</string>
                   </property>
+                  <property name="textFormat">
+                   <enum>Qt::AutoText</enum>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="4">
+                 <widget class="QLineEdit" name="txt_sampling_delay">
                   <property name="maximumSize">
                    <size>
                     <width>100</width>
                     <height>16777215</height>
                    </size>
                   </property>
-                  <property name="text">
-                   <string>1</string>
+                 </widget>
+                </item>
+                <item row="0" column="7">
+                 <widget class="QLabel" name="label_22">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
                   </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>ADC奈奎斯特区</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="3">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>播放波门延迟</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="5">
+                 <widget class="QLabel" name="label_21">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>ADC NOC频率</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="5">
+                 <widget class="QLabel" name="label_13">
+                  <property name="text">
+                   <string>播放波门宽度</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="2">
+                 <widget class="QComboBox" name="select_source">
+                  <item>
+                   <property name="text">
+                    <string>DDS产生</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>RAM预置</string>
+                   </property>
+                  </item>
                  </widget>
                 </item>
                 <item row="3" column="1">
@@ -802,16 +829,49 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="6">
-                 <widget class="QLineEdit" name="txt_dac_noc_f">
+                <item row="3" column="6">
+                 <widget class="QLineEdit" name="txt_dds_pulse">
                   <property name="maximumSize">
                    <size>
                     <width>100</width>
                     <height>16777215</height>
                    </size>
                   </property>
+                 </widget>
+                </item>
+                <item row="3" column="2">
+                 <widget class="QLineEdit" name="txt_dds_fc">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QLabel" name="label_8">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
-                   <string>100</string>
+                   <string>DAC采样率(MHz)</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="5">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>脉宽</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -828,24 +888,8 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="5">
-                 <widget class="QLabel" name="label_9">
-                  <property name="maximumSize">
-                   <size>
-                    <width>1000</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>DAC NCO频率</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="6">
-                 <widget class="QLineEdit" name="txt_dds_pulse">
+                <item row="3" column="4">
+                 <widget class="QLineEdit" name="txt_dds_band">
                   <property name="maximumSize">
                    <size>
                     <width>100</width>
@@ -854,21 +898,62 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="3">
-                 <widget class="QLabel" name="label_6">
+                <item row="1" column="4">
+                 <widget class="QComboBox" name="select_dac_sample">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>1000</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2000</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>4000</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="6">
+                 <widget class="QLineEdit" name="txt_dac_noc_f">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
-                   <string>带宽</string>
+                   <string>100</string>
                   </property>
-                  <property name="textFormat">
-                   <enum>Qt::AutoText</enum>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="txt_prf_cyc">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
                   </property>
                  </widget>
                 </item>
                 <item row="0" column="2">
                  <widget class="QComboBox" name="select_clock">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <item>
                    <property name="text">
                     <string>内参考</string>
@@ -879,6 +964,80 @@
                     <string>外参考</string>
                    </property>
                   </item>
+                 </widget>
+                </item>
+                <item row="1" column="7">
+                 <widget class="QLabel" name="label_10">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>DAC奈奎斯特区</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QPushButton" name="btn_rf_cfg">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>RF配置</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="8">
+                 <widget class="QPushButton" name="btn_dss_cfg">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>DSS设置</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="btn_start">
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>系统开启</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QPushButton" name="btn_stop">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>100</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>系统停止</string>
+                  </property>
                  </widget>
                 </item>
                </layout>
@@ -898,7 +1057,7 @@
          <enum>Qt::NoFocus</enum>
         </property>
         <attribute name="title">
-         <string>数据卸载</string>
+         <string>通用控制</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_2"/>
        </widget>

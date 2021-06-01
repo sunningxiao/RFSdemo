@@ -2,6 +2,9 @@ import json
 import os
 import struct
 from netconn import CommandTCPServer
+from sim_ctl import sim_connect
+from utils import simulation, solve_exception
+
 
 from printLog import *
 
@@ -56,15 +59,17 @@ class ICDParams:
         self.server = None
         self.recv_header = b''
 
-    def connect(self):
+    @simulation(simulation_ctl, sim_connect)
+    @solve_exception()
+    def connect(self, pthread=None):
         self.server: CommandTCPServer = CommandTCPServer()
         self._connected = True
+        return True
 
     def load_icd(self):
-        file_path = \
-            self._file_name.split('.')[0] + '_run.json' \
-                if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
-                else self._file_name
+        file_path = self._file_name.split('.')[0] + '_run.json' \
+            if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
+            else self._file_name
         with open(file_path, 'r', encoding='utf-8') as fp:
             try:
                 self.icd_data = json.load(fp)
@@ -100,6 +105,7 @@ class ICDParams:
         param[2] = fmt_type(value)
         self.param.update({param_name: param})
 
+    @simulation(simulation_ctl, sim_connect)
     def send_command(self, button_name: str, need_feedback=True, file_name=None) -> bool:
         if not self._connected:
             printWarning('未连接板卡')
@@ -120,6 +126,10 @@ class ICDParams:
                     sent = self.server.send(command)
                     command = command[sent:]
                     command_len -= sent
+            except Exception as e:
+                printException(e, f'指令({_command_name})发送失败')
+                return False
+            try:
                 if need_feedback:
                     _feedback = self.server.recv()
                     if not _feedback.startswith(self.recv_header):
@@ -133,7 +143,7 @@ class ICDParams:
                         printWarning('指令成功下发，但执行失败')
                         return False
             except Exception as e:
-                printException(e, f'指令{_command_name}发送失败')
+                printException(e, f'指令({_command_name})无应答')
                 return False
         printInfo(f'成功执行指令{_commands}')
         return True
@@ -157,12 +167,12 @@ class ICDParams:
                         value, _fmt = self.__fmt_register(self.param[register])
                         command += struct.pack(_fmt_mode + _fmt, value)
                     else:
-                        printWarning(f'指令{command_name}的{register}不存在')
+                        printWarning(f'指令({command_name})的({register})不存在')
                 else:
-                    printWarning(f'指令{command_name}的{register}格式不正确')
+                    printWarning(f'指令({command_name})的({register})格式不正确')
         except Exception as e:
             printException(e, '指令转码失败')
-        assert len(command) >= 16, f'指令{command_name}不正确'
+        assert len(command) >= 16, f'指令({command_name})不正确'
         return command[0: 12] + struct.pack(_fmt_mode + 'I', len(command)) + command[16:]
 
     @staticmethod
@@ -174,7 +184,7 @@ class ICDParams:
             fmt_str = value_type[register[1]]
             return int(value), fmt_str
         except Exception as e:
-            printException(e, f'寄存器{register[0]}有误')
+            printException(e, f'寄存器({register[0]})有误')
         return 0, 'I'
 
     @staticmethod

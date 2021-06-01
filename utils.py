@@ -20,8 +20,6 @@ def solve_exception(flag=False):
             except Exception as e:
                 printException(e)
                 return False
-            finally:
-                args[0].update_number()
 
         return wrapper
     return decorator
@@ -34,7 +32,7 @@ def simulation(sim, callback_function):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            pthread = kwargs.get("pthread")
+            pthread = kwargs.get("pthread", None)
             if sim:
                 result = callback_function()
             else:

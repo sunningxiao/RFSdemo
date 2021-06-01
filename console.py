@@ -15,7 +15,7 @@ import ui.CTYui as ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
-from upload_ctl import UploadCtl, us_signal
+from data_solve import us_signal
 from utils import Page, sleep
 
 
@@ -62,7 +62,17 @@ class JGFConsole(QtWidgets.QWidget):
         ico.addPixmap(QtGui.QPixmap('ui/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
 
+        # 关联按钮
+        self.ui.btn_connect.clicked.connect(self.click_connect)
+        self.ui.btn_start.clicked.connect(self.linking_button('系统开启', need_feedback=True, need_file=False))
+        self.ui.btn_stop.clicked.connect(self.linking_button('系统停止', need_feedback=True, need_file=False))
+        self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
+        self.ui.btn_dss_cfg.clicked.connect(self.linking_button('DDS配置', need_feedback=True, need_file=False))
+        self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
+        self.ui.btn_framwork_up.clicked.connect(self.linking_button('固件更新', need_feedback=True, need_file=True))
+
         self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
+        self.ui.dds_chose.currentIndexChanged.connect(self.change_param('DDS_RAM', self.ui.dds_chose, int, 'index'))
 
         # 关联界面参数与json
         self.ui.select_source.currentIndexChanged.connect(self.change_param('DAC0播放数据来源', self.ui.select_source, int, 'index'))
@@ -112,11 +122,10 @@ class JGFConsole(QtWidgets.QWidget):
             printException(e)
 
     def click_connect(self):
-        _pg = pgdialog(self, self.upload_ctl.connect, label="系统连接", withcancel=False)
+        _pg = pgdialog(self, self.icd_param.connect, label="系统连接", withcancel=False)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
-            self.upload_ctl.start_get_record_status()
             printInfo("记录系统连接成功")
         else:
             self.gui_state(0)
@@ -146,19 +155,16 @@ class JGFConsole(QtWidgets.QWidget):
         # 未连接状态
         if state == 0:
             self.ui.tabWidget.setEnabled(False)
+            self.set_btn([True, True, True, True, True, True, False, False])
         # 空闲状态
         elif state == 1:
             self.ui.label_status.setText("空闲状态")
             self.ui.tabWidget.setEnabled(True)
-            self.set_btn([True, True, True, True, False, True, False, True])
-        # 卸载状态
-        elif state == 2:
-            self.ui.label_status.setText("卸载状态")
-            self.set_btn([False, False, False, False, True, False, False, False])
+            self.set_btn([True, True, False, True, True, True, True, True])
         # 记录状态
-        elif state == 3:
-            self.ui.label_status.setText("数据记录状态")
-            self.set_btn([False, False, False, False, False, False, True, False])
+        elif state == 2:
+            self.ui.label_status.setText("开始记录")
+            self.set_btn([False, False, True, False, False, False, False, False])
         self._status = state
 
     def set_btn(self, state):
@@ -209,6 +215,18 @@ class JGFConsole(QtWidgets.QWidget):
                     self.icd_param.set_param(param_name, param_label.currentIndex(), type_fmt)
             else:
                 printWarning('不受支持的控件类型')
+        return _func
+
+    def linking_button(self, button_name, need_feedback=True, need_file=False):
+        def _func(*args, **kwargs):
+            if need_file:
+                filename = QFileDialog.getOpenFileName(self, '请选择文件')[0]
+                thread = threading.Thread(target=self.icd_param.send_command, args=[button_name, need_feedback, filename])
+            else:
+                thread = threading.Thread(target=self.icd_param.send_command,
+                                          args=[button_name, need_feedback])
+            thread.start()
+
         return _func
 
     def select_dds(self, dds=0):

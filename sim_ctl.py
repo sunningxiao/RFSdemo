@@ -45,7 +45,7 @@ i = 0
 
 def sim_update_status():
     global i
-    chnl_count = 6
+    chnl_count = 8
     chnl = np.arange(1, 128, 128 / chnl_count).reshape(chnl_count, 1)
     s_data = np.arange(0, 100, 0.1)
     data = s_data.repeat(chnl_count).reshape(1000, chnl_count, 1)

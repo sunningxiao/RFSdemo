@@ -5,76 +5,12 @@ from PyQt5 import QtCore
 import threading
 import os
 import numpy as np
+from netconn import DataTCPServer
+from tools.unpackage import UnPackage
 from tools import Queue, Fifo
 
-import platform
-import random
-
-PCIESTREAMCNT = 1
-
-
-class Xdma(object):
-
-    isWindows = platform.system() == "Windows"
-
-    def __init__(self):
-        self.sd_dict = {}
-        self.board_info = ""
-        self.board_set = set()
-
-        self.reg = {}
-        printInfo("xdma模拟初始化")
-
-    def open_board(self, board):
-        return True
-
-    def get_fpga_version(self, board=0):
-        return 0
-
-    def close_board(self, board):
-        return True
-
-    def get_info(self, board=0):
-        return ""
-
-    # 申请内存
-    def alloc_buffer(self, board, length):
-        return 1
-
-    # 获取内存
-    @staticmethod
-    def get_buffer(fd, length):
-        # data = np.random.rand(length//2)
-        # data.dtype = np.uint32
-        data = np.arange(length, dtype='u4')
-        return data
-
-    def free_buffer(self, fd):
-        return True
-
-    def alite_write(self, addr, data, board=0):
-        self.reg[addr] = data
-        printDebug("板卡%x, 接收写寄存器，地址：%x, 值：%x" % (board, addr, data))
-        return True
-
-    def alite_read(self, addr, board=0):
-        try:
-            val = self.reg[addr]
-        except:
-            val = random.randint(0, 10)
-        printDebug("板卡%x, 接收读寄存器，地址：%x, 返回值：%x" % (board, addr, val))
-        return True, val
-
-    def reset_board(self, board):
-        printDebug("接收到板卡%x复位" % board)
-        return True
-
-    def stream_write(self, board, chnl, fd, length, offset=0, stop_event=None, flag=1):
-        # printInfo("板卡%x, 接收到数据流下行指令，通道号：%d，数据量：%d" % (board, chnl, length))
-        return True
-
-    def stream_read(self, board, chnl, fd, length, offset=0, stop_event=None, flag=1):
-        return True
+# 是否解包存储
+UNPACK = False
 
 
 class UploadStatusSignal(QtCore.QObject):
@@ -89,7 +25,7 @@ class DataSolve:
     _weave_length_byte = 256
     _weave_length = _weave_length_byte // 4  # 4Byte
     _board = 0
-    _channel_num = 0
+    _channel_num = 8
     # _least_common_multiple = np.lcm.reduce((1, 2, 3, 4, 6))
     _dma_size = 1024 ** 2 * 15  # 4Byte  需要为(1, 2, 3, 4, 6)的公倍数, 解交织时
     _buf_count = 10
@@ -100,233 +36,111 @@ class DataSolve:
     _left_size = 0
     _write_start_time = 0
     _prev_count = 0
+    _info = None
     _stop_flag = False
 
     def get_weave_length(self):
         return self._weave_length_byte
 
-    def __init__(self):
-        self.xdma = Xdma()
-        self._run_event = threading.Event()
-        self._fd_list = []
-        self._buffers = []
-        self._unload_enable_state = self.init()  # 卸载使能状态， 启动卸载前需要判断改属性是否为True
-        # 用于upload和solve函数之间互斥锁
-        self.upload_solve_fifo = Fifo(self._buf_count, self._run_event)
+    def __init__(self, server: DataTCPServer):
+        self.server = server
+        self._files = []
+        self._cache = Queue(1024)
 
-    def init(self):
-        fd_list = []
-        try:
-            buffers = []
-            if not self.xdma.open_board(self._board) or not self.xdma.reset_board(self._board):
-                assert 0, "xdma board init fail."
-            for _ in range(self._buf_count):
-                fd = self.xdma.alloc_buffer(self._board, self._dma_size)
-                assert fd, "xdma alloc buffer fail."
-                buffer = self.xdma.get_buffer(fd, self._dma_size)
-                assert not isinstance(buffer, bool), "xdma get buffer fail."
-                fd_list.append(fd)
-                buffers.append(buffer)
-            self._fd_list, self._buffers = fd_list, buffers
-            return True
-        except AssertionError as e:
-            printError(e)
-            self._error_message, = e.args
-            [self.xdma.free_buffer(fd) for fd in fd_list]
-            self.xdma.close_board(self._board)
-            return False
+    def start_solve(self, filepath=None):
+        # 启动数据接收线程
+        _thread = threading.Thread(target=self.wait_connect)
+        _thread.start()
 
-    def get_state(self):
-        return self._unload_enable_state
+        if filepath is None:
+            filepath = time.strftime('%Y%m%d_%H-%M-%S', time.localtime())
+        if not os.path.exists(filepath):
+            os.mkdir(filepath)
+        if not UNPACK:
+            filename = 'data.dat'
+            self._files.append(open(f'{filepath}/{filename}', 'wb'))
+            _thread = threading.Thread(target=self.write, args=(self._files[-1], ))
+            _thread.start()
+        else:
+            for i in range(self._channel_num):
+                filename = f'cnt_{i}'
+                self._files.append(open(f'{filepath}/{filename}', 'wb'))
+            self.write_unpack()
 
-    def init_param(self):
-        # 参数初始化
-        self._run_event.set()
-        self._files = None
-        self.upload_solve_fifo.reset(self._run_event)
-        self._queue = None
+        return True
+
+    def wait_connect(self):
         self._stop_flag = False
-
-    def stop_unload(self, is_alive):
-        self._run_event.clear()
-        if is_alive:
-            self._run_event.wait()
-
-    def start_unload(self, start_unload_function, finally_call, *args):
-        """ 文件列表数据卸载 """
         try:
-            if not self.get_state():
-                printWarning(f"unload disabled, {self._error_message}")
-                us_signal.status_trigger.emit([self.get_state()])
-                return
-            self.init_param()
-            sel_files, filepath, de_interleave, label_show = args
-            total_count = len(sel_files)
-            for index, info in enumerate(sel_files):
-                file_id, filename, sample_channel_count, file_sel_size, *icd_args = info
-                # icd_args: [文件起始位置偏移, 文件卸载大小], 当为空时标识全部卸载, 则为[0, 0]
-                if not icd_args:
-                    icd_args = [0, 0]
-                # 向qt发送signal，更新界面数值
-                us_signal.status_trigger.emit([1, 0, 0, '%d / %d' % (index + 1, total_count)])
-    
-                if not start_unload_function(1, *icd_args, file_id):
-                    printError(f"unload No.{index + 1} File fail, {filename}.")
-                    return
-                # ---- 指令发送/接收正常, 启动upload, write ----
-                cur_size = file_sel_size * 1024 ** 2 // 4
-                self._left_size = cur_size % self._dma_size
-                count = cur_size // self._dma_size + 1 if self._left_size else cur_size // self._dma_size
-
-                start_time = time.time()
-    
-                _de_interleave = de_interleave and sample_channel_count > 1
-    
-                printDebug(f"dma size: {self._dma_size}, channel count: {sample_channel_count}, "
-                           f"current size: {cur_size}, count: {count}, left size: {self._left_size}, "
-                           f"de-interleave: {_de_interleave}")
-                s_thread = threading.Thread(target=self.solve, args=(count, _de_interleave, sample_channel_count))
-                s_thread.start()
-                if filepath is not None:
-                    # 防止同时操作一片内存导致存入数据异常
-                    self._queue = Queue(self.upload_solve_fifo.mininum - 1, sample_channel_count if _de_interleave else 1)
-                    self._files = files = []
-
-                    if not _de_interleave:
-                        files.append(open(f"{filepath}/{filename}", "wb"))
-                        threading.Thread(target=self.write, args=(0, count, _de_interleave)).start()
-                    else:
-                        base_filename, suffix = os.path.splitext(filename)
-                        filename_fmt = "{}/{}_C{}{}".format(filepath, base_filename, "{}", suffix)
-                        for c_num in range(sample_channel_count):
-                            files.append(open(filename_fmt.format(c_num), "wb"))
-                            threading.Thread(target=self.write, args=(c_num, count, _de_interleave)).start()
-
-                u_thread = threading.Thread(target=self.upload, args=(count, ))
-                u_thread.start()
-                u_thread.join()
-                s_thread.join()
-                if self._queue:
-                    self._queue.join()
-                if self._stop_flag or not self._run_event.is_set():
-                    us_signal.status_trigger.emit([2, 0, 0, 'Abort'])
+            self.server.accept()
+            _header = self.server.recv()
+            header = np.frombuffer(_header, dtype='u4')
+            info = UnPackage.get_pack_info(0, header)
+            self._info = info
+            once_package = info[0] * info[6]
+            _data = _header
+            _data += self.server.recv(once_package - len(_header))
+            # data = np.frombuffer(_data, dtype='u4')
+            self._cache.put(_data)
+            start_time = time.time()
+            data_length = 0
+            while True:
+                if self._stop_flag:
                     break
-                speed = file_sel_size / (time.time() - start_time)
-                printColor(f'File: {filename} transmission Done. Everage speed is {speed:.2f} MB/s', color='green')
-                us_signal.status_trigger.emit([1, 100, 0, ""])
-
-            self._run_event.clear()
-            us_signal.status_trigger.emit([2, 0, 0, 'Done'])
+                # 接收数据
+                _data = self.server.recv(once_package)
+                if len(_data) == 0:
+                    printInfo('数据连接已断开')
+                    break
+                self._cache.put(_data)
+                data_length += once_package
+                if time.time() - start_time > 1:
+                    us_signal.status_trigger.emit((1, 0, data_length/(time.time() - start_time)/1024**2))
+                    start_time = time.time()
+                    data_length = 0
         except Exception as e:
+            self.server.recv_server.close()
             printException(e)
-        finally:
-            if not self._run_event.is_set():
-                # 当所有文件卸载完或点击停止卸载时执行
-                finally_call()
+        self._stop_flag = True
 
-            self._run_event.set()
-
-    def upload(self, count):
-        """ 数据上传 """
-        try:
-            length = self._dma_size
-            for i in range(1, count+1):
-                fd_index = self.upload_solve_fifo.chk_ful()
-                if not self._run_event.is_set():
-                    return
-                if i == count and self._left_size:
-                    length = self._left_size
-                if not self.xdma.stream_read(self._board, self._dma_channel_num, self._fd_list[fd_index], length,
-                                             stop_event=self._run_event.is_set):
-                    printError(f"Dma has the problem on round {i}")
-                    return
-                self.upload_solve_fifo.push()
-
-        except AssertionError as e:
-            printDebug(e)
-        except Exception as e:
-            printException(e)
-
-    def solve(self, count, de_interleave, sample_channel_count):
+    def solve(self, chl_flag: iter):
         """ 数据解包 """
         try:
-            once_weave = self._weave_length * sample_channel_count  # 通道一次交织的长度
-            start_time, s_count = time.time(), 0
-            length = self._dma_size
-            _stop_flag = self._stop_flag
-            for i in range(1, count+1):
-                data = self._buffers[self.upload_solve_fifo.chk_ept()]
-                if i == count and self._left_size:
-                    length = self._left_size
-                    if de_interleave:
-                        length -= length % once_weave
-                    data = data[: length]
-
-                if not self._run_event.is_set():
-                    return
-
-                if not _stop_flag:
-                    try:
-                        if de_interleave:
-                            data = data.reshape(length // once_weave, sample_channel_count, self._weave_length)
-                            data = np.einsum("abc->bac", data).reshape(sample_channel_count, length // sample_channel_count)
-                    except Exception as e:
-                        printException(e)
-                        self._stop_flag = _stop_flag = True
-
-                if self._queue:
-                    while not self._queue.m_put(data):
-                        if not self._run_event.is_set():
-                            return
-
-                elif time.time() - start_time >= 1:
-                    start_time, s_count = self._update(start_time, i, count, s_count)
-
-                self.upload_solve_fifo.pop()
-
+            _data = self._cache.lookup()
+            data = np.frombuffer(_data, dtype='u4')
+            data = UnPackage.solve_source_data(data, chl_flag, for_save=False)
+            return data
         except AssertionError as e:
             printDebug(e)
         except Exception as e:
             printException(e)
 
-    def write(self, c_num, count, de_interleave):
+    def write(self, file):
         """ 数据存储
-            c_num: 通道号
         """
         try:
-            cur_count, t_count = 1, count + 1
-            if c_num == 0:
-                self._write_start_time, self._prev_count = time.time(), 0
-            while cur_count != t_count:
-                data = self._queue.m_get(c_num)
-
-                if not self._run_event.is_set():
-                    return
-
-                if isinstance(data, bool):
-                    continue
-
-                flag, data = data
-
-                if not self._stop_flag:
-                    try:
-                        self._files[c_num].write(data[c_num] if de_interleave else data)
-                    except Exception as e:
-                        printException(e)
-                        self._stop_flag = True
-
-                if flag and time.time() - self._write_start_time >= 1:
-                    self._write_start_time, self._prev_count = self._update(
-                        self._write_start_time, cur_count, count, self._prev_count)
-                cur_count += 1
+            start_time = time.time()
+            data_length = 0
+            while self._cache.qsize() or not self._stop_flag:
+                _data = self._cache.m_get(timeout=1)
+                if _data:
+                    file.write(_data[1])
+                    data_length += len(_data[1])
+                    if time.time() - start_time > 1:
+                        us_signal.status_trigger.emit((1, 1, data_length/(time.time() - start_time)/1024**2))
+                        start_time = time.time()
+                        data_length = 0
         except AssertionError as e:
             printDebug(e)
         except Exception as e:
             printException(e)
         finally:
-            self._files[c_num].close()
-            self._queue.task_done()
-            printDebug("c_num task done")
+            file.close()
+            printColor("文件保存完成", 'green')
+            us_signal.status_trigger.emit((0,))
+
+    def write_unpack(self):
+        pass
 
     def _update(self, start_time, cur_count, count, s_count):
         gap_time = time.time() - start_time

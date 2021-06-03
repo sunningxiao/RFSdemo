@@ -1,9 +1,10 @@
 import json
 import os
 import struct
-from netconn import CommandTCPServer
+from netconn import CommandTCPServer, DataTCPServer
 from sim_ctl import sim_connect
 from utils import simulation, solve_exception
+from data_solve import DataSolve
 
 
 from printLog import *
@@ -56,13 +57,17 @@ class ICDParams:
         self.button = {}
         self.param = {}
         self.command = {}
-        self.server = None
+        self.data_server = self.server = None
         self.recv_header = b''
+        self.data_solve = None
 
     @simulation(simulation_ctl, sim_connect)
     @solve_exception()
     def connect(self, pthread=None):
-        self.server: CommandTCPServer = CommandTCPServer()
+        self.server = CommandTCPServer()
+        self.data_server = DataTCPServer()
+        self.data_solve = DataSolve(self.data_server)
+        # self.data_solve.start_solve()
         self._connected = True
         return True
 
@@ -79,8 +84,10 @@ class ICDParams:
             self.button = self.icd_data['button']
             self.param = self.icd_data['param']
             self.command = self.icd_data['command']
-            CommandTCPServer._remote_port = self.icd_data['remote_port']
+            CommandTCPServer._remote_port = self.icd_data['remote_command_port']
             CommandTCPServer._conn_ip = self.icd_data['remote_ip']
+            DataTCPServer._local_port = self.icd_data['remote_data_port']
+            DataTCPServer._conn_ip = self.icd_data['remote_ip']
             self.recv_header = struct.pack(_fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
         except Exception as e:
             printException(e, f'{file_path}不可用')
@@ -106,7 +113,7 @@ class ICDParams:
         self.param.update({param_name: param})
 
     @simulation(simulation_ctl, sim_connect)
-    def send_command(self, button_name: str, need_feedback=True, file_name=None) -> bool:
+    def send_command(self, button_name: str, need_feedback=True, file_name=None, callback=lambda *args: True) -> bool:
         if not self._connected:
             printWarning('未连接板卡')
             return False
@@ -146,6 +153,7 @@ class ICDParams:
                 printException(e, f'指令({_command_name})无应答')
                 return False
         printInfo(f'成功执行指令{_commands}')
+        callback()
         return True
 
     def _fmt_command(self, command_name, file_name=None) -> bytes:

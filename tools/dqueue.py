@@ -44,6 +44,14 @@ class Queue(queue.Queue):
                     return False, item
         return False
 
+    def lookup(self, timeout=1):
+        with self.not_empty:
+            while not self._qsize():
+                if not self.not_empty.wait(timeout):
+                    return False
+
+            return self.queue[-1]
+
     def m_put(self, item, timeout=1):
         with self.not_full:
             if self.maxsize > 0:
@@ -53,3 +61,19 @@ class Queue(queue.Queue):
             self._put(item)
             self.not_empty.notify_all()
             return True
+
+
+if __name__ == '__main__':
+    import socket
+    import time
+
+    _tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    _tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    _tcp_server.connect(('127.0.0.1', 5002))
+    with open('D:/test_0.data', 'rb') as fp:
+        _data = fp.read(1024 * 1024 * 16)
+        while _data:
+            time.sleep(0.2)
+            _tcp_server.sendall(_data)
+            _data = fp.read(1024 * 1024 * 16)
+    _tcp_server.close()

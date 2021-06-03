@@ -35,7 +35,8 @@ class QSignal(QtCore.QObject):
 class JGFConsole(QtWidgets.QWidget):
     max_channel_count = 6
     page_size = 50
-    _speed_fmt = "速率: {:.2f} MB/s"
+    _speed_fmt = "传输速率: {:.2f} MB/s"
+    _save_speed_fmt = "存储速率: {:.2f} MB/s"
     _update_unload_status_interval = 1
     _update_record_status_interval = 1e-3
     _status = 0  # 运行状态
@@ -47,7 +48,6 @@ class JGFConsole(QtWidgets.QWidget):
 
         self.icd_param = icd_parser.ICDParams()
 
-        self.selectedlist = np.array([], dtype='u1')  # tableWidget内显示的控件
         # self.check_all_btn = self.ui.btn_checkall
         # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
         self.enable_chk_channels = []
@@ -63,9 +63,13 @@ class JGFConsole(QtWidgets.QWidget):
         self.setWindowIcon(ico)
 
         # 关联按钮
+        self.ui.btn_auto_command.clicked.connect(self.linking_auto_button)
+
         self.ui.btn_connect.clicked.connect(self.click_connect)
-        self.ui.btn_start.clicked.connect(self.linking_button('系统开启', need_feedback=True, need_file=False))
-        self.ui.btn_stop.clicked.connect(self.linking_button('系统停止', need_feedback=True, need_file=False))
+        self.ui.btn_start.clicked.connect(
+            self.linking_button('系统开启', need_feedback=True, need_file=False, callback=self.click_start))
+        self.ui.btn_stop.clicked.connect(
+            self.linking_button('系统停止', need_feedback=True, need_file=False, callback=self.click_stop))
         self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
         self.ui.btn_dss_cfg.clicked.connect(self.linking_button('DDS配置', need_feedback=True, need_file=False))
         self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
@@ -113,6 +117,11 @@ class JGFConsole(QtWidgets.QWidget):
         # self.close(程序退出)触发
         # self.icd_param.param.pop('DDS_RAM')
         self.icd_param.save_icd()
+        self.icd_param.data_solve._stop_flag = True
+        self.icd_param.data_server.close()
+        if self._status == 2:
+            # 判断状态，发送停止指令
+            self.linking_button('系统停止', need_feedback=False, need_file=False)()
 
     def update_textlog(self, msg):
         try:
@@ -127,9 +136,20 @@ class JGFConsole(QtWidgets.QWidget):
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
             printInfo("记录系统连接成功")
+            self.show_unload_status((0, 0))
         else:
             self.gui_state(0)
             printError(f"记录系统连接失败（{_pg.get_err_msg()}）")
+
+    def click_start(self):
+        self.gui_state(2)
+        self.icd_param.data_solve.start_solve()
+        return True
+
+    def click_stop(self):
+        self.gui_state(1)
+        self.icd_param.data_solve._stop_flag = True
+        return True
 
     def show_unload_status(self, status):
         """
@@ -138,18 +158,13 @@ class JGFConsole(QtWidgets.QWidget):
         """
         state, *status = status
         if state:
-            percent, speed, file_process = status
-            if file_process:
-                self.ui.label_file_process.setText(file_process)
-            if state == 2:
-                self.gui_state(1)
-            else:
-                self.ui.bar_percent.setValue(int(percent))
-                self.ui.label_speed.setText(self._speed_fmt.format(speed))
+            if status[0] == 0:
+                self.ui.label.setText(self._speed_fmt.format(status[1]))
+            elif status[0] == 1:
+                self.ui.label_3.setText(self._save_speed_fmt.format(status[1]))
         else:
-            self.ui.bar_percent.setValue(0)
-            self.ui.label_speed.setText("")
-            self.ui.label_file_process.setText("")
+            self.ui.label.setText(self._speed_fmt.format(0))
+            self.ui.label_3.setText(self._save_speed_fmt.format(0))
 
     def gui_state(self, state=1):
         # 未连接状态
@@ -185,9 +200,6 @@ class JGFConsole(QtWidgets.QWidget):
         dds = self.icd_param.get_param('DDS_RAM', 0, int)
         self.ui.dds_chose.setCurrentIndex(dds)
         self.select_dds(dds)
-        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
-        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
-        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
         self.ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
         self.ui.txt_prf_cnt.setText(self.icd_param.get_param('基准PRF数量', 1000, str))
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
@@ -198,11 +210,8 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
 
-        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
-        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 2000, str))
-        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 10000, str))
-        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 2000, str))
-        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 32, str))
+        for btn in self.icd_param.command:
+            self.ui.select_command.addItem(btn)
 
     def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str, combo_flag='text'):
         def _func(*args, **kwargs):
@@ -217,28 +226,28 @@ class JGFConsole(QtWidgets.QWidget):
                 printWarning('不受支持的控件类型')
         return _func
 
-    def linking_button(self, button_name, need_feedback=True, need_file=False):
+    def linking_button(self, button_name, need_feedback=True, need_file=False, callback=lambda *args: True):
         def _func(*args, **kwargs):
             if need_file:
                 filename = QFileDialog.getOpenFileName(self, '请选择文件')[0]
-                thread = threading.Thread(target=self.icd_param.send_command, args=[button_name, need_feedback, filename])
+                if filename == '':
+                    return
+                thread = threading.Thread(target=self.icd_param.send_command,
+                                          args=[button_name, need_feedback, filename],
+                                          kwargs={'callback': callback})
             else:
                 thread = threading.Thread(target=self.icd_param.send_command,
-                                          args=[button_name, need_feedback])
+                                          args=[button_name, need_feedback],
+                                          kwargs={'callback': callback})
             thread.start()
 
         return _func
 
-    def select_dds(self, dds=0):
-        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
-        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
-        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
-        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
-        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
-        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
-        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
-        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
+    def linking_auto_button(self):
+        btn = self.ui.select_command.currentText()
+        self.linking_button(btn, need_feedback=False, need_file=False)()
 
+    def select_dds(self, dds=0):
         self.ui.txt_dds_fc.editingFinished.disconnect()
         self.ui.txt_dds_band.editingFinished.disconnect()
         self.ui.txt_dds_pulse.editingFinished.disconnect()
@@ -256,6 +265,15 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', self.ui.txt_gate_delay))
         self.ui.txt_sampling_delay.editingFinished.connect(self.change_param(f'ADC{dds}采样延迟', self.ui.txt_sampling_delay))
         self.ui.txt_sampling_points.editingFinished.connect(self.change_param(f'ADC{dds}采样点数', self.ui.txt_sampling_points))
+
+        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
+        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
+        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
+        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
+        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
+        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
+        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
+        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
 
 
 if __name__ == '__main__':

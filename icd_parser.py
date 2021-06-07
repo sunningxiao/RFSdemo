@@ -1,6 +1,7 @@
 import json
 import os
 import struct
+import time
 from netconn import CommandTCPServer, DataTCPServer
 from sim_ctl import sim_connect
 from utils import simulation, solve_exception
@@ -64,8 +65,8 @@ class ICDParams:
     @simulation(simulation_ctl, sim_connect)
     @solve_exception()
     def connect(self, pthread=None):
-        self.server = CommandTCPServer()
         self.data_server = DataTCPServer()
+        self.server = CommandTCPServer()
         self.data_solve = DataSolve(self.data_server)
         # self.data_solve.start_solve()
         self._connected = True
@@ -113,7 +114,9 @@ class ICDParams:
         self.param.update({param_name: param})
 
     @simulation(simulation_ctl, sim_connect)
-    def send_command(self, button_name: str, need_feedback=True, file_name=None, callback=lambda *args: True) -> bool:
+    def send_command(self, button_name: str,
+                     need_feedback=True, file_name=None,
+                     callback=lambda *args: True, wait: int = 0) -> bool:
         if not self._connected:
             printWarning('未连接板卡')
             return False
@@ -136,8 +139,10 @@ class ICDParams:
             except Exception as e:
                 printException(e, f'指令({_command_name})发送失败')
                 return False
+            printInfo(f'指令({_command_name})已发送')
             try:
                 if need_feedback:
+                    time.sleep(wait)
                     _feedback = self.server.recv()
                     if not _feedback.startswith(self.recv_header):
                         printWarning('返回指令包头错误')
@@ -152,7 +157,7 @@ class ICDParams:
             except Exception as e:
                 printException(e, f'指令({_command_name})无应答')
                 return False
-        printInfo(f'成功执行指令{_commands}')
+        printColor(f'成功执行指令{_commands}', 'green')
         callback()
         return True
 

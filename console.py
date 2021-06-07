@@ -2,8 +2,6 @@
 # -*- coding:utf-8 -*-
 
 import sys
-import time
-import numpy as np
 import threading
 import qdarkstyle
 from PyQt5.QtWidgets import *
@@ -16,7 +14,6 @@ from printLog import *
 import icd_parser
 from pgdialog import pgdialog
 from data_solve import us_signal
-from utils import Page, sleep
 
 
 class QSignal(QtCore.QObject):
@@ -33,13 +30,14 @@ class QSignal(QtCore.QObject):
 
 
 class JGFConsole(QtWidgets.QWidget):
-    max_channel_count = 6
+    max_channel_count = 8
     page_size = 50
     _speed_fmt = "传输速率: {:.2f} MB/s"
     _save_speed_fmt = "存储速率: {:.2f} MB/s"
     _update_unload_status_interval = 1
     _update_record_status_interval = 1e-3
     _status = 0  # 运行状态
+    _text_line = 0
 
     def __init__(self):
         super().__init__()
@@ -73,13 +71,16 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
         self.ui.btn_dss_cfg.clicked.connect(self.linking_button('DDS配置', need_feedback=True, need_file=False))
         self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
-        self.ui.btn_framwork_up.clicked.connect(self.linking_button('固件更新', need_feedback=True, need_file=True))
+        self.ui.btn_framwork_up.clicked.connect(
+            self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
+        )
 
         self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
         self.ui.dds_chose.currentIndexChanged.connect(self.change_param('DDS_RAM', self.ui.dds_chose, int, 'index'))
 
         # 关联界面参数与json
-        self.ui.select_source.currentIndexChanged.connect(self.change_param('DAC0播放数据来源', self.ui.select_source, int, 'index'))
+        self.ui.select_source.currentIndexChanged.connect(
+            self.change_param('DAC0播放数据来源', self.ui.select_source, int, 'index'))
         self.ui.txt_gate_delay.editingFinished.connect(self.change_param('DAC0播放波门延迟', self.ui.txt_gate_delay))
         self.ui.txt_gate_width.editingFinished.connect(self.change_param('DAC0播放波门宽度', self.ui.txt_gate_width))
         self.ui.txt_sampling_delay.editingFinished.connect(self.change_param('ADC0采样延迟', self.ui.txt_sampling_delay))
@@ -91,11 +92,14 @@ class JGFConsole(QtWidgets.QWidget):
 
         self.ui.txt_prf_cyc.editingFinished.connect(self.change_param('基准PRF周期', self.ui.txt_prf_cyc))
         self.ui.txt_prf_cnt.editingFinished.connect(self.change_param('基准PRF数量', self.ui.txt_prf_cnt))
-        self.ui.select_clock.currentIndexChanged.connect(self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
-        self.ui.select_adc_sample.currentIndexChanged.connect(self.change_param('ADC采样率', self.ui.select_adc_sample, int))
+        self.ui.select_clock.currentIndexChanged.connect(
+            self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
+        self.ui.select_adc_sample.currentIndexChanged.connect(
+            self.change_param('ADC采样率', self.ui.select_adc_sample, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
-        self.ui.select_dac_sample.currentIndexChanged.connect(self.change_param('DAC采样率', self.ui.select_dac_sample, int))
+        self.ui.select_dac_sample.currentIndexChanged.connect(
+            self.change_param('DAC采样率', self.ui.select_dac_sample, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
 
@@ -103,8 +107,9 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.grid_graph.addWidget(self.lplt)
         # self.lplt.setYRange(-1.5, 1.5)
         self.lplt.setLabel('top', '回波数据')
-        self.plot_color = ['r', 'g', 'b', 'c', 'm', 'y', 'k', 'w']
-        self.chk_channels = [self.ui.chk1, self.ui.chk2, self.ui.chk3, self.ui.chk4, self.ui.chk5, self.ui.chk6, self.ui.chk7, self.ui.chk8]
+        self.plot_color = ['r', 'g', 'b', 'c', 'm', 'y', (128, 200, 20), 'w']
+        self.chk_channels = [self.ui.chk1, self.ui.chk2, self.ui.chk3, self.ui.chk4, self.ui.chk5, self.ui.chk6,
+                             self.ui.chk7, self.ui.chk8]
         self.channel_plots = {self.chk_channels[i]: [self.lplt.plot(name=f'chnl{i}'), self.plot_color[i]]
                               for i in range(self.max_channel_count)}
         pg.mkPen()
@@ -125,8 +130,12 @@ class JGFConsole(QtWidgets.QWidget):
 
     def update_textlog(self, msg):
         try:
+            if self._text_line >= 100:
+                self.ui.textBrowser.clear()
+                self._text_line = 0
             self.ui.textBrowser.moveCursor(QtGui.QTextCursor.End)
             self.ui.textBrowser.insertHtml(msg)
+            self._text_line += 1
         except Exception as e:
             printException(e)
 
@@ -149,7 +158,21 @@ class JGFConsole(QtWidgets.QWidget):
     def click_stop(self):
         self.gui_state(1)
         self.icd_param.data_solve._stop_flag = True
+        self.icd_param.data_server.close_recv()
         return True
+
+    def show_unpack(self, data):
+        chk_info = [chk.isChecked() for chk in self.channel_plots]
+        for index, (chk, chnl_pen) in enumerate(self.channel_plots.items()):
+            if chk_info[index]:
+                try:
+                    _data = data[data['head'][index]['name']]
+                except:
+                    _data = [0] * 4096
+                chnl_pen[0].setData(_data, pen=chnl_pen[1])
+                chnl_pen[0].show()
+            else:
+                chnl_pen[0].hide()
 
     def show_unload_status(self, status):
         """
@@ -162,6 +185,8 @@ class JGFConsole(QtWidgets.QWidget):
                 self.ui.label.setText(self._speed_fmt.format(status[1]))
             elif status[0] == 1:
                 self.ui.label_3.setText(self._save_speed_fmt.format(status[1]))
+            elif status[0] == 2:
+                self.show_unpack(status[1])
         else:
             self.ui.label.setText(self._speed_fmt.format(0))
             self.ui.label_3.setText(self._save_speed_fmt.format(0))
@@ -195,6 +220,7 @@ class JGFConsole(QtWidgets.QWidget):
     def load_param(self):
         self.icd_param.load_icd()
         self.show_param()
+        # self.icd_param.start_data_server()
 
     def show_param(self):
         dds = self.icd_param.get_param('DDS_RAM', 0, int)
@@ -213,7 +239,8 @@ class JGFConsole(QtWidgets.QWidget):
         for btn in self.icd_param.command:
             self.ui.select_command.addItem(btn)
 
-    def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str, combo_flag='text'):
+    def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str,
+                     combo_flag='text'):
         def _func(*args, **kwargs):
             if isinstance(param_label, QtWidgets.QLineEdit):
                 self.icd_param.set_param(param_name, param_label.text(), type_fmt)
@@ -224,9 +251,11 @@ class JGFConsole(QtWidgets.QWidget):
                     self.icd_param.set_param(param_name, param_label.currentIndex(), type_fmt)
             else:
                 printWarning('不受支持的控件类型')
+
         return _func
 
-    def linking_button(self, button_name, need_feedback=True, need_file=False, callback=lambda *args: True):
+    def linking_button(self, button_name, need_feedback=True, need_file=False, callback=lambda *args: True,
+                       wait: int = 0):
         def _func(*args, **kwargs):
             if need_file:
                 filename = QFileDialog.getOpenFileName(self, '请选择文件')[0]
@@ -234,11 +263,11 @@ class JGFConsole(QtWidgets.QWidget):
                     return
                 thread = threading.Thread(target=self.icd_param.send_command,
                                           args=[button_name, need_feedback, filename],
-                                          kwargs={'callback': callback})
+                                          kwargs={'callback': callback, 'wait': wait})
             else:
                 thread = threading.Thread(target=self.icd_param.send_command,
                                           args=[button_name, need_feedback],
-                                          kwargs={'callback': callback})
+                                          kwargs={'callback': callback, 'wait': wait})
             thread.start()
 
         return _func
@@ -263,8 +292,10 @@ class JGFConsole(QtWidgets.QWidget):
             self.change_param(f'DAC{dds}播放数据来源', self.ui.select_source, int, 'index'))
         self.ui.txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}播放波门宽度', self.ui.txt_gate_width))
         self.ui.txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', self.ui.txt_gate_delay))
-        self.ui.txt_sampling_delay.editingFinished.connect(self.change_param(f'ADC{dds}采样延迟', self.ui.txt_sampling_delay))
-        self.ui.txt_sampling_points.editingFinished.connect(self.change_param(f'ADC{dds}采样点数', self.ui.txt_sampling_points))
+        self.ui.txt_sampling_delay.editingFinished.connect(
+            self.change_param(f'ADC{dds}采样延迟', self.ui.txt_sampling_delay))
+        self.ui.txt_sampling_points.editingFinished.connect(
+            self.change_param(f'ADC{dds}采样点数', self.ui.txt_sampling_points))
 
         self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
         self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
@@ -278,8 +309,10 @@ class JGFConsole(QtWidgets.QWidget):
 
 if __name__ == '__main__':
     import platform
+
     if platform.system() == 'Windows':
         import ctypes
+
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("naishu")
 
     app = QApplication(sys.argv)

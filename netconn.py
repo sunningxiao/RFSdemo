@@ -69,9 +69,16 @@ class DataTCPServer:
 
     def close(self):
         try:
+            self._tcp_server.close()
             self._recv_server.shutdown(socket.SHUT_RDWR)
             self._recv_server.close()
-            self._tcp_server.close()
+        except Exception as e:
+            pass
+
+    def close_recv(self):
+        try:
+            self._recv_server.shutdown(socket.SHUT_RDWR)
+            self._recv_server.close()
         except Exception as e:
             pass
 

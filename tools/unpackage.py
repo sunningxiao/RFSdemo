@@ -1,7 +1,7 @@
 import numpy as np
 from printLog import *
 
-QvLength = 1024
+QvLength = 4096
 
 
 class UnPackage:

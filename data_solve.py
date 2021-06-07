@@ -48,6 +48,7 @@ class DataSolve:
         self._cache = Queue(1024)
 
     def start_solve(self, filepath=None):
+        self._cache = Queue(1024)
         # 启动数据接收线程
         _thread = threading.Thread(target=self.wait_connect)
         _thread.start()
@@ -67,29 +68,38 @@ class DataSolve:
                 self._files.append(open(f'{filepath}/{filename}', 'wb'))
             self.write_unpack()
 
+        _thread = threading.Thread(target=self.solve, args=([True]*8, ))
+        _thread.start()
+
         return True
 
     def wait_connect(self):
         self._stop_flag = False
         try:
             self.server.accept()
+            # self.server.recv_server.settimeout(None)
+            printColor('已建立连接', 'green')
             _header = self.server.recv()
             header = np.frombuffer(_header, dtype='u4')
             info = UnPackage.get_pack_info(0, header)
             self._info = info
-            once_package = info[0] * info[6]
+            once_package = info[0] * info[7]
+            printInfo(f'包长度{once_package}')
             _data = _header
             _data += self.server.recv(once_package - len(_header))
             # data = np.frombuffer(_data, dtype='u4')
             self._cache.put(_data)
             start_time = time.time()
             data_length = 0
+            # self.server.recv_server.settimeout(5)
             while True:
                 if self._stop_flag:
                     break
                 # 接收数据
                 _data = self.server.recv(once_package)
-                if len(_data) == 0:
+                # if _data is False:
+                #     continue
+                if len(_data) < once_package:
                     printInfo('数据连接已断开')
                     break
                 self._cache.put(_data)
@@ -99,6 +109,7 @@ class DataSolve:
                     start_time = time.time()
                     data_length = 0
         except Exception as e:
+            self._stop_flag = True
             self.server.recv_server.close()
             printException(e)
         self._stop_flag = True
@@ -106,10 +117,14 @@ class DataSolve:
     def solve(self, chl_flag: iter):
         """ 数据解包 """
         try:
-            _data = self._cache.lookup()
-            data = np.frombuffer(_data, dtype='u4')
-            data = UnPackage.solve_source_data(data, chl_flag, for_save=False)
-            return data
+            while self._cache.qsize() or not self._stop_flag:
+                _data = self._cache.lookup()
+                if _data:
+                    data = np.frombuffer(_data, dtype='u4')
+                    data = UnPackage.solve_source_data(data, chl_flag, for_save=False)
+                    if data:
+                        us_signal.status_trigger.emit((1, 2, data))
+                        time.sleep(1)
         except AssertionError as e:
             printDebug(e)
         except Exception as e:

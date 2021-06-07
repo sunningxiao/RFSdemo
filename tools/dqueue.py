@@ -70,10 +70,11 @@ if __name__ == '__main__':
     _tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     _tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     _tcp_server.connect(('127.0.0.1', 5002))
-    with open('D:/test_0.data', 'rb') as fp:
-        _data = fp.read(1024 * 1024 * 16)
-        while _data:
-            time.sleep(0.2)
-            _tcp_server.sendall(_data)
-            _data = fp.read(1024 * 1024 * 16)
+    for i in range(10):
+        with open('D:/test_0.data', 'rb') as fp:
+            _data = fp.read(526336)
+            while _data:
+                time.sleep(0.05)
+                _tcp_server.sendall(_data)
+                _data = fp.read(526336)
     _tcp_server.close()

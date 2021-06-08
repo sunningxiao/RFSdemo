@@ -84,6 +84,9 @@ class DataSolve:
             info = UnPackage.get_pack_info(0, header)
             self._info = info
             once_package = info[0] * info[7]
+            if once_package > 1024**2*16:
+                printWarning('解析包长过大，按16M接收')
+                once_package = 1024**2*16
             printInfo(f'包长度{once_package}')
             _data = _header
             _data += self.server.recv(once_package - len(_header))

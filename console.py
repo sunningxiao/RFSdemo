@@ -7,9 +7,12 @@ import qdarkstyle
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
+import socket
+import time
 
 # import ui.ui as ui
 import ui.CTYui as ui
+import ui.master as master_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -27,6 +30,16 @@ class QSignal(QtCore.QObject):
         while True:
             text = self.queue.get()
             self.txt_trigger.emit(text)
+
+
+class MasterConsole(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.ui = master_ui.Ui_Dialog()
+        self.initUI()
+
+        self.icd_param = icd_parser.ICDParams()
+        self.icd_param.load_icd()
 
 
 class JGFConsole(QtWidgets.QWidget):
@@ -49,6 +62,7 @@ class JGFConsole(QtWidgets.QWidget):
         # self.check_all_btn = self.ui.btn_checkall
         # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
         self.enable_chk_channels = []
+        self.scanning_board()
 
     def initUI(self):
         self.ui.setupUi(self)
@@ -128,6 +142,26 @@ class JGFConsole(QtWidgets.QWidget):
             # 判断状态，发送停止指令
             self.linking_button('系统停止', need_feedback=False, need_file=False)()
 
+    def scanning_board(self):
+        dest = ('<broadcast>', 5003)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        s.bind(('', 5000))
+        s.sendto(b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00", dest)
+        s.settimeout(3)
+
+        def _func():
+            try:
+                while True:
+                    (_, addr) = s.recvfrom(2048)
+                    self.ui.select_link_addr.addItem(addr[0])
+            except:
+                s.close()
+                printInfo('板卡扫描完成')
+
+        _thread = threading.Thread(target=_func)
+        _thread.start()
+
     def update_textlog(self, msg):
         try:
             if self._text_line >= 100:
@@ -140,7 +174,8 @@ class JGFConsole(QtWidgets.QWidget):
             printException(e)
 
     def click_connect(self):
-        _pg = pgdialog(self, self.icd_param.connect, label="系统连接", withcancel=False)
+        ip = self.ui.select_link_addr.currentText()
+        _pg = pgdialog(self, self.icd_param.connect, args=(ip, ), label="系统连接", withcancel=False)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
@@ -220,6 +255,7 @@ class JGFConsole(QtWidgets.QWidget):
     def load_param(self):
         self.icd_param.load_icd()
         self.show_param()
+        self.ui.select_link_addr.addItem(self.icd_param.icd_data['remote_ip'])
         # self.icd_param.start_data_server()
 
     def show_param(self):

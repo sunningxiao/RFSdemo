@@ -64,7 +64,10 @@ class ICDParams:
 
     @simulation(simulation_ctl, sim_connect)
     @solve_exception()
-    def connect(self, pthread=None):
+    def connect(self, ip=None, pthread=None):
+        if ip is not None:
+            CommandTCPServer._conn_ip = ip
+            DataTCPServer._conn_ip = ip
         self.data_server = DataTCPServer()
         self.server = CommandTCPServer()
         self.data_solve = DataSolve(self.data_server)

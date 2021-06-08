@@ -75,7 +75,7 @@
            <widget class="QPushButton" name="btn_connect">
             <property name="minimumSize">
              <size>
-              <width>150</width>
+              <width>100</width>
               <height>0</height>
              </size>
             </property>
@@ -87,6 +87,19 @@
             </property>
             <property name="text">
              <string>系统连接</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="select_link_addr">
+            <property name="minimumSize">
+             <size>
+              <width>145</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="editable">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

@@ -12,7 +12,7 @@ import time
 
 # import ui.ui as ui
 import ui.CTYui as ui
-import ui.master as master_ui
+# import ui.master as master_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -32,14 +32,14 @@ class QSignal(QtCore.QObject):
             self.txt_trigger.emit(text)
 
 
-class MasterConsole(QtWidgets.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.ui = master_ui.Ui_Dialog()
-        self.initUI()
-
-        self.icd_param = icd_parser.ICDParams()
-        self.icd_param.load_icd()
+# class MasterConsole(QtWidgets.QWidget):
+#     def __init__(self):
+#         super().__init__()
+#         self.ui = master_ui.Ui_Dialog()
+#         self.initUI()
+#
+#         self.icd_param = icd_parser.ICDParams()
+#         self.icd_param.load_icd()
 
 
 class JGFConsole(QtWidgets.QWidget):

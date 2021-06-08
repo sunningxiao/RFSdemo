@@ -551,7 +551,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>DAC NCO频率</string>
+                   <string>DAC NCO频率(MHz)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -568,7 +568,7 @@
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>100</width>
+                    <width>16777215</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -638,7 +638,7 @@
                 <item row="5" column="3">
                  <widget class="QLabel" name="label_14">
                   <property name="text">
-                   <string>采样延迟</string>
+                   <string>采样延迟(ns)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -677,7 +677,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="label_16">
                   <property name="text">
-                   <string>基准PRF周期</string>
+                   <string>基准PRF周期(ns)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -722,7 +722,7 @@
                 <item row="3" column="3">
                  <widget class="QLabel" name="label_6">
                   <property name="text">
-                   <string>带宽</string>
+                   <string>带宽(MHz)</string>
                   </property>
                   <property name="textFormat">
                    <enum>Qt::AutoText</enum>
@@ -767,7 +767,7 @@
                 <item row="4" column="3">
                  <widget class="QLabel" name="label_12">
                   <property name="text">
-                   <string>播放波门延迟</string>
+                   <string>播放波门延迟(ns)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -789,7 +789,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>ADC NOC频率</string>
+                   <string>ADC NOC频率(MHz)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -799,7 +799,7 @@
                 <item row="4" column="5">
                  <widget class="QLabel" name="label_13">
                   <property name="text">
-                   <string>播放波门宽度</string>
+                   <string>播放波门宽度(ns)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -835,7 +835,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>中心频率</string>
+                   <string>中心频率(MHz)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -881,7 +881,7 @@
                 <item row="3" column="5">
                  <widget class="QLabel" name="label_7">
                   <property name="text">
-                   <string>脉宽</string>
+                   <string>脉宽(us)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1017,7 +1017,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>DSS设置</string>
+                   <string>DDS设置</string>
                   </property>
                  </widget>
                 </item>

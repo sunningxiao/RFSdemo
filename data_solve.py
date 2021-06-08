@@ -124,7 +124,7 @@ class DataSolve:
                 _data = self._cache.lookup()
                 if _data:
                     data = np.frombuffer(_data, dtype='u4')
-                    data = UnPackage.solve_source_data(data, chl_flag, for_save=False)
+                    data = UnPackage.solve_source_data(data, chl_flag, for_save=False, step=-1)
                     if data:
                         us_signal.status_trigger.emit((1, 2, data))
                         time.sleep(1)

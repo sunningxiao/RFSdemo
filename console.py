@@ -77,6 +77,8 @@ class JGFConsole(QtWidgets.QWidget):
         # 关联按钮
         self.ui.btn_auto_command.clicked.connect(self.linking_auto_button)
 
+        self.ui.btn_reload_icd.clicked.connect(self.reload_param)
+
         self.ui.btn_connect.clicked.connect(self.click_connect)
         self.ui.btn_start.clicked.connect(
             self.linking_button('系统开启', need_feedback=True, need_file=False, callback=self.click_start))
@@ -268,6 +270,10 @@ class JGFConsole(QtWidgets.QWidget):
         self.show_param()
         # self.ui.select_link_addr.addItem(self.icd_param.icd_data['remote_ip'])
         # self.icd_param.start_data_server()
+
+    def reload_param(self):
+        self.icd_param.load_icd(reload=True)
+        self.show_param()
 
     def show_param(self):
         dds = self.icd_param.get_param('DDS_RAM', 0, int)

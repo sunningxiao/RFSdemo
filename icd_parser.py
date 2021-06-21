@@ -75,9 +75,9 @@ class ICDParams:
         self._connected = True
         return True
 
-    def load_icd(self):
+    def load_icd(self, reload=False):
         file_path = self._file_name.split('.')[0] + '_run.json' \
-            if os.path.isfile(self._file_name.split('.')[0] + '_run.json') \
+            if os.path.isfile(self._file_name.split('.')[0] + '_run.json') and not reload \
             else self._file_name
         with open(file_path, 'r', encoding='utf-8') as fp:
             try:
@@ -93,6 +93,7 @@ class ICDParams:
             DataTCPServer._local_port = self.icd_data['remote_data_port']
             DataTCPServer._conn_ip = self.icd_data['remote_ip']
             self.recv_header = struct.pack(_fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
+            printInfo('参数载入成功')
         except Exception as e:
             printException(e, f'{file_path}不可用')
 

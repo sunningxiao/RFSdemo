@@ -167,6 +167,7 @@ class JGFConsole(QtWidgets.QWidget):
                     self.ui.select_link_addr.addItem(addr[0])
             except:
                 s.close()
+                self.ui.select_link_addr.setCurrentIndex(0)
                 printInfo('板卡扫描完成')
 
         _thread = threading.Thread(target=_func)
@@ -265,7 +266,7 @@ class JGFConsole(QtWidgets.QWidget):
     def load_param(self):
         self.icd_param.load_icd()
         self.show_param()
-        self.ui.select_link_addr.addItem(self.icd_param.icd_data['remote_ip'])
+        # self.ui.select_link_addr.addItem(self.icd_param.icd_data['remote_ip'])
         # self.icd_param.start_data_server()
 
     def show_param(self):

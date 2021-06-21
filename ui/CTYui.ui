@@ -75,7 +75,7 @@
            <widget class="QPushButton" name="btn_connect">
             <property name="minimumSize">
              <size>
-              <width>100</width>
+              <width>150</width>
               <height>0</height>
              </size>
             </property>
@@ -568,7 +568,7 @@
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>16777215</width>
+                    <width>100</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -1050,6 +1050,16 @@
                   </property>
                   <property name="text">
                    <string>系统停止</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QCheckBox" name="chk_write_file">
+                  <property name="text">
+                   <string>落盘</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>

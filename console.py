@@ -197,7 +197,7 @@ class JGFConsole(QtWidgets.QWidget):
 
     def click_start(self):
         self.gui_state(2)
-        self.icd_param.data_solve.start_solve()
+        self.icd_param.data_solve.start_solve(write_file=self.ui.chk_write_file.isChecked())
         return True
 
     def click_stop(self):

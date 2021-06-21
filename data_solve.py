@@ -47,7 +47,7 @@ class DataSolve:
         self._files = []
         self._cache = Queue(1024)
 
-    def start_solve(self, filepath=None):
+    def start_solve(self, filepath=None, write_file=True):
         self._cache = Queue(1024)
         # 启动数据接收线程
         _thread = threading.Thread(target=self.wait_connect)
@@ -60,7 +60,7 @@ class DataSolve:
         if not UNPACK:
             filename = 'data.dat'
             self._files.append(open(f'{filepath}/{filename}', 'wb'))
-            _thread = threading.Thread(target=self.write, args=(self._files[-1], ))
+            _thread = threading.Thread(target=self.write, args=(self._files[-1], write_file))
             _thread.start()
         else:
             for i in range(self._channel_num):
@@ -133,7 +133,7 @@ class DataSolve:
         except Exception as e:
             printException(e)
 
-    def write(self, file):
+    def write(self, file, write_file):
         """ 数据存储
         """
         try:
@@ -141,7 +141,7 @@ class DataSolve:
             data_length = 0
             while self._cache.qsize() or not self._stop_flag:
                 _data = self._cache.m_get(timeout=1)
-                if _data:
+                if _data and write_file:
                     file.write(_data[1])
                     data_length += len(_data[1])
                     if time.time() - start_time > 1:

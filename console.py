@@ -146,7 +146,17 @@ class JGFConsole(QtWidgets.QWidget):
         dest = ('<broadcast>', 5003)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        s.bind(('', 5000))
+        addrs = socket.getaddrinfo(socket.gethostname(), None)
+        addr = [addr[4][0] for addr in addrs if addr[4][0].startswith('192.168.1.')]
+        if not addr:
+            printWarning('本机没有192.168.1.0网段的ip地址，不能完成扫描')
+            return
+        printInfo(f'本机IP：{addr[0]}')
+        try:
+            s.bind((addr[0], 15000))
+        except:
+            printWarning('扫描端口15000绑定失败，不能完成扫描')
+            return
         s.sendto(b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00", dest)
         s.settimeout(3)
 

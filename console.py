@@ -10,9 +10,8 @@ import pyqtgraph as pg
 import socket
 import time
 
-# import ui.ui as ui
 import ui.CTYui as ui
-# import ui.master as master_ui
+import ui.dds_config_ui as dds_config_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -42,6 +41,13 @@ class QSignal(QtCore.QObject):
 #         self.icd_param.load_icd()
 
 
+class DDSConfig(QtWidgets.QDialog, dds_config_ui.Ui_Dialog):
+    def __init__(self):
+        super(DDSConfig, self).__init__()
+        self.setupUi(self)
+        self.btn_cancel.clicked.connect(self.close)
+
+
 class JGFConsole(QtWidgets.QWidget):
     max_channel_count = 8
     page_size = 50
@@ -55,6 +61,7 @@ class JGFConsole(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.ui = ui.Ui_Form()
+        self.dds_config_ui = DDSConfig()
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -85,7 +92,11 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.btn_stop.clicked.connect(
             self.linking_button('系统停止', need_feedback=True, need_file=False, callback=self.click_stop))
         self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
-        self.ui.btn_dss_cfg.clicked.connect(self.linking_button('DDS配置', need_feedback=True, need_file=False))
+        self.ui.btn_dss_cfg.clicked.connect(self.dds_config_ui.show)
+        self.dds_config_ui.btn_config.clicked.connect(self.linking_button('DDS配置',
+                                                                          need_feedback=True,
+                                                                          need_file=False,
+                                                                          callback=self.dds_config_ui.close))
         self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
         self.ui.btn_framwork_up.clicked.connect(
             self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
@@ -119,14 +130,36 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
 
-        self.lplt = pg.PlotWidget()
-        self.ui.grid_graph.addWidget(self.lplt)
+        self.plot_win = pg.GraphicsLayoutWidget()
+        self.ui.grid_graph.addWidget(self.plot_win)
+
+        self.lplt = self.plot_win.addPlot()
+        # self.ui.grid_graph.addWidget(self.lplt)
         # self.lplt.setYRange(-1.5, 1.5)
         self.lplt.setLabel('top', '回波数据')
+
+        # 全波形总览
+        self.plot_win.nextRow()
+        self.lplt_all = self.plot_win.addPlot()
+        self.lplt_all.setMaximumHeight(60)
+        lr = pg.LinearRegionItem([0, 4096])
+        lr.setZValue(-10)
+        self.lplt_all.addItem(lr)
+
+        def updatePlot():
+            self.lplt.setXRange(*lr.getRegion(), padding=0)
+
+        def updateRegion():
+            lr.setRegion(self.lplt.getViewBox().viewRange()[0])
+
+        lr.sigRegionChanged.connect(updatePlot)
+        self.lplt.sigXRangeChanged.connect(updateRegion)
+        updatePlot()
+
         self.plot_color = ['r', 'g', 'b', 'c', 'm', 'y', (128, 200, 20), 'w']
         self.chk_channels = [self.ui.chk1, self.ui.chk2, self.ui.chk3, self.ui.chk4, self.ui.chk5, self.ui.chk6,
                              self.ui.chk7, self.ui.chk8]
-        self.channel_plots = {self.chk_channels[i]: [self.lplt.plot(name=f'chnl{i}'), self.plot_color[i]]
+        self.channel_plots = {self.chk_channels[i]: [self.lplt.plot(name=f'chnl{i}'), self.lplt_all.plot(name=f'chnl{i}'), self.plot_color[i]]
                               for i in range(self.max_channel_count)}
         pg.mkPen()
         self.gui_state(0)
@@ -193,6 +226,8 @@ class JGFConsole(QtWidgets.QWidget):
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
             printInfo("记录系统连接成功")
+            # 连接后直接按默认参数发送RF配置指令，保证系统开启前进行过RF配置
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
             self.show_unload_status((0, 0))
         else:
             self.gui_state(0)
@@ -217,10 +252,13 @@ class JGFConsole(QtWidgets.QWidget):
                     _data = data[data['head'][index]['name']]
                 except:
                     _data = [0] * 4096
-                chnl_pen[0].setData(_data, pen=chnl_pen[1])
+                chnl_pen[0].setData(_data, pen=chnl_pen[2])
                 chnl_pen[0].show()
+                chnl_pen[1].setData(_data, pen=chnl_pen[2])
+                chnl_pen[1].show()
             else:
                 chnl_pen[0].hide()
+                chnl_pen[1].hide()
 
     def show_unload_status(self, status):
         """

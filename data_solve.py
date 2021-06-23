@@ -58,7 +58,7 @@ class DataSolve:
         if not os.path.exists(filepath):
             os.mkdir(filepath)
         if not UNPACK:
-            filename = 'data.dat'
+            filename = 'data_0.data'
             self._files.append(open(f'{filepath}/{filename}', 'wb'))
             _thread = threading.Thread(target=self.write, args=(self._files[-1], write_file))
             _thread.start()
@@ -124,7 +124,7 @@ class DataSolve:
                 _data = self._cache.lookup()
                 if _data:
                     data = np.frombuffer(_data, dtype='u4')
-                    data = UnPackage.solve_source_data(data, chl_flag, for_save=False, step=-1)
+                    data = UnPackage.solve_source_data(data, chl_flag, for_save=True, step=0)
                     if data:
                         us_signal.status_trigger.emit((1, 2, data))
                         time.sleep(1)

@@ -177,6 +177,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.plot_win.nextRow()
         self.lplt_all = self.plot_win.addPlot()
         self.lplt_all.setMaximumHeight(60)
+        self.lplt_all.setXRange(0, 35000)
         lr = pg.LinearRegionItem([0, 4096])
         lr.setZValue(-10)
         self.lplt_all.addItem(lr)

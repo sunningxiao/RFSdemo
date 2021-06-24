@@ -5,7 +5,7 @@ import time
 from netconn import CommandTCPServer, DataTCPServer
 from sim_ctl import sim_connect
 from utils import simulation, solve_exception
-from data_solve import DataSolve
+from data_solve import DataSolve, us_signal
 
 
 from printLog import *
@@ -58,6 +58,7 @@ class ICDParams:
         self.button = {}
         self.param = {}
         self.command = {}
+        self.after_connection = []
         self.data_server = self.server = None
         self.recv_header = b''
         self.data_solve = None
@@ -73,6 +74,8 @@ class ICDParams:
         self.data_solve = DataSolve(self.data_server)
         # self.data_solve.start_solve()
         self._connected = True
+        for command in self.after_connection:
+            self.send_command(command)
         return True
 
     def load_icd(self, reload=False):
@@ -88,6 +91,7 @@ class ICDParams:
             self.button = self.icd_data['button']
             self.param = self.icd_data['param']
             self.command = self.icd_data['command']
+            self.after_connection: list = self.icd_data['after_connection']
             CommandTCPServer._remote_port = self.icd_data['remote_command_port']
             CommandTCPServer._conn_ip = self.icd_data['remote_ip']
             DataTCPServer._local_port = self.icd_data['remote_data_port']
@@ -119,7 +123,7 @@ class ICDParams:
 
     @simulation(simulation_ctl, sim_connect)
     def send_command(self, button_name: str,
-                     need_feedback=True, file_name=None,
+                     need_feedback=True, check_feedback=True, file_name=None,
                      callback=lambda *args: True, wait: int = 0) -> bool:
         if not self._connected:
             printWarning('未连接板卡')
@@ -148,21 +152,23 @@ class ICDParams:
                 if need_feedback:
                     time.sleep(wait)
                     _feedback = self.server.recv()
-                    if not _feedback.startswith(self.recv_header):
-                        printWarning('返回指令包头错误')
-                        return False
-                    if command_bak[4:8] != _feedback[4:8]:
-                        printWarning('返回指令ID错误')
-                        return False
-                    _feedback = struct.unpack(_fmt_mode + 'IIIII', _feedback)
-                    if _feedback[4] != 0:
-                        printWarning('指令成功下发，但执行失败')
-                        return False
+                    if check_feedback:
+                        if not _feedback.startswith(self.recv_header):
+                            printWarning('返回指令包头错误')
+                            return False
+                        if command_bak[4:8] != _feedback[4:8]:
+                            printWarning('返回指令ID错误')
+                            return False
+                        _feedback = struct.unpack(_fmt_mode + 'IIIII', _feedback)
+                        if _feedback[4] != 0:
+                            printWarning('指令成功下发，但执行失败')
+                            return False
             except Exception as e:
                 printException(e, f'指令({_command_name})无应答')
                 return False
         printColor(f'成功执行指令{_commands}', 'green')
-        callback()
+        # 优化回调机制，防止出现在其他线程操作qtimer的情况
+        us_signal.status_trigger.emit((1, 3, callback))
         return True
 
     def _fmt_command(self, command_name, file_name=None) -> bytes:

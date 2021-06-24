@@ -954,7 +954,7 @@
                  </widget>
                 </item>
                 <item row="10" column="4">
-                 <widget class="QComboBox" name="comboBox">
+                 <widget class="QComboBox" name="select_prf_src">
                   <property name="maximumSize">
                    <size>
                     <width>130</width>

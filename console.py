@@ -284,6 +284,8 @@ class JGFConsole(QtWidgets.QWidget):
             elif status[0] == 3:
                 # 执行回调函数,优化指令执行后的函数回调机制
                 status[1]()
+            elif status[0] == 4:
+                self.icd_param.save_icd(status[1])
         else:
             self.ui.label.setText(self._speed_fmt.format(0))
             self.ui.label_3.setText(self._save_speed_fmt.format(0))

@@ -71,6 +71,7 @@ class DataSolve:
         _thread = threading.Thread(target=self.solve, args=([True]*8, ))
         _thread.start()
 
+        us_signal.status_trigger.emit((1, 4, filepath))
         return True
 
     def wait_connect(self):
@@ -155,7 +156,7 @@ class DataSolve:
         finally:
             file.close()
             printColor("文件保存完成", 'green')
-            us_signal.status_trigger.emit((0,))
+            us_signal.status_trigger.emit((0, 0))
 
     def write_unpack(self):
         pass

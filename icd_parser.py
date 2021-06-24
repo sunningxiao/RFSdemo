@@ -101,8 +101,8 @@ class ICDParams:
         except Exception as e:
             printException(e, f'{file_path}不可用')
 
-    def save_icd(self):
-        with open(self._file_name.split('.')[0] + '_run.json', 'w', encoding='utf-8') as fp:
+    def save_icd(self, path=''):
+        with open(path + '\\' + self._file_name.split('.')[0] + '_run.json', 'w', encoding='utf-8') as fp:
             # 按utf-8的格式格式化并写入文件
             json.dump(self.icd_data, fp, ensure_ascii=False, indent=4)
             printInfo('参数保存成功')

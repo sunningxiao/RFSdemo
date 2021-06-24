@@ -12,6 +12,7 @@ import time
 
 import ui.CTYui as ui
 import ui.dds_config_ui as dds_config_ui
+import ui.start_ui as start_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -45,6 +46,7 @@ class DDSConfig(QtWidgets.QDialog, dds_config_ui.Ui_Dialog):
     def __init__(self, ui_parent):
         super(DDSConfig, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle('DDS设置_参数检查')
         self.btn_cancel.clicked.connect(self.close)
         self.ui_parent: JGFConsole = ui_parent
 
@@ -53,6 +55,21 @@ class DDSConfig(QtWidgets.QDialog, dds_config_ui.Ui_Dialog):
 
     def showEvent(self, a0: QtGui.QShowEvent) -> None:
         self.ui_parent.show_dds_config_ui()
+
+
+class StartConfig(QtWidgets.QDialog, start_ui.Ui_Dialog):
+    def __init__(self, ui_parent):
+        super(StartConfig, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle('系统开启_参数检查')
+        self.btn_cancel.clicked.connect(self.close)
+        self.ui_parent: JGFConsole = ui_parent
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        self.ui_parent.show_param()
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.ui_parent.show_start_ui()
 
 
 class JGFConsole(QtWidgets.QWidget):
@@ -69,6 +86,7 @@ class JGFConsole(QtWidgets.QWidget):
         super().__init__()
         self.ui = ui.Ui_Form()
         self.dds_config_ui = DDSConfig(self)
+        self.start_ui = StartConfig(self)
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -94,17 +112,24 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.btn_reload_icd.clicked.connect(self.reload_param)
 
         self.ui.btn_connect.clicked.connect(self.click_connect)
-        self.ui.btn_start.clicked.connect(
+
+        self.ui.btn_start.clicked.connect(self.start_ui.show)
+        self.start_ui.btn_config.clicked.connect(
             self.linking_button('系统开启', need_feedback=True, need_file=False, callback=self.click_start))
-        # self.ui.btn_start.clicked.connect(self.click_start)
+        self.link_start_ui()
+
         self.ui.btn_stop.clicked.connect(
             self.linking_button('系统停止', need_feedback=True, need_file=False, callback=self.click_stop))
         self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        # dds相关的输入关联
         self.ui.btn_dss_cfg.clicked.connect(self.dds_config_ui.show)
         self.dds_config_ui.btn_config.clicked.connect(self.linking_button('DDS配置',
                                                                           need_feedback=True,
                                                                           need_file=False,
                                                                           callback=self.dds_config_ui.close))
+        self.link_dds_config_ui()
+
         self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
         self.ui.btn_framwork_up.clicked.connect(
             self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
@@ -244,6 +269,7 @@ class JGFConsole(QtWidgets.QWidget):
     def click_start(self):
         self.gui_state(2)
         self.icd_param.data_solve.start_solve(write_file=self.ui.chk_write_file.isChecked())
+        self.start_ui.close()
         return True
 
     def click_stop(self):
@@ -344,10 +370,6 @@ class JGFConsole(QtWidgets.QWidget):
         for btn in self.icd_param.button:
             self.ui.select_command.addItem(btn)
 
-        # 绑定dds独立配置界面的参数
-        self.show_dds_config_ui()
-        self.link_dds_config_ui()
-
     def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str,
                      combo_flag='text'):
         def _func(*args, **kwargs):
@@ -414,6 +436,39 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
         self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
         self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
+
+    def show_start_ui(self):
+        self.start_ui.select_prf_src.setCurrentIndex(self.icd_param.get_param('基准PRF来源', 0))
+        self.start_ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
+        self.start_ui.txt_prf_cnt.setText(self.icd_param.get_param('基准PRF数量', 1000, str))
+        for dds in range(8):
+            select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
+            select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
+            txt_gate_width: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_width_{dds}')
+            txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
+            txt_gate_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_delay_{dds}')
+            txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
+            txt_sampling_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_delay_{dds}')
+            txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
+            txt_sampling_points: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_points_{dds}')
+            txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
+
+    def link_start_ui(self):
+        self.start_ui.select_prf_src.currentIndexChanged.connect(
+            self.change_param('基准PRF来源', self.start_ui.select_prf_src, int, 'index'))
+        self.start_ui.txt_prf_cyc.editingFinished.connect(self.change_param('基准PRF周期', self.start_ui.txt_prf_cyc))
+        self.start_ui.txt_prf_cnt.editingFinished.connect(self.change_param('基准PRF数量', self.start_ui.txt_prf_cnt))
+        for dds in range(8):
+            select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
+            select_source.currentIndexChanged.connect(self.change_param(f'DAC{dds}播放数据来源', select_source, int, 'index'))
+            txt_gate_width: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_width_{dds}')
+            txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}播放波门宽度', txt_gate_width))
+            txt_gate_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_delay_{dds}')
+            txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', txt_gate_delay))
+            txt_sampling_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_delay_{dds}')
+            txt_sampling_delay.editingFinished.connect(self.change_param(f'ADC{dds}采样延迟', txt_sampling_delay))
+            txt_sampling_points: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_points_{dds}')
+            txt_sampling_points.editingFinished.connect(self.change_param(f'ADC{dds}采样点数', txt_sampling_points))
 
     def show_dds_config_ui(self):
         for dds in range(8):

@@ -8,11 +8,13 @@ from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import socket
-import time
+import numpy as np
+from numpy import fft
 
 import ui.CTYui as ui
 import ui.dds_config_ui as dds_config_ui
 import ui.start_ui as start_ui
+import ui.wave_file_ui as wave_file_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -72,6 +74,18 @@ class StartConfig(QtWidgets.QDialog, start_ui.Ui_Dialog):
         self.ui_parent.show_start_ui()
 
 
+class WaveFileConfig(QtWidgets.QDialog, wave_file_ui.Ui_Dialog):
+    def __init__(self, ui_parent):
+        super(WaveFileConfig, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle('波形装载--双击文件名清除选择')
+        self.btn_cancel.clicked.connect(self.close)
+        self.ui_parent: JGFConsole = ui_parent
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.ui_parent.show_wave_file_ui()
+
+
 class JGFConsole(QtWidgets.QWidget):
     max_channel_count = 8
     page_size = 50
@@ -87,6 +101,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui = ui.Ui_Form()
         self.dds_config_ui = DDSConfig(self)
         self.start_ui = StartConfig(self)
+        self.wave_file_config_ui = WaveFileConfig(self)
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -130,7 +145,10 @@ class JGFConsole(QtWidgets.QWidget):
                                                                           callback=self.dds_config_ui.close))
         self.link_dds_config_ui()
 
-        self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
+        self.ui.btn_wave.clicked.connect(self.wave_file_config_ui.show)
+        self.wave_file_config_ui.btn_config.clicked.connect(self.click_wave)
+        self.link_wave_file_ui()
+        # self.ui.btn_wave.clicked.connect(self.linking_button('波形装载', need_feedback=True, need_file=True))
         self.ui.btn_framwork_up.clicked.connect(
             self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
         )
@@ -279,6 +297,25 @@ class JGFConsole(QtWidgets.QWidget):
         self.icd_param.data_server.close_recv()
         return True
 
+    def click_wave(self):
+        def _func():
+            chl = self.icd_param.get_param('DDS_RAM')
+            try:
+                for dds in range(8):
+                    self.icd_param.set_param('DDS_RAM', dds)
+                    filename = self.icd_param.get_param(f'通道{dds}文件路径', '', str)
+                    if filename != '':
+                        assert self.icd_param.send_command('波形装载', file_name=filename)
+                        printColor(f'通道{dds+1}波形装载完成', 'blue')
+            except:
+                printWarning('波形装载失败')
+            finally:
+                self.icd_param.set_param('DDS_RAM', chl)
+                self.wave_file_config_ui.close()
+
+        thread = threading.Thread(target=_func)
+        thread.start()
+
     def show_unpack(self, data):
         chk_info = [chk.isChecked() for chk in self.channel_plots]
         for index, (chk, chnl_pen) in enumerate(self.channel_plots.items()):
@@ -288,6 +325,8 @@ class JGFConsole(QtWidgets.QWidget):
                 except:
                     _data = [0] * 4096
                 chnl_pen[0].setData(_data, pen=chnl_pen[2])
+                # 频谱（未归一化）
+                # chnl_pen[0].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(_data)))), pen=chnl_pen[2])
                 chnl_pen[0].show()
                 chnl_pen[1].setData(_data, pen=chnl_pen[2])
                 chnl_pen[1].show()
@@ -404,6 +443,17 @@ class JGFConsole(QtWidgets.QWidget):
 
         return _func
 
+    def linking_wave_button(self, dds):
+        def _func(*args, **kwargs):
+            filename = QFileDialog.getOpenFileName(self.wave_file_config_ui, '请选择文件')[0]
+            if filename == '':
+                return
+            file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
+            file_name_label.setText(filename)
+            self.icd_param.set_param(f'通道{dds}文件路径', filename, str)
+
+        return _func
+
     def linking_auto_button(self):
         btn = self.ui.select_command.currentText()
         self.linking_button(btn, need_feedback=True, check_feedback=False, need_file=False)()
@@ -488,6 +538,26 @@ class JGFConsole(QtWidgets.QWidget):
             txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', txt_dds_band))
             txt_dds_pulse: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_pulse_{dds}')
             txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', txt_dds_pulse))
+
+    def show_wave_file_ui(self):
+        for dds in range(8):
+            file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
+            file_name_label.setText(self.icd_param.get_param(f'通道{dds}文件路径', '', str))
+
+    def link_wave_file_ui(self):
+
+        # 双击文件名清空
+        def mouseDoubleClickEvent(label, _dds):
+            def _func(e):
+                label.setText('')
+                self.icd_param.set_param(f'通道{_dds}文件路径', '', str)
+            return _func
+
+        for dds in range(8):
+            file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
+            file_name_label.mouseDoubleClickEvent = mouseDoubleClickEvent(file_name_label, dds)
+            select_file: QtWidgets.QPushButton = getattr(self.wave_file_config_ui, f'select_file_{dds}')
+            select_file.clicked.connect(self.linking_wave_button(dds))
 
 
 if __name__ == '__main__':

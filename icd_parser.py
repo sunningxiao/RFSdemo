@@ -124,7 +124,7 @@ class ICDParams:
 
     @simulation(simulation_ctl, sim_connect)
     def send_command(self, button_name: str,
-                     need_feedback=True, check_feedback=True, file_name=None,
+                     need_feedback=True, file_name=None, check_feedback=True,
                      callback=lambda *args: True, wait: int = 0) -> bool:
         if not self._connected:
             printWarning('未连接板卡')

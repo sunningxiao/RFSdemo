@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>833</width>
-    <height>386</height>
+    <width>990</width>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,32 +26,12 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0,0,0">
           <property name="spacing">
            <number>7</number>
           </property>
-          <item row="8" column="6">
-           <widget class="QLabel" name="label_36">
-            <property name="text">
-             <string>脉宽(us)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" rowspan="15">
-           <widget class="Line" name="line">
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_4">
+          <item row="14" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_7">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -60,69 +40,38 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_2">
+          <item row="8" column="8">
+           <widget class="QLabel" name="label_18">
             <property name="text">
-             <string>通道2</string>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_6">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="6">
-           <widget class="QLabel" name="label_48">
-            <property name="text">
-             <string>脉宽(us)</string>
+             <string>初始相位(°)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="2" column="6">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>脉宽(us)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_4">
+          <item row="6" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_3">
             <property name="maximumSize">
              <size>
               <width>100</width>
               <height>16777215</height>
              </size>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2" colspan="6">
-           <widget class="Line" name="line_9">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>通道4</string>
             </property>
            </widget>
           </item>
           <item row="0" column="7">
            <widget class="QLineEdit" name="txt_dds_pulse_0">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_3">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -153,8 +102,333 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="2">
-           <widget class="QLabel" name="label_34">
+          <item row="6" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_3">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1" rowspan="15">
+           <widget class="Line" name="line">
+            <property name="frameShadow">
+             <enum>QFrame::Plain</enum>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_6">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2" colspan="8">
+           <widget class="Line" name="line_10">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_5">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="8">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>初始相位(°)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="label_37">
+            <property name="text">
+             <string>通道6</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_4">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_1">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="4">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2" colspan="8">
+           <widget class="Line" name="line_31">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="4">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_33">
+            <property name="text">
+             <string>通道5</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_7">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_5">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="Line" name="line_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_0">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2" colspan="8">
+           <widget class="Line" name="line_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="4">
+           <widget class="QLabel" name="label_47">
+            <property name="text">
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_0">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="2" colspan="8">
+           <widget class="Line" name="line_32">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_2">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_5">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="6">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>脉宽(us)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="6">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>脉宽(us)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="6">
+           <widget class="QLabel" name="label_48">
+            <property name="text">
+             <string>脉宽(us)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>通道2</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_1">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_7">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="Line" name="line_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="6">
+           <widget class="QLabel" name="label_40">
+            <property name="text">
+             <string>脉宽(us)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_23">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -175,79 +449,21 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="6">
-           <widget class="QLabel" name="label_7">
+          <item row="8" column="4">
+           <widget class="QLabel" name="label_35">
             <property name="text">
-             <string>脉宽(us)</string>
+             <string>带宽(MHz)</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::AutoText</enum>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="3" column="2" colspan="6">
-           <widget class="Line" name="line_10">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_6">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="13" column="0">
-           <widget class="Line" name="line_8">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_6">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_4">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2" colspan="6">
-           <widget class="Line" name="line_33">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_2">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
-           <widget class="QLabel" name="label_6">
+          <item row="10" column="4">
+           <widget class="QLabel" name="label_39">
             <property name="text">
              <string>带宽(MHz)</string>
             </property>
@@ -281,65 +497,32 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_23">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>10000</width>
-              <height>16777215</height>
-             </size>
-            </property>
+          <item row="12" column="8">
+           <widget class="QLabel" name="label_20">
             <property name="text">
-             <string>中心频率(MHz)</string>
+             <string>初始相位(°)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="14" column="4">
-           <widget class="QLabel" name="label_47">
-            <property name="text">
-             <string>带宽(MHz)</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <item row="9" column="2" colspan="8">
+           <widget class="Line" name="line_33">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="2" column="2">
-           <widget class="QLabel" name="label_24">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>10000</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>中心频率(MHz)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <item row="5" column="0">
+           <widget class="Line" name="line_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="10" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_5">
+          <item row="0" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_0">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -348,8 +531,18 @@
             </property>
            </widget>
           </item>
-          <item row="12" column="6">
-           <widget class="QLabel" name="label_44">
+          <item row="4" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_2">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="6">
+           <widget class="QLabel" name="label_36">
             <property name="text">
              <string>脉宽(us)</string>
             </property>
@@ -358,189 +551,18 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="Line" name="line_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
+          <item row="10" column="8">
+           <widget class="QLabel" name="label_19">
             <property name="text">
-             <string>通道1</string>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="2" colspan="6">
-           <widget class="Line" name="line_34">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="4">
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>带宽(MHz)</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
+             <string>初始相位(°)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="6" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_3">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="0">
-           <widget class="Line" name="line_7">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_3">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="2">
-           <widget class="QLabel" name="label_42">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>10000</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>中心频率(MHz)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="0">
-           <widget class="QLabel" name="label_45">
-            <property name="text">
-             <string>通道8</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="0">
-           <widget class="QLabel" name="label_37">
-            <property name="text">
-             <string>通道6</string>
-            </property>
-           </widget>
-          </item>
-          <item row="13" column="2" colspan="6">
-           <widget class="Line" name="line_35">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_2">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="4">
-           <widget class="QLabel" name="label_39">
-            <property name="text">
-             <string>带宽(MHz)</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_7">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="Line" name="line_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="Line" name="line_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_7">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_2">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_0">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_7">
+          <item row="8" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_4">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -571,8 +593,15 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="5">
-           <widget class="QLineEdit" name="txt_dds_band_1">
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>通道4</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_6">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -581,13 +610,91 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_1">
+          <item row="12" column="2">
+           <widget class="QLabel" name="label_42">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>10000</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>中心频率(MHz)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <widget class="Line" name="line_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="6">
+           <widget class="QLabel" name="label_44">
+            <property name="text">
+             <string>脉宽(us)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="label_24">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>10000</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>中心频率(MHz)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="8">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>初始相位(°)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_6">
             <property name="maximumSize">
              <size>
               <width>100</width>
               <height>16777215</height>
              </size>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="Line" name="line_7">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
@@ -604,60 +711,20 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="6">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>脉宽(us)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <item row="11" column="2" colspan="8">
+           <widget class="Line" name="line_34">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="10" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_5">
+          <item row="4" column="3">
+           <widget class="QLineEdit" name="txt_dds_fc_2">
             <property name="maximumSize">
              <size>
               <width>100</width>
               <height>16777215</height>
              </size>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_33">
-            <property name="text">
-             <string>通道5</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_1">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QLineEdit" name="txt_dds_fc_0">
-            <property name="maximumSize">
-             <size>
-              <width>100</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="6">
-           <widget class="QLabel" name="label_40">
-            <property name="text">
-             <string>脉宽(us)</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -683,42 +750,57 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0">
-           <widget class="Line" name="line_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="Line" name="line_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="0">
-           <widget class="QLabel" name="label_41">
+          <item row="14" column="0">
+           <widget class="QLabel" name="label_45">
             <property name="text">
-             <string>通道7</string>
+             <string>通道8</string>
             </property>
            </widget>
           </item>
-          <item row="8" column="4">
-           <widget class="QLabel" name="label_35">
-            <property name="text">
-             <string>带宽(MHz)</string>
+          <item row="4" column="7">
+           <widget class="QLineEdit" name="txt_dds_pulse_2">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
             </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
+           </widget>
+          </item>
+          <item row="8" column="2">
+           <widget class="QLabel" name="label_34">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>10000</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>中心频率(MHz)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="6" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_3">
+          <item row="2" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_1">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_6">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -734,15 +816,22 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="2" colspan="6">
-           <widget class="Line" name="line_32">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>通道1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="2" colspan="8">
+           <widget class="Line" name="line_35">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="10" column="7">
-           <widget class="QLineEdit" name="txt_dds_pulse_5">
+          <item row="10" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_5">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -751,23 +840,70 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="4">
-           <widget class="QLabel" name="label_10">
+          <item row="6" column="6">
+           <widget class="QLabel" name="label_13">
             <property name="text">
-             <string>带宽(MHz)</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
+             <string>脉宽(us)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="5" column="2" colspan="6">
-           <widget class="Line" name="line_31">
+          <item row="14" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_7">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="8">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>初始相位(°)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="Line" name="line_5">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_1">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_4">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="8">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>初始相位(°)</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
@@ -781,30 +917,54 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="4">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>带宽(MHz)</string>
+          <item row="8" column="5">
+           <widget class="QLineEdit" name="txt_dds_band_4">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
             </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
+           </widget>
+          </item>
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_41">
+            <property name="text">
+             <string>通道7</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="9">
+           <widget class="QLineEdit" name="txt_dds_phase_3">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="8">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>初始相位(°)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>
-          <item row="15" column="7">
-           <widget class="QPushButton" name="btn_config">
-            <property name="text">
-             <string>确定</string>
-            </property>
-           </widget>
-          </item>
-          <item row="15" column="6">
+          <item row="15" column="0">
            <widget class="QPushButton" name="btn_cancel">
             <property name="text">
              <string>取消</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="9">
+           <widget class="QPushButton" name="btn_config">
+            <property name="text">
+             <string>确定</string>
             </property>
            </widget>
           </item>

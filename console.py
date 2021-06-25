@@ -16,6 +16,7 @@ import ui.dds_config_ui as dds_config_ui
 import ui.start_ui as start_ui
 import ui.wave_file_ui as wave_file_ui
 import ui.spectrum_ui as spectrum_ui
+import ui.qmc_config_ui as qmc_config_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -33,16 +34,6 @@ class QSignal(QtCore.QObject):
         while True:
             text = self.queue.get()
             self.txt_trigger.emit(text)
-
-
-# class MasterConsole(QtWidgets.QWidget):
-#     def __init__(self):
-#         super().__init__()
-#         self.ui = master_ui.Ui_Dialog()
-#         self.initUI()
-#
-#         self.icd_param = icd_parser.ICDParams()
-#         self.icd_param.load_icd()
 
 
 class DDSConfig(QtWidgets.QDialog, dds_config_ui.Ui_Dialog):
@@ -85,6 +76,17 @@ class WaveFileConfig(QtWidgets.QDialog, wave_file_ui.Ui_Dialog):
 
     def showEvent(self, a0: QtGui.QShowEvent) -> None:
         self.ui_parent.show_wave_file_ui()
+
+
+class QMCConfig(QtWidgets.QDialog, qmc_config_ui.Ui_Dialog):
+    def __init__(self, ui_parent):
+        super(QMCConfig, self).__init__()
+        self.setupUi(self)
+        self.btn_cancel.clicked.connect(self.close)
+        self.ui_parent: JGFConsole = ui_parent
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.ui_parent.show_qmc_config_ui()
 
 
 class SpectrumScreen(QtWidgets.QDialog, spectrum_ui.Ui_Dialog):
@@ -144,6 +146,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.start_ui = StartConfig(self)
         self.wave_file_config_ui = WaveFileConfig(self)
         self.spectrum_screen = SpectrumScreen(self)
+        self.qmc_config_ui = QMCConfig(self)
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -172,6 +175,12 @@ class JGFConsole(QtWidgets.QWidget):
 
         self.ui.btn_show_spectrum.clicked.connect(self.spectrum_screen.show)
 
+        self.ui.btn_qmc_cfg.clicked.connect(self.qmc_config_ui.show)
+        self.qmc_config_ui.btn_config.clicked.connect(
+            self.linking_button('QMC配置', need_feedback=True, need_file=False)
+        )
+        self.link_qmc_config_ui()
+
         self.ui.btn_start.clicked.connect(self.start_ui.show)
         self.start_ui.btn_config.clicked.connect(
             self.linking_button('系统开启', need_feedback=True, need_file=False, callback=self.click_start))
@@ -197,25 +206,7 @@ class JGFConsole(QtWidgets.QWidget):
             self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
         )
 
-        self.ui.dds_chose.currentIndexChanged.connect(self.select_dds)
-        self.ui.dds_chose.currentIndexChanged.connect(self.change_param('DDS_RAM', self.ui.dds_chose, int, 'index'))
-
         # 关联界面参数与json
-        self.ui.select_source.currentIndexChanged.connect(
-            self.change_param('DAC0播放数据来源', self.ui.select_source, int, 'index'))
-        self.ui.txt_gate_delay.editingFinished.connect(self.change_param('DAC0播放波门延迟', self.ui.txt_gate_delay))
-        self.ui.txt_gate_width.editingFinished.connect(self.change_param('DAC0播放波门宽度', self.ui.txt_gate_width))
-        self.ui.txt_sampling_delay.editingFinished.connect(self.change_param('ADC0采样延迟', self.ui.txt_sampling_delay))
-        self.ui.txt_sampling_points.editingFinished.connect(self.change_param('ADC0采样点数', self.ui.txt_sampling_points))
-
-        self.ui.txt_dds_fc.editingFinished.connect(self.change_param('dds0中心频率', self.ui.txt_dds_fc))
-        self.ui.txt_dds_band.editingFinished.connect(self.change_param('dds0带宽', self.ui.txt_dds_band))
-        self.ui.txt_dds_pulse.editingFinished.connect(self.change_param('dds0脉宽', self.ui.txt_dds_pulse))
-
-        self.ui.select_prf_src.currentIndexChanged.connect(
-            self.change_param('基准PRF来源', self.ui.select_prf_src, int, 'index'))
-        self.ui.txt_prf_cyc.editingFinished.connect(self.change_param('基准PRF周期', self.ui.txt_prf_cyc))
-        self.ui.txt_prf_cnt.editingFinished.connect(self.change_param('基准PRF数量', self.ui.txt_prf_cnt))
         self.ui.select_clock.currentIndexChanged.connect(
             self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
         self.ui.select_adc_sample.currentIndexChanged.connect(
@@ -441,12 +432,6 @@ class JGFConsole(QtWidgets.QWidget):
         self.show_param()
 
     def show_param(self):
-        dds = self.icd_param.get_param('DDS_RAM', 0, int)
-        self.ui.dds_chose.setCurrentIndex(dds)
-        self.select_dds(dds)
-        self.ui.select_prf_src.setCurrentIndex(self.icd_param.get_param('基准PRF来源', 0))
-        self.ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
-        self.ui.txt_prf_cnt.setText(self.icd_param.get_param('基准PRF数量', 1000, str))
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
         self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2}[self.icd_param.get_param('ADC采样率', 1000)])
         self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
@@ -455,6 +440,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
 
+        self.ui.select_command.clear()
         for btn in self.icd_param.button:
             self.ui.select_command.addItem(btn)
 
@@ -506,36 +492,6 @@ class JGFConsole(QtWidgets.QWidget):
         btn = self.ui.select_command.currentText()
         self.linking_button(btn, need_feedback=True, check_feedback=False, need_file=False)()
 
-    def select_dds(self, dds=0):
-        self.ui.txt_dds_fc.editingFinished.disconnect()
-        self.ui.txt_dds_band.editingFinished.disconnect()
-        self.ui.txt_dds_pulse.editingFinished.disconnect()
-        self.ui.select_source.currentIndexChanged.disconnect()
-        self.ui.txt_gate_delay.editingFinished.disconnect()
-        self.ui.txt_gate_width.editingFinished.disconnect()
-        self.ui.txt_sampling_delay.editingFinished.disconnect()
-        self.ui.txt_sampling_points.editingFinished.disconnect()
-        self.ui.txt_dds_fc.editingFinished.connect(self.change_param(f'dds{dds}中心频率', self.ui.txt_dds_fc))
-        self.ui.txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', self.ui.txt_dds_band))
-        self.ui.txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', self.ui.txt_dds_pulse))
-        self.ui.select_source.currentIndexChanged.connect(
-            self.change_param(f'DAC{dds}播放数据来源', self.ui.select_source, int, 'index'))
-        self.ui.txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}播放波门宽度', self.ui.txt_gate_width))
-        self.ui.txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', self.ui.txt_gate_delay))
-        self.ui.txt_sampling_delay.editingFinished.connect(
-            self.change_param(f'ADC{dds}采样延迟', self.ui.txt_sampling_delay))
-        self.ui.txt_sampling_points.editingFinished.connect(
-            self.change_param(f'ADC{dds}采样点数', self.ui.txt_sampling_points))
-
-        self.ui.txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
-        self.ui.txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
-        self.ui.txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
-        self.ui.select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
-        self.ui.txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
-        self.ui.txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
-        self.ui.txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
-        self.ui.txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
-
     def show_start_ui(self):
         self.start_ui.select_prf_src.setCurrentIndex(self.icd_param.get_param('基准PRF来源', 0))
         self.start_ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
@@ -577,6 +533,8 @@ class JGFConsole(QtWidgets.QWidget):
             txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
             txt_dds_pulse: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_pulse_{dds}')
             txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
+            txt_dds_phase: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_phase_{dds}')
+            txt_dds_phase.setText(self.icd_param.get_param(f'dds{dds}初始相位', 0, str))
 
     def link_dds_config_ui(self):
         for dds in range(8):
@@ -586,6 +544,34 @@ class JGFConsole(QtWidgets.QWidget):
             txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', txt_dds_band))
             txt_dds_pulse: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_pulse_{dds}')
             txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', txt_dds_pulse))
+            txt_dds_phase: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_phase_{dds}')
+            txt_dds_phase.editingFinished.connect(self.change_param(f'dds{dds}初始相位', txt_dds_phase))
+
+    def show_qmc_config_ui(self):
+        def _func(_ui, edit_name, param_name):
+            txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
+            txt.setText(self.icd_param.get_param(param_name, 0, str))
+
+        for chl in range(8):
+            edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
+                     f'txt_dac_gain_{chl}', f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
+            params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
+                      f'DAC{chl}增益', f'DAC{chl}偏置', f'DAC{chl}相位']
+            for edit, param in zip(edits, params):
+                _func(self.qmc_config_ui, edit, param)
+
+    def link_qmc_config_ui(self):
+        def _func(_ui, edit_name, param_name):
+            txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
+            txt.editingFinished.connect(self.change_param(param_name, txt))
+
+        for chl in range(8):
+            edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
+                     f'txt_dac_gain_{chl}', f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
+            params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
+                      f'DAC{chl}增益', f'DAC{chl}偏置', f'DAC{chl}相位']
+            for edit, param in zip(edits, params):
+                _func(self.qmc_config_ui, edit, param)
 
     def show_wave_file_ui(self):
         for dds in range(8):

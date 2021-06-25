@@ -128,7 +128,7 @@ class DataSolve:
                     data = UnPackage.solve_source_data(data, chl_flag, for_save=True, step=0)
                     if data:
                         us_signal.status_trigger.emit((1, 2, data))
-                        time.sleep(1)
+                        time.sleep(1.5)
         except AssertionError as e:
             printDebug(e)
         except Exception as e:

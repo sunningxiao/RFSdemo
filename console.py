@@ -15,6 +15,7 @@ import ui.CTYui as ui
 import ui.dds_config_ui as dds_config_ui
 import ui.start_ui as start_ui
 import ui.wave_file_ui as wave_file_ui
+import ui.spectrum_ui as spectrum_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -86,6 +87,46 @@ class WaveFileConfig(QtWidgets.QDialog, wave_file_ui.Ui_Dialog):
         self.ui_parent.show_wave_file_ui()
 
 
+class SpectrumScreen(QtWidgets.QDialog, spectrum_ui.Ui_Dialog):
+    def __init__(self, ui_parent):
+        super(SpectrumScreen, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle('频谱快视')
+        self.ui_parent: JGFConsole = ui_parent
+        self.plot_win = pg.GraphicsLayoutWidget()
+        self.wave_show_win.addWidget(self.plot_win)
+        self.plots = []
+        # 频谱展示
+        self.spectrum_plot = self.append_plot('回波频谱(dB)')
+        self.channel_plots = [self.spectrum_plot.plot(name=f'chnl{i}') for i in range(8)]
+
+    def append_plot(self, name, axis=None):
+        if axis:
+            plot = self.plot_win.addPlot(axisItems={'bottom': axis})
+        else:
+            plot = self.plot_win.addPlot()
+        plot.setLabel('top', name)
+        self.plots.append(plot)
+        return plot
+
+    # def showEvent(self, a0: QtGui.QShowEvent) -> None:
+    #     self.plot_win.clear()
+    #     self.plots = []
+    #     axis = pg.AxisItem(orientation='bottom')
+    #     n = self.ui_parent.icd_param.get_param(f'ADC0采样点数', 32) * 1000
+    #     fs = self.ui_parent.icd_param.get_param(f'ADC采样率', 4000)
+    #     tick = [list(zip(range(n), ('{:.2f}'.format(fs / (i + 1)) for i in range(n))))]
+    #     axis.setTicks(tick)
+    #     self.spectrum_plot = self.append_plot('回波频谱(dB)', axis)
+
+    def show_data(self, index, need_show, data=(), _pen='w'):
+        if need_show:
+            self.channel_plots[index].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(data)))), pen=_pen)
+            self.channel_plots[index].show()
+        else:
+            self.channel_plots[index].hide()
+
+
 class JGFConsole(QtWidgets.QWidget):
     max_channel_count = 8
     page_size = 50
@@ -102,6 +143,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.dds_config_ui = DDSConfig(self)
         self.start_ui = StartConfig(self)
         self.wave_file_config_ui = WaveFileConfig(self)
+        self.spectrum_screen = SpectrumScreen(self)
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -127,6 +169,8 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.btn_reload_icd.clicked.connect(self.reload_param)
 
         self.ui.btn_connect.clicked.connect(self.click_connect)
+
+        self.ui.btn_show_spectrum.clicked.connect(self.spectrum_screen.show)
 
         self.ui.btn_start.clicked.connect(self.start_ui.show)
         self.start_ui.btn_config.clicked.connect(
@@ -330,9 +374,13 @@ class JGFConsole(QtWidgets.QWidget):
                 chnl_pen[0].show()
                 chnl_pen[1].setData(_data, pen=chnl_pen[2])
                 chnl_pen[1].show()
+                if self.spectrum_screen.isVisible():
+                    self.spectrum_screen.show_data(index, True, _data, chnl_pen[2])
             else:
                 chnl_pen[0].hide()
                 chnl_pen[1].hide()
+                if self.spectrum_screen.isVisible():
+                    self.spectrum_screen.show_data(index, False)
 
     def show_unload_status(self, status):
         """

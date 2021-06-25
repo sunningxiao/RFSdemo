@@ -27,6 +27,17 @@ value_type = {
     "double": "d"
 }
 
+value_python = {
+    "uint8": int,
+    "int8": int,
+    "uint16": int,
+    "int16": int,
+    "uint32": int,
+    "int32": int,
+    "float": float,
+    "double": float
+}
+
 type_size = {
     "uint8": 1,
     "int8": 1,
@@ -119,7 +130,10 @@ class ICDParams:
 
     def set_param(self, param_name: str, value, fmt_type=int):
         param = self.param.get(param_name, [param_name, 'uint32', value])
-        param[2] = fmt_type(value)
+        if isinstance(value, str) and value.startswith('0x') and param[1] not in ['float', 'double']:
+            param[2] = value
+        else:
+            param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})
 
     @simulation(simulation_ctl, sim_connect)
@@ -206,7 +220,7 @@ class ICDParams:
             if isinstance(value, str) and value.startswith('0x'):
                 value = int(value, 16)
             fmt_str = value_type[register[1]]
-            return int(value), fmt_str
+            return value_python[register[1]](value), fmt_str
         except Exception as e:
             printException(e, f'寄存器({register[0]})有误')
         return 0, 'I'

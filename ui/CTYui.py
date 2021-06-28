@@ -329,7 +329,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Control"))
-        self.label_4.setText(_translate("Form", "V2.3"))
+        self.label_4.setText(_translate("Form", "V2.3.1"))
         self.btn_framwork_up.setText(_translate("Form", "固件更新"))
         self.btn_connect.setText(_translate("Form", "系统连接"))
         self.label_2.setText(_translate("Form", "状态："))

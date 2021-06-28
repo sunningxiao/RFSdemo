@@ -346,7 +346,8 @@ class JGFConsole(QtWidgets.QWidget):
                 printWarning('波形装载失败')
             finally:
                 self.icd_param.set_param('DDS_RAM', chl)
-                self.wave_file_config_ui.close()
+                us_signal.status_trigger.emit((1, 3, self.wave_file_config_ui.close))
+                # self.wave_file_config_ui.close()
 
         thread = threading.Thread(target=_func)
         thread.start()
@@ -488,6 +489,18 @@ class JGFConsole(QtWidgets.QWidget):
 
         return _func
 
+    def linking_wave_button_all(self):
+        def _func(*args, **kwargs):
+            filename = QFileDialog.getOpenFileName(self.wave_file_config_ui, '请选择文件')[0]
+            if filename == '':
+                return
+            for dds in range(8):
+                file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
+                file_name_label.setText(filename)
+                self.icd_param.set_param(f'通道{dds}文件路径', filename, str)
+
+        return _func
+
     def linking_auto_button(self):
         btn = self.ui.select_command.currentText()
         self.linking_button(btn, need_feedback=True, check_feedback=False, need_file=False)()
@@ -592,6 +605,8 @@ class JGFConsole(QtWidgets.QWidget):
             file_name_label.mouseDoubleClickEvent = mouseDoubleClickEvent(file_name_label, dds)
             select_file: QtWidgets.QPushButton = getattr(self.wave_file_config_ui, f'select_file_{dds}')
             select_file.clicked.connect(self.linking_wave_button(dds))
+
+        self.wave_file_config_ui.set_all.clicked.connect(self.linking_wave_button_all())
 
 
 if __name__ == '__main__':

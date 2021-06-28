@@ -35,7 +35,8 @@ value_python = {
     "uint32": int,
     "int32": int,
     "float": float,
-    "double": float
+    "double": float,
+    "file": str
 }
 
 type_size = {

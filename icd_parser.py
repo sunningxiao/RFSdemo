@@ -131,8 +131,8 @@ class ICDParams:
 
     def set_param(self, param_name: str, value, fmt_type=int):
         param = self.param.get(param_name, [param_name, 'uint32', value])
-        if isinstance(value, str) and value.startswith('0x') and param[1] not in ['float', 'double']:
-            param[2] = value
+        if isinstance(value, str) and value.startswith('0x'):
+            param[2] = int(value, 16)
         else:
             param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})

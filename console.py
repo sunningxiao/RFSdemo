@@ -409,7 +409,7 @@ class JGFConsole(QtWidgets.QWidget):
         # 记录状态
         elif state == 2:
             self.ui.label_status.setText("开始记录")
-            self.set_btn([False, False, True, False, False, False, False, True])
+            self.set_btn([False, False, True, False, False, True, False, True])
         self._status = state
 
     def set_btn(self, state):

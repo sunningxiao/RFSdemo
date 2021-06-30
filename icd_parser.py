@@ -2,12 +2,12 @@ import json
 import os
 import struct
 import time
+import numpy as np
+
 from netconn import CommandTCPServer, DataTCPServer
 from sim_ctl import sim_connect
 from utils import simulation, solve_exception
 from data_solve import DataSolve, us_signal
-
-
 from printLog import *
 
 file_context_flag = '__file__'
@@ -220,6 +220,10 @@ class ICDParams:
             value = register[2]
             if isinstance(value, str) and value.startswith('0x'):
                 value = int(value, 16)
+            if len(register) > 3:
+                # 发送时做参数计算
+                x = value
+                value = eval(register[3])
             fmt_str = value_type[register[1]]
             return value_python[register[1]](value), fmt_str
         except Exception as e:

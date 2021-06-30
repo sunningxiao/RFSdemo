@@ -450,11 +450,11 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.label_17.setText(_translate("Dialog", "DAC增益"))
+        self.label_17.setText(_translate("Dialog", "DAC衰减(dB)"))
         self.btn_config.setText(_translate("Dialog", "确定"))
         self.label_15.setText(_translate("Dialog", "ADC偏置"))
         self.label_19.setText(_translate("Dialog", "DAC相位(°)"))
-        self.label_14.setText(_translate("Dialog", "ADC增益"))
+        self.label_14.setText(_translate("Dialog", "ADC增益(dB)"))
         self.label_45.setText(_translate("Dialog", "通道8"))
         self.label_33.setText(_translate("Dialog", "通道5"))
         self.label_16.setText(_translate("Dialog", "ADC相位(°)"))

@@ -209,7 +209,7 @@
              <enum>QFrame::Plain</enum>
             </property>
             <property name="text">
-             <string>DAC增益</string>
+             <string>DAC衰减(dB)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -399,7 +399,7 @@
              <enum>QFrame::Plain</enum>
             </property>
             <property name="text">
-             <string>ADC增益</string>
+             <string>ADC增益(dB)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>

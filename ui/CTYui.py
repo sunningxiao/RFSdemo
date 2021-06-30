@@ -329,7 +329,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Control"))
-        self.label_4.setText(_translate("Form", "V2.3.1"))
+        self.label_4.setText(_translate("Form", "V2.4"))
         self.btn_framwork_up.setText(_translate("Form", "固件更新"))
         self.btn_connect.setText(_translate("Form", "系统连接"))
         self.label_2.setText(_translate("Form", "状态："))
@@ -360,7 +360,7 @@ class Ui_Form(object):
         self.txt_dac_noc_f.setText(_translate("Form", "100"))
         self.label_13.setText(_translate("Form", "DAC采样率(MHz)"))
         self.label_23.setText(_translate("Form", "ADC采样率(MHz)"))
-        self.label_25.setText(_translate("Form", "ADC NOC频率(MHz)"))
+        self.label_25.setText(_translate("Form", "ADC NCO频率(MHz)"))
         self.lab_clock_2.setText(_translate("Form", "参考时钟"))
         self.select_clock.setItemText(0, _translate("Form", "内参考"))
         self.select_clock.setItemText(1, _translate("Form", "外参考"))

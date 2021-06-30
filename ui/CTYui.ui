@@ -689,7 +689,7 @@
                    </size>
                   </property>
                   <property name="text">
-                   <string>ADC NOC频率(MHz)</string>
+                   <string>ADC NCO频率(MHz)</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

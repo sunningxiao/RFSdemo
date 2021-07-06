@@ -576,9 +576,11 @@ class JGFConsole(QtWidgets.QWidget):
 
         for chl in range(8):
             edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
-                     f'txt_dac_gain_{chl}', f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
+                     f'txt_dac_gain_{chl}', f'txt_dac_gain_step_{chl}', f'txt_dac_gain_target_{chl}',
+                     f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
             params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
-                      f'DAC{chl}增益', f'DAC{chl}偏置', f'DAC{chl}相位']
+                      f'DAC{chl}增益', f'DAC{chl}衰减步进', f'DAC{chl}衰减截止',
+                      f'DAC{chl}偏置', f'DAC{chl}相位']
             for edit, param in zip(edits, params):
                 _func(self.qmc_config_ui, edit, param)
 
@@ -589,9 +591,11 @@ class JGFConsole(QtWidgets.QWidget):
 
         for chl in range(8):
             edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
-                     f'txt_dac_gain_{chl}', f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
+                     f'txt_dac_gain_{chl}', f'txt_dac_gain_step_{chl}', f'txt_dac_gain_target_{chl}',
+                     f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
             params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
-                      f'DAC{chl}增益', f'DAC{chl}偏置', f'DAC{chl}相位']
+                      f'DAC{chl}增益', f'DAC{chl}衰减步进', f'DAC{chl}衰减截止',
+                      f'DAC{chl}偏置', f'DAC{chl}相位']
             for edit, param in zip(edits, params):
                 _func(self.qmc_config_ui, edit, param)
 

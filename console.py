@@ -82,6 +82,7 @@ class QMCConfig(QtWidgets.QDialog, qmc_config_ui.Ui_Dialog):
     def __init__(self, ui_parent):
         super(QMCConfig, self).__init__()
         self.setupUi(self)
+        self.setWindowTitle('QMC配置')
         self.btn_cancel.clicked.connect(self.close)
         self.ui_parent: JGFConsole = ui_parent
 
@@ -539,26 +540,34 @@ class JGFConsole(QtWidgets.QWidget):
             txt_sampling_points.editingFinished.connect(self.change_param(f'ADC{dds}采样点数', txt_sampling_points))
 
     def show_dds_config_ui(self):
-        for dds in range(8):
-            txt_dds_fc: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_fc_{dds}')
-            txt_dds_fc.setText(self.icd_param.get_param(f'dds{dds}中心频率', 0, str))
-            txt_dds_band: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_band_{dds}')
-            txt_dds_band.setText(self.icd_param.get_param(f'dds{dds}带宽', 100, str))
-            txt_dds_pulse: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_pulse_{dds}')
-            txt_dds_pulse.setText(self.icd_param.get_param(f'dds{dds}脉宽', 1.1, str))
-            txt_dds_phase: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_phase_{dds}')
-            txt_dds_phase.setText(self.icd_param.get_param(f'dds{dds}初始相位', 0, str))
+        def _func(_ui, edit_name, param_name):
+            txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
+            txt.setText(self.icd_param.get_param(param_name, 0, str))
+
+        for chl in range(8):
+            edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
+                     f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
+                     f'txt_dds_phase_{chl}', f'txt_dds_phase_step_{chl}', f'txt_dds_phase_range_{chl}']
+            params = [f'dds{chl}中心频率', f'dds{chl}频率扫描步进', f'dds{chl}频率扫描范围',
+                      f'dds{chl}带宽', f'dds{chl}脉宽',
+                      f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
+            for edit, param in zip(edits, params):
+                _func(self.dds_config_ui, edit, param)
 
     def link_dds_config_ui(self):
-        for dds in range(8):
-            txt_dds_fc: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_fc_{dds}')
-            txt_dds_fc.editingFinished.connect(self.change_param(f'dds{dds}中心频率', txt_dds_fc))
-            txt_dds_band: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_band_{dds}')
-            txt_dds_band.editingFinished.connect(self.change_param(f'dds{dds}带宽', txt_dds_band))
-            txt_dds_pulse: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_pulse_{dds}')
-            txt_dds_pulse.editingFinished.connect(self.change_param(f'dds{dds}脉宽', txt_dds_pulse))
-            txt_dds_phase: QtWidgets.QLineEdit = getattr(self.dds_config_ui, f'txt_dds_phase_{dds}')
-            txt_dds_phase.editingFinished.connect(self.change_param(f'dds{dds}初始相位', txt_dds_phase))
+        def _func(_ui, edit_name, param_name):
+            txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
+            txt.editingFinished.connect(self.change_param(param_name, txt))
+
+        for chl in range(8):
+            edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
+                     f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
+                     f'txt_dds_phase_{chl}', f'txt_dds_phase_step_{chl}', f'txt_dds_phase_range_{chl}']
+            params = [f'dds{chl}中心频率', f'dds{chl}频率扫描步进', f'dds{chl}频率扫描范围',
+                      f'dds{chl}带宽', f'dds{chl}脉宽',
+                      f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
+            for edit, param in zip(edits, params):
+                _func(self.dds_config_ui, edit, param)
 
     def show_qmc_config_ui(self):
         def _func(_ui, edit_name, param_name):

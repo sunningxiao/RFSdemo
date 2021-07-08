@@ -218,6 +218,9 @@ class JGFConsole(QtWidgets.QWidget):
             self.change_param('DAC采样率', self.ui.select_dac_sample, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
+        self.ui.txt_pll_f.editingFinished.connect(self.change_param('PLL参考时钟频率', self.ui.txt_pll_f, int))
+        self.ui.chk_pll_adc.stateChanged.connect(self.change_param('ADC PLL使能', self.ui.chk_pll_adc, int))
+        self.ui.chk_pll_dac.stateChanged.connect(self.change_param('DAC PLL使能', self.ui.chk_pll_dac, int))
 
         self.plot_win = pg.GraphicsLayoutWidget()
         self.ui.grid_graph.addWidget(self.plot_win)
@@ -441,6 +444,9 @@ class JGFConsole(QtWidgets.QWidget):
         self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2}[self.icd_param.get_param('DAC采样率', 1000)])
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
+        self.ui.txt_pll_f.setText(self.icd_param.get_param('PLL参考时钟频率', 250, str))
+        self.ui.chk_pll_adc.setChecked(self.icd_param.get_param('ADC PLL使能', 0, bool))
+        self.ui.chk_pll_dac.setChecked(self.icd_param.get_param('DAC PLL使能', 0, bool))
 
         self.ui.select_command.clear()
         for btn in self.icd_param.button:
@@ -456,6 +462,8 @@ class JGFConsole(QtWidgets.QWidget):
                     self.icd_param.set_param(param_name, param_label.currentText(), type_fmt)
                 elif combo_flag == 'index':
                     self.icd_param.set_param(param_name, param_label.currentIndex(), type_fmt)
+            elif isinstance(param_label, QtWidgets.QCheckBox):
+                self.icd_param.set_param(param_name, int(param_label.isChecked()), type_fmt)
             else:
                 printWarning('不受支持的控件类型')
 

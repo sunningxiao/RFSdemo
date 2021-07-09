@@ -438,10 +438,10 @@ class JGFConsole(QtWidgets.QWidget):
 
     def show_param(self):
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
-        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2}[self.icd_param.get_param('ADC采样率', 1000)])
+        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('ADC采样率', 1000)])
         self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
         self.ui.txt_adc_nyq.setText(self.icd_param.get_param('ADC 奈奎斯特区', 1, str))
-        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2}[self.icd_param.get_param('DAC采样率', 1000)])
+        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('DAC采样率', 1000)])
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
         self.ui.txt_pll_f.setText(self.icd_param.get_param('PLL参考时钟频率', 250, str))

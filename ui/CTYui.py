@@ -58,6 +58,10 @@ class Ui_Form(object):
         self.select_link_addr.setEditable(True)
         self.select_link_addr.setObjectName("select_link_addr")
         self.horizontalLayout.addWidget(self.select_link_addr)
+        self.chk_port_follow_ip = QtWidgets.QCheckBox(self.frame_2)
+        self.chk_port_follow_ip.setChecked(True)
+        self.chk_port_follow_ip.setObjectName("chk_port_follow_ip")
+        self.horizontalLayout.addWidget(self.chk_port_follow_ip)
         self.label_2 = QtWidgets.QLabel(self.frame_2)
         self.label_2.setMinimumSize(QtCore.QSize(100, 0))
         self.label_2.setMaximumSize(QtCore.QSize(100, 16777215))
@@ -380,9 +384,11 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Control"))
-        self.label_4.setText(_translate("Form", "V2.4.3"))
+        self.label_4.setText(_translate("Form", "V2.5"))
         self.btn_framwork_up.setText(_translate("Form", "固件更新"))
         self.btn_connect.setText(_translate("Form", "系统连接"))
+        self.chk_port_follow_ip.setToolTip(_translate("Form", "<html><head/><body><p>例如：</p><p>192.168.1.161-&gt;数据接收端口6001</p><p>192.168.1.150-&gt;数据接收端口5000</p></body></html>"))
+        self.chk_port_follow_ip.setText(_translate("Form", "端口跟随ip"))
         self.label_2.setText(_translate("Form", "状态："))
         self.label_status.setText(_translate("Form", "系统未连接"))
         self.btn_reload_icd.setText(_translate("Form", "重载ICD"))

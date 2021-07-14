@@ -34,7 +34,7 @@
      <item row="3" column="6">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>V2.4.3</string>
+        <string>V2.5</string>
        </property>
       </widget>
      </item>
@@ -119,6 +119,19 @@
              </size>
             </property>
             <property name="editable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="chk_port_follow_ip">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;例如：&lt;/p&gt;&lt;p&gt;192.168.1.161-&amp;gt;数据接收端口6001&lt;/p&gt;&lt;p&gt;192.168.1.150-&amp;gt;数据接收端口5000&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>端口跟随ip</string>
+            </property>
+            <property name="checked">
              <bool>true</bool>
             </property>
            </widget>

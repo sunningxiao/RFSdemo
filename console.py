@@ -151,6 +151,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
+        self.load_param()
 
         # self.check_all_btn = self.ui.btn_checkall
         # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
@@ -314,7 +315,8 @@ class JGFConsole(QtWidgets.QWidget):
 
     def click_connect(self):
         ip = self.ui.select_link_addr.currentText()
-        _pg = pgdialog(self, self.icd_param.connect, args=(ip, ), label="系统连接", withcancel=False)
+        follow = self.ui.chk_port_follow_ip.isChecked()
+        _pg = pgdialog(self, self.icd_param.connect, args=(ip, follow), label="系统连接", withcancel=False)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
@@ -650,6 +652,5 @@ if __name__ == '__main__':
 
     us_signal.status_trigger.connect(jgf.show_unload_status)
     printInfo("软件已启动")
-    jgf.load_param()
 
     sys.exit(app.exec_())

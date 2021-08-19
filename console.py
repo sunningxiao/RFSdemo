@@ -17,6 +17,7 @@ import ui.start_ui as start_ui
 import ui.wave_file_ui as wave_file_ui
 import ui.spectrum_ui as spectrum_ui
 import ui.qmc_config_ui as qmc_config_ui
+import ui.rf_config as rf_config_ui
 from printLog import *
 import icd_parser
 from pgdialog import pgdialog
@@ -90,6 +91,22 @@ class QMCConfig(QtWidgets.QDialog, qmc_config_ui.Ui_Dialog):
         self.ui_parent.show_qmc_config_ui()
 
 
+class RFConfig(QtWidgets.QDialog, rf_config_ui.Ui_Form):
+    def __init__(self, ui_parent):
+        super(RFConfig, self).__init__()
+        self.setupUi(self)
+        self.ui_parent: JGFConsole = ui_parent
+
+    def check_mode(self):
+        self.widget_master.setVisible(self.ui_parent.ui.chk_is_master.isChecked())
+        self.widget_slave.setVisible(not self.ui_parent.ui.chk_is_master.isChecked())
+        self.setWindowTitle('主端配置' if self.ui_parent.ui.chk_is_master.isChecked() else '从端配置')
+    
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.check_mode()
+        super(RFConfig, self).showEvent(a0)
+
+
 class SpectrumScreen(QtWidgets.QDialog, spectrum_ui.Ui_Dialog):
     def __init__(self, ui_parent):
         super(SpectrumScreen, self).__init__()
@@ -148,6 +165,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.wave_file_config_ui = WaveFileConfig(self)
         self.spectrum_screen = SpectrumScreen(self)
         self.qmc_config_ui = QMCConfig(self)
+        self.rf_config_ui = RFConfig(self)
         self.initUI()
 
         self.icd_param = icd_parser.ICDParams()
@@ -190,7 +208,36 @@ class JGFConsole(QtWidgets.QWidget):
 
         self.ui.btn_stop.clicked.connect(
             self.linking_button('系统停止', need_feedback=True, need_file=False, callback=self.click_stop))
-        self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        # 多机RF配置
+        self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
+        self.rf_config_ui.btn_master_clock_cfg.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000010))
+        self.rf_config_ui.btn_master_clock_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_slave_clock_cfg.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000011))
+        self.rf_config_ui.btn_slave_clock_cfg.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_master_clock_sync.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000012))
+        self.rf_config_ui.btn_master_clock_sync.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_slave_clock_sync.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000013))
+        self.rf_config_ui.btn_slave_clock_sync.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_sysref_gen.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000014))
+        self.rf_config_ui.btn_sysref_gen.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_master_rf_config.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+        self.rf_config_ui.btn_master_rf_config.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        self.rf_config_ui.btn_slave_rf_config.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+        self.rf_config_ui.btn_slave_rf_config.clicked.connect(
+            self.linking_button('RF配置', need_feedback=True, need_file=False))
+        # self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
 
         # dds相关的输入关联
         self.ui.btn_dss_cfg.clicked.connect(self.dds_config_ui.show)

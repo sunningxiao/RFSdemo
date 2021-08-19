@@ -26,7 +26,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Control</string>
+   <string>RFSOC Demo</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -34,7 +34,7 @@
      <item row="3" column="6">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>V2.5</string>
+        <string>V2.6_beta</string>
        </property>
       </widget>
      </item>
@@ -119,6 +119,16 @@
              </size>
             </property>
             <property name="editable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="chk_is_master">
+            <property name="text">
+             <string>主端</string>
+            </property>
+            <property name="checked">
              <bool>true</bool>
             </property>
            </widget>

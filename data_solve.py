@@ -47,18 +47,18 @@ class DataSolve:
         self._files = []
         self._cache = Queue(1024)
 
-    def start_solve(self, filepath=None, write_file=True):
+    def start_solve(self, filepath=None, write_file=True, file_name=''):
         self._cache = Queue(1024)
         # 启动数据接收线程
         _thread = threading.Thread(target=self.wait_connect)
         _thread.start()
 
         if filepath is None:
-            filepath = time.strftime('%Y%m%d_%H-%M-%S', time.localtime())
+            filepath = f"{file_name}_{time.strftime('%Y%m%d_%H-%M-%S', time.localtime())}"
         if not os.path.exists(filepath):
             os.mkdir(filepath)
         if not UNPACK:
-            filename = 'data_0.data'
+            filename = f'data-{file_name}_0.data'
             self._files.append(open(f'{filepath}/{filename}', 'wb'))
             _thread = threading.Thread(target=self.write, args=(self._files[-1], write_file))
             _thread.start()

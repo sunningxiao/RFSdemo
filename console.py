@@ -97,13 +97,13 @@ class RFConfig(QtWidgets.QDialog, rf_config_ui.Ui_Form):
         self.setupUi(self)
         self.ui_parent: JGFConsole = ui_parent
 
-    def check_mode(self):
-        self.widget_master.setVisible(self.ui_parent.ui.chk_is_master.isChecked())
-        self.widget_slave.setVisible(not self.ui_parent.ui.chk_is_master.isChecked())
-        self.setWindowTitle('主端配置' if self.ui_parent.ui.chk_is_master.isChecked() else '从端配置')
+    def check_mode(self, event=None):
+        self.widget_master.setVisible(self.ui_parent.ui.chk_is_master.checkState() == 2)
+        self.widget_slave.setVisible(self.ui_parent.ui.chk_is_master.checkState() == 1)
+        self.setWindowTitle('主端配置' if self.ui_parent.ui.chk_is_master.checkState() == 2 else '从端配置')
     
     def showEvent(self, a0: QtGui.QShowEvent) -> None:
-        self.check_mode()
+        self.check_mode(a0)
         super(RFConfig, self).showEvent(a0)
 
 
@@ -185,6 +185,8 @@ class JGFConsole(QtWidgets.QWidget):
         ico = QtGui.QIcon()
         ico.addPixmap(QtGui.QPixmap('ui/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
+
+        self.ui.chk_is_master.stateChanged.connect(self.action_is_master_changed)
 
         # 关联按钮
         self.ui.btn_auto_command.clicked.connect(self.linking_auto_button)
@@ -486,6 +488,7 @@ class JGFConsole(QtWidgets.QWidget):
         self.show_param()
 
     def show_param(self):
+        self.action_is_master_changed(0 if int(self.icd_param.get_param('脱机工作', 0)) else 2)
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
         self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('ADC采样率', 1000)])
         self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
@@ -677,6 +680,29 @@ class JGFConsole(QtWidgets.QWidget):
             select_file.clicked.connect(self.linking_wave_button(dds))
 
         self.wave_file_config_ui.set_all.clicked.connect(self.linking_wave_button_all())
+
+    def action_is_master_changed(self, status):
+        self.ui.chk_is_master.setCheckState(status)
+        self.ui.btn_rf_cfg.clicked.disconnect()
+
+        if status == 0:
+            self.ui.chk_is_master.setText('脱机')
+            self.icd_param.set_param('脱机工作', 1, int)
+            self.ui.btn_rf_cfg.clicked.connect(
+                lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+            self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
+
+        elif status == 1:
+            self.ui.chk_is_master.setText('从端')
+            self.icd_param.set_param('脱机工作', 0, int)
+
+            self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
+
+        elif status == 2:
+            self.ui.chk_is_master.setText('主端')
+            self.icd_param.set_param('脱机工作', 0, int)
+
+            self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
 
 
 if __name__ == '__main__':

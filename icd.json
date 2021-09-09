@@ -3,7 +3,7 @@
     "remote_command_port": 5001,
     "remote_data_port": 5002,
     "recv_header": "0xCFCFCFCF",
-    "after_connection": ["连接后"],
+    "after_connection": [],
     "button": {
         "RF配置": ["RF配置"],
         "QMC配置": ["QMC配置"],

@@ -377,7 +377,8 @@ class JGFConsole(QtWidgets.QWidget):
 
     def click_start(self):
         self.gui_state(2)
-        self.icd_param.data_solve.start_solve(write_file=self.ui.chk_write_file.isChecked())
+        ip = self.ui.select_link_addr.currentText()
+        self.icd_param.data_solve.start_solve(write_file=self.ui.chk_write_file.isChecked(), file_name=ip.split('.')[3])
         self.start_ui.close()
         return True
 

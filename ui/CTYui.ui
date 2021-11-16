@@ -484,7 +484,7 @@
                 <item row="4" column="3">
                  <widget class="QLabel" name="label_9">
                   <property name="text">
-                   <string>DAC抽取倍数</string>
+                   <string>DAC内插倍数</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -520,25 +520,6 @@
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="4">
-                 <widget class="QLineEdit" name="txt_adc_extract">
-                  <property name="minimumSize">
-                   <size>
-                    <width>80</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>130</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>8</string>
                   </property>
                  </widget>
                 </item>
@@ -733,25 +714,6 @@
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="4">
-                 <widget class="QLineEdit" name="txt_dac_extract">
-                  <property name="minimumSize">
-                   <size>
-                    <width>80</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>130</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>8</string>
                   </property>
                  </widget>
                 </item>
@@ -971,6 +933,78 @@
                   <property name="text">
                    <string>RF配置</string>
                   </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="QComboBox" name="select_adc_extract">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>130</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>4</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>8</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="4" column="4">
+                 <widget class="QComboBox" name="select_dac_extract">
+                  <property name="minimumSize">
+                   <size>
+                    <width>100</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>130</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>1</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>2</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>4</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>8</string>
+                   </property>
+                  </item>
                  </widget>
                 </item>
                </layout>

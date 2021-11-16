@@ -17,7 +17,7 @@ mode:显示形式0为不显示执行百分比，1为显示执行百分比,2为�
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QProgressDialog
 import threading
-from printLog import *
+from tools.printLog import *
 
 
 class pgdialog(QProgressDialog):

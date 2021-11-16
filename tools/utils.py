@@ -1,4 +1,4 @@
-from printLog import *
+from tools.printLog import *
 from functools import wraps
 import time
 

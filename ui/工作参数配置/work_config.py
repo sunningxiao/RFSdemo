@@ -604,19 +604,3 @@ class Ui_Form(object):
         self.comboBox.setItemText(6, _translate("Form", "6"))
         self.comboBox.setItemText(7, _translate("Form", "7"))
         self.comboBox.setItemText(8, _translate("Form", "镜像"))
-
-
-if __name__ == '__main__':
-    import qdarkstyle
-    import sys
-
-    class TestWidget(QtWidgets.QWidget, Ui_Form):
-        def __init__(self):
-            super(TestWidget, self).__init__(None)
-            self.setupUi(self)
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    widget = TestWidget()
-    widget.show()
-    app.exec()

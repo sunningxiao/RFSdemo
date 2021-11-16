@@ -183,14 +183,16 @@ class ICDParams:
 
 
 if __name__ == '__main__':
-    sequence = pd.read_excel('工作参数配置.xlsx')
     icd = ICDParams()
     icd.load_icd()
-    chnl_id = input('请输入目标通道号:\n')
-    file_name = input('请输入excel文件名:\n')
-    icd.set_param('工作参数配置槽位号', chnl_id)
-    data = icd._fmt_command('工作参数配置', file_name)
-    with open(f'{file_name.split(".")[0]}_chnl{chnl_id}_{len(sequence)}_{time.strftime("%Y-%m-%d_%H-%M-%S")}.seq', 'wb') as fp:
-        fp.write(data)
-    print('生成成功')
-    input('按回车退出程序')
+    while True:
+        chnl_id = input('请输入目标通道号(直接回车退出):\n')
+        if chnl_id == '':
+            break
+        file_name = input('请输入excel文件名:\n')
+        sequence = pd.read_excel(file_name)
+        icd.set_param('工作参数配置槽位号', chnl_id)
+        data = icd._fmt_command('工作参数配置', file_name)
+        with open(f'{file_name.split(".")[0]}_chnl{chnl_id}_{len(sequence)}_{time.strftime("%Y-%m-%d_%H-%M-%S")}.seq', 'wb') as fp:
+            fp.write(data)
+        print('生成成功')

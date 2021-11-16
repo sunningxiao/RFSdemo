@@ -2,13 +2,11 @@ import json
 import os
 import struct
 import time
-import numpy as np
 
-from netconn import CommandTCPServer, DataTCPServer
-from sim_ctl import sim_connect
-from utils import simulation, solve_exception
-from data_solve import DataSolve, us_signal
-from printLog import *
+from core.netconn import CommandTCPServer, DataTCPServer
+from tools.utils import solve_exception
+from core.data_solve import DataSolve, us_signal
+from tools.printLog import *
 
 file_context_flag = '__file__'
 file_length_flag = '__filelength__'
@@ -75,7 +73,6 @@ class ICDParams:
         self.recv_header = b''
         self.data_solve = None
 
-    @simulation(simulation_ctl, sim_connect)
     @solve_exception()
     def connect(self, ip=None, follow_ip=False, pthread=None):
         if ip is not None:
@@ -92,6 +89,7 @@ class ICDParams:
         self._connected = True
         for command in self.after_connection:
             self.send_command(command)
+        pthread.update_state(True)
         return True
 
     def load_icd(self, reload=False):
@@ -141,7 +139,6 @@ class ICDParams:
             param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})
 
-    @simulation(simulation_ctl, sim_connect)
     def send_command(self, button_name: str,
                      need_feedback=True, file_name=None, check_feedback=True,
                      callback=lambda *args: True, wait: int = 0) -> bool:

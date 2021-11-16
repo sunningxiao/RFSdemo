@@ -1,14 +1,33 @@
-#! /usr/bin/python3
-# -*- coding: utf-8 -*-
-#
-
-
 import platform
-import sys, os
+import sys
+import os
 import queue
 
-__all__ = ["print_queue", "printInfo", "printError", "printException", "printColor", "printDebug", "printWarning",
-           "simulation_ctl"]
+from PyQt5 import QtCore
+
+__all__ = ["print_wheel", "printInfo", "printError", "printException", "printColor", "printDebug", "printWarning"]
+
+
+class QPrintSignal(QtCore.QObject):
+    txt_trigger = QtCore.pyqtSignal(str)
+
+    def __init__(self, queue, *args, **kwargs):
+        QtCore.QObject.__init__(self, *args, **kwargs)
+        self.queue = queue
+
+    def printLog(self):
+        while True:
+            text = self.queue.get()
+            self.txt_trigger.emit(text)
+
+
+print_queue = queue.Queue()
+QT_thread = QtCore.QThread()
+print_wheel = QPrintSignal(print_queue)
+print_wheel.moveToThread(QT_thread)
+QT_thread.started.connect(print_wheel.printLog)
+QT_thread.start()
+
 
 if 'Windows' in platform.system():
     import ctypes
@@ -98,9 +117,6 @@ class WriteStream(object):
         pass
 
 
-print_queue = queue.Queue()
-
-
 def set_print_enable(dict_en):
     global enable_debug
     global enable_info
@@ -115,8 +131,6 @@ def set_print_enable(dict_en):
     if enable_QT:
         sys.stdout = WriteStream(print_queue)
 
-
-simulation_ctl = False  # 模拟使能
 
 set_print_enable({'QT': True, 'debug': True, 'info': True, 'error': True, 'exception': True})
 

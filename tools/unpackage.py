@@ -1,5 +1,5 @@
 import numpy as np
-from printLog import *
+from tools.printLog import *
 
 QvLength = 4096
 

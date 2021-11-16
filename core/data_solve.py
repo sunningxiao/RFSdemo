@@ -1,13 +1,13 @@
 import time
 
-from printLog import *
+from tools.printLog import *
 from PyQt5 import QtCore
 import threading
 import os
 import numpy as np
-from netconn import DataTCPServer
+from core.netconn import DataTCPServer
 from tools.unpackage import UnPackage
-from tools import Queue, Fifo
+from tools import Queue
 
 # 是否解包存储
 UNPACK = False
@@ -68,7 +68,7 @@ class DataSolve:
                 self._files.append(open(f'{filepath}/{filename}', 'wb'))
             self.write_unpack()
 
-        _thread = threading.Thread(target=self.solve, args=([True]*8, ))
+        _thread = threading.Thread(target=self.solve, args=([True]*16, ))
         _thread.start()
 
         us_signal.status_trigger.emit((1, 4, filepath))

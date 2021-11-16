@@ -39,12 +39,12 @@
         "RF指令ID": [
             "RF指令ID",
             "uint32",
-            "0x31000003"
+            822083587
         ],
         "脱机工作": [
             "脱机工作",
             "uint32",
-            0
+            1
         ],
         "系统参考时钟选择": [
             "系统参考时钟选择",
@@ -239,7 +239,7 @@
         "dds3脉宽": [
             "dds3脉宽",
             "double",
-            8
+            8.0
         ],
         "dds3初始相位": [
             "dds3初始相位",
@@ -434,7 +434,7 @@
         "DAC0播放数据来源": [
             "DAC0播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC0播放波门宽度": [
             "DAC0播放波门宽度",
@@ -459,7 +459,7 @@
         "DAC1播放数据来源": [
             "DAC1播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC1播放波门宽度": [
             "DAC1播放波门宽度",
@@ -484,7 +484,7 @@
         "DAC2播放数据来源": [
             "DAC2播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC2播放波门宽度": [
             "DAC2播放波门宽度",
@@ -509,7 +509,7 @@
         "DAC3播放数据来源": [
             "DAC3播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC3播放波门宽度": [
             "DAC3播放波门宽度",
@@ -534,7 +534,7 @@
         "DAC4播放数据来源": [
             "DAC4播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC4播放波门宽度": [
             "DAC4播放波门宽度",
@@ -559,7 +559,7 @@
         "DAC5播放数据来源": [
             "DAC5播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC5播放波门宽度": [
             "DAC5播放波门宽度",
@@ -584,7 +584,7 @@
         "DAC6播放数据来源": [
             "DAC6播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC6播放波门宽度": [
             "DAC6播放波门宽度",
@@ -609,7 +609,7 @@
         "DAC7播放数据来源": [
             "DAC7播放数据来源",
             "uint32",
-            0
+            1
         ],
         "DAC7播放波门宽度": [
             "DAC7播放波门宽度",
@@ -1069,7 +1069,7 @@
         "DAC7增益": [
             "DAC7增益",
             "double",
-            0,
+            0.0,
             "10**(-x/20)"
         ],
         "DAC7衰减步进": [
@@ -1097,42 +1097,42 @@
         "通道0文件路径": [
             "通道0文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道1文件路径": [
             "通道1文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道2文件路径": [
             "通道2文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道3文件路径": [
             "通道3文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道4文件路径": [
             "通道4文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道5文件路径": [
             "通道5文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道6文件路径": [
             "通道6文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ],
         "通道7文件路径": [
             "通道7文件路径",
             "file",
-            ""
+            "C:/Users/56585/Desktop/Sin_Fixed_1000MSps_0Offset_1Amp_200MHz_0MBw_0Phase_64us_16bit_Signed_64us_1Row_1Column.dat"
         ]
     },
     "command": {

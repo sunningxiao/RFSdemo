@@ -4,7 +4,8 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import socket
 
-import ui.CTYui as ui
+import ui.main_frame as ui
+from ui.utils import SerialUIMixin
 from ui.DDS配置 import DDSConfig
 from ui.开启工作 import StartConfig
 from ui.波形预置 import WaveFileConfig
@@ -20,7 +21,7 @@ from core.data_solve import us_signal
 from widgets.pgdialog import pgdialog
 
 
-class RFSControl(QtWidgets.QWidget):
+class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     max_channel_count = 8
     page_size = 50
     _speed_fmt = "传输速率: {:.2f} MB/s"
@@ -52,6 +53,7 @@ class RFSControl(QtWidgets.QWidget):
 
     def initUI(self):
         self.ui.setupUi(self)
+        self.init_serial_ui()
         pix = QtGui.QPixmap("static/logo.png")
         self.ui.lab_logo.setPixmap(pix)
         self.ui.lab_logo.setScaledContents(True)
@@ -59,6 +61,9 @@ class RFSControl(QtWidgets.QWidget):
         ico = QtGui.QIcon()
         ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
+
+        self.ui.splitter_log.moveSplitter(0, 1)
+        self.ui.btn_connect_com.clicked.connect(self.click_connect_com)
 
         print_wheel.txt_trigger.connect(self.update_textlog)
 
@@ -193,12 +198,22 @@ class RFSControl(QtWidgets.QWidget):
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # self.close(程序退出)触发
         # self.icd_param.param.pop('DDS_RAM')
+        self._serial_stop_event.set()
         self.icd_param.save_icd()
         self.icd_param.data_solve._stop_flag = True
         self.icd_param.data_server.close()
         if self._status == 2:
             # 判断状态，发送停止指令
             self.linking_button('系统停止', need_feedback=False, need_file=False)()
+
+    def click_connect_com(self):
+        port = self.ui.select_com_id.currentText()
+        baud = self.ui.select_com_baud_rate.currentText()
+        check_sum = self.ui.select_com_checksum.currentText()
+        byte_size = self.ui.select_com_data_bit.currentText()
+        stop_bit = self.ui.select_com_stop_bit.currentText()
+        stream_str = self.ui.select_com_stream.currentText()
+        self.connect_com(port, baud, check_sum, byte_size, stop_bit, stream_str)
 
     def scanning_board(self):
         dest = ('<broadcast>', 5003)
@@ -233,7 +248,7 @@ class RFSControl(QtWidgets.QWidget):
 
     def update_textlog(self, msg):
         try:
-            if self._text_line >= 100:
+            if self._text_line >= 5000:
                 self.ui.textBrowser.clear()
                 self._text_line = 0
             self.ui.textBrowser.moveCursor(QtGui.QTextCursor.End)

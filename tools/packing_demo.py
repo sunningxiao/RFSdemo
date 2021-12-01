@@ -101,12 +101,7 @@ class ICDParams:
             param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})
 
-    def send_command(self, button_name: str,
-                     need_feedback=True, file_name=None, check_feedback=True,
-                     callback=lambda *args: True, wait: int = 0) -> bool:
-        pass
-
-    def _fmt_command(self, command_name, file_name=None) -> bytes:
+    def fmt_command(self, command_name, file_name=None) -> bytes:
         file_data = command = b''
         file_length = 0
         if isinstance(file_name, str):
@@ -192,7 +187,7 @@ if __name__ == '__main__':
         file_name = input('请输入excel文件名:\n')
         sequence = pd.read_excel(file_name)
         icd.set_param('工作参数配置槽位号', chnl_id)
-        data = icd._fmt_command('工作参数配置', file_name)
+        data = icd.fmt_command('工作参数配置', file_name)
         with open(f'{file_name.split(".")[0]}_chnl{chnl_id}_{len(sequence)}_{time.strftime("%Y-%m-%d_%H-%M-%S")}.seq', 'wb') as fp:
             fp.write(data)
         print('生成成功')

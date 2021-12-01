@@ -3,7 +3,7 @@ import os
 import struct
 import time
 
-from core.netconn import CommandTCPServer, DataTCPServer
+from core.interface import CommandTCPInterface, DataTCPInterface
 from tools.utils import solve_exception
 from core.data_solve import DataSolve, us_signal
 from tools.printLog import *
@@ -79,11 +79,11 @@ class ICDParams:
             if follow_ip:
                 _port = ip.split('.')[3][-2:]
                 _port = _port[0] + '00' + _port[1]
-                DataTCPServer._local_port = int(_port)
-            CommandTCPServer._conn_ip = ip
-            DataTCPServer._conn_ip = ip
-        self.data_server = DataTCPServer()
-        self.server = CommandTCPServer()
+                DataTCPInterface._local_port = int(_port)
+            CommandTCPInterface._conn_ip = ip
+            DataTCPInterface._conn_ip = ip
+        self.data_server = DataTCPInterface()
+        self.server = CommandTCPInterface()
         self.data_solve = DataSolve(self.data_server)
         # self.data_solve.start_solve()
         self._connected = True
@@ -106,10 +106,10 @@ class ICDParams:
             self.param = self.icd_data['param']
             self.command = self.icd_data['command']
             self.after_connection: list = self.icd_data['after_connection']
-            CommandTCPServer._remote_port = self.icd_data['remote_command_port']
-            CommandTCPServer._conn_ip = self.icd_data['remote_ip']
-            DataTCPServer._local_port = self.icd_data['remote_data_port']
-            DataTCPServer._conn_ip = self.icd_data['remote_ip']
+            CommandTCPInterface._remote_port = self.icd_data['remote_command_port']
+            CommandTCPInterface._conn_ip = self.icd_data['remote_ip']
+            DataTCPInterface._local_port = self.icd_data['remote_data_port']
+            DataTCPInterface._conn_ip = self.icd_data['remote_ip']
             self.recv_header = struct.pack(_fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
             printInfo('参数载入成功')
         except Exception as e:
@@ -145,7 +145,7 @@ class ICDParams:
         if not self._connected:
             printWarning('未连接板卡')
             return False
-        self.server: CommandTCPServer
+        self.server: CommandTCPInterface
         _commands = self.button.get(button_name, None)
         if _commands is None:
             printWarning(f'没有此按钮')
@@ -158,7 +158,7 @@ class ICDParams:
             command_len = len(command)
             try:
                 while command_len > 0:
-                    sent = self.server.send(command)
+                    sent = self.server.send_cmd(command)
                     command = command[sent:]
                     command_len -= sent
             except Exception as e:
@@ -168,7 +168,7 @@ class ICDParams:
             try:
                 if need_feedback:
                     time.sleep(wait)
-                    _feedback = self.server.recv()
+                    _feedback = self.server.recv_cmd()
                     if check_feedback:
                         if not _feedback.startswith(self.recv_header):
                             printWarning('返回指令包头错误')

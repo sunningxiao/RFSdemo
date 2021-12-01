@@ -8,13 +8,15 @@ import pyqtgraph as pg
 import qdarkstyle
 from qasync import QEventLoop
 
+from tools.printLog import set_print_enable
+
 
 # 全局修改pyqtgraph的背景色
 pg.setConfigOption('background', '#19232D')
 
 global_application = QApplication(sys.argv)
 
-# 应用全局主题，并将CheckBox调大方便触控
+# 应用全局主题
 global_application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
 # 应用Qt异步事件循环
@@ -26,3 +28,6 @@ except AttributeError as e:
     global_event_loop = QEventLoop(global_application)
 asyncio.set_event_loop(global_event_loop)
 global_desktop_center = global_application.desktop().availableGeometry().center()
+
+# 是否使用Qt print循环
+# set_print_enable({'QT': False, 'debug': True, 'info': True, 'error': True, 'exception': True})

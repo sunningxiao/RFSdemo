@@ -1,12 +1,13 @@
 import time
+from typing import Union
 
 from tools.printLog import *
 from PyQt5 import QtCore
 import threading
 import os
 import numpy as np
-from core.netconn import DataTCPServer
-from tools.unpackage import UnPackage
+from core.interface import DataTCPInterface, XdmaInterface
+from tools.data_unpacking import UnPackage
 from tools import Queue
 
 # 是否解包存储
@@ -42,7 +43,7 @@ class DataSolve:
     def get_weave_length(self):
         return self._weave_length_byte
 
-    def __init__(self, server: DataTCPServer):
+    def __init__(self, server: Union[DataTCPInterface, XdmaInterface]):
         self.server = server
         self._files = []
         self._cache = Queue(1024)
@@ -80,7 +81,7 @@ class DataSolve:
             self.server.accept()
             # self.server.recv_server.settimeout(None)
             printColor('已建立连接', 'green')
-            _header = self.server.recv()
+            _header = self.server.read_data()
             header = np.frombuffer(_header, dtype='u4')
             info = UnPackage.get_pack_info(0, header)
             self._info = info
@@ -90,7 +91,7 @@ class DataSolve:
                 once_package = 1024**2*16
             printInfo(f'包长度{once_package}')
             _data = _header
-            _data += self.server.recv(once_package - len(_header))
+            _data += self.server.read_data(once_package - len(_header))
             # data = np.frombuffer(_data, dtype='u4')
             self._cache.put(_data)
             start_time = time.time()
@@ -100,7 +101,7 @@ class DataSolve:
                 if self._stop_flag:
                     break
                 # 接收数据
-                _data = self.server.recv(once_package)
+                _data = self.server.read_data(once_package)
                 # if _data is False:
                 #     continue
                 if len(_data) < once_package:
@@ -135,7 +136,12 @@ class DataSolve:
             printException(e)
 
     def write(self, file, write_file):
-        """ 数据存储
+        """
+        数据存储
+
+        :param file:
+        :param write_file:
+        :return:
         """
         try:
             start_time = time.time()

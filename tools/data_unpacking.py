@@ -1,3 +1,6 @@
+from typing import Union
+from functools import lru_cache
+
 import numpy as np
 from tools.printLog import *
 
@@ -30,7 +33,52 @@ class UnPackage:
         pass
 
     @classmethod
-    def solve_source_data(cls, data, channel_chart_show_status: iter, *args, file_callback_function=None, task_parser=False, step=0, for_save=False):
+    def common_solve_data(cls, _data: np.ndarray, step=0, qv_length=1024, head_tag=0x18EFDC01):
+        """
+        通用解包，
+
+        :param _data: 解析数据
+        :param step: 抽取间隔
+        :param qv_length: 截取点数
+        :param head_tag: 包头标识数 0x18EFDC01/0x01DCEF18
+        :return:
+        """
+
+        try:
+            chnl_position = None
+            chnl_value_bit = 2
+            pack_info = None
+            pack_mode = 0
+            first_num = 0
+
+            # 在颗粒度中找包头
+            head_info = cls.get_head_info(first_num, pack_mode, _data, pack_info, chnl_position, chnl_value_bit,
+                                          head_tag=head_tag)
+            assert head_info is not None, "没有匹配的包头格式"
+            head_index, head_list, head_list_length = head_info
+            _data = _data[head_index:]
+
+            # 解析包头字段
+            unpacked_head = cls.get_pack_info(pack_mode, _data, pack_info)
+            (pack_length, mode, data_length, head_length, data_dtype, width,
+             bit_con_byte, chnl_count, include_tail, is_complex) = unpacked_head
+
+            cut_length = qv_length * bit_con_byte  # 截取长度单位为数据位宽
+
+            # head_data uint32, data 数据位宽决定
+            return unpacked_head, cls.unpack_data(mode, _data, pack_length, chnl_count, data_dtype, width, bit_con_byte,
+                                                  cut_length, head_length, data_length, step, is_complex)
+
+        except AssertionError as e:
+            # print(e)
+            return {}
+        except Exception as e:
+            printException(e)
+            return {}
+
+    @classmethod
+    def solve_source_data(cls, data, channel_chart_show_status: iter, *args, file_callback_function=None,
+                          task_parser=False, step=0, for_save=False):
         """
         :param channel_info: 通道模型类对象.get_dict()
         :param data: 解析数据
@@ -58,7 +106,8 @@ class UnPackage:
 
             data = data[head_index:]
 
-            pack_length, mode, data_length, head_length, data_dtype, width, bit_con_byte, chnl_count, include_tail, is_complex = cls.get_pack_info(pack_mode, data, pack_info)
+            (pack_length, mode, data_length, head_length, data_dtype, width,
+             bit_con_byte, chnl_count, include_tail, is_complex) = cls.get_pack_info(pack_mode, data, pack_info)
 
             if file_callback_function is not None:
                 pack_num = cls.get_pack_num(pack_mode, data, pack_info)
@@ -75,7 +124,8 @@ class UnPackage:
 
                 cut_length = data_length
             elif task_parser:
-                return head_index, pack_length, chnl_count, mode, data_dtype, width, bit_con_byte, head_length, data_length, include_tail
+                return (head_index, pack_length, chnl_count, mode, data_dtype, width,
+                        bit_con_byte, head_length, data_length, include_tail)
             else:
                 if for_save:
                     cut_length = data_length
@@ -83,9 +133,11 @@ class UnPackage:
                     cut_length = qv_length * bit_con_byte  # 截取长度单位为数据位宽
 
             # head_data uint32, data 数据位宽决定
-            head_data, data = cls.unpack_data(mode, data, pack_length, chnl_count, data_dtype, width, bit_con_byte, cut_length, head_length, data_length, step, is_complex)
+            head_data, data = cls.unpack_data(mode, data, pack_length, chnl_count, data_dtype, width, bit_con_byte,
+                                              cut_length, head_length, data_length, step, is_complex)
 
-            cls.__build_result(head_data, data, channel_chart_show_status, result_data, mode, *[pack_info, chnl_count, pack_mode, chnl_position, chnl_value_bit, is_complex])
+            cls.__build_result(head_data, data, channel_chart_show_status, result_data, mode,
+                               *[pack_info, chnl_count, pack_mode, chnl_position, chnl_value_bit, is_complex])
             return result_data
         except AssertionError as e:
             if file_callback_function is not None or task_parser:
@@ -113,7 +165,8 @@ class UnPackage:
             if mode != 2:
                 sub_head_data = head_data[index]
                 channel_num = int(
-                    0 if chnl_count == 1 else cls.get_chnl_number(pack_mode, sub_head_data, chnl_position, chnl_value_bit))
+                    0 if chnl_count == 1 else cls.get_chnl_number(pack_mode, sub_head_data, chnl_position,
+                                                                  chnl_value_bit))
             else:
                 sub_head_data = head_data
                 channel_num = index
@@ -139,30 +192,14 @@ class UnPackage:
 
             head_dict["show"] = True if channel_show_mode == 1 else False
             result_data[f"chl_{index}"] = d
-            # if channel_show_mode:
-            #     result = Custom.solve_chart_data(d, channel_info["chnl"], channel_show_mode, is_complex)
-            #     if result:
-            #         chart_name, chart_data = result
-            #         try:
-            #             chart_num_list = result_data[chart_name]
-            #         except:
-            #             result_data[chart_name] = chart_num_list = []
-            #         for sub_num, sub_data in enumerate(chart_data):
-            #             sub_data_dict = {}
-            #             chart_num_list.append(sub_data_dict)
-            #             sub_data_dict["name"] = name
-            #             sub_data_dict["type"] = "line"
-            #             sub_data_dict["xAxisIndex"] = sub_num
-            #             sub_data_dict["yAxisIndex"] = sub_num
-            #             sub_data_dict["data"] = sub_data
 
     @classmethod
-    def get_head_info(cls, first_num, pack_mode, data, pack_info, *args):
+    def get_head_info(cls, first_num, pack_mode, data, pack_info, *args, head_tag=0x18EFDC01):
         # 解析头部信息
         if pack_mode:
             head_list = [int(i, 16) for i in pack_info["headword"].split("-")]
         else:
-            head_list = [0x18EFDC01]
+            head_list = [head_tag]
         head_list_length = len(head_list)
         max_head_value = max(head_list)
         max_head_index = head_list.index(max_head_value)
@@ -288,7 +325,8 @@ class UnPackage:
         return result
 
     @classmethod
-    def unpack_data(cls, mode, data, pack_length, chnl_count, data_dtype, width, bit_con_byte, cut_length, head_length, data_length, step, is_complex):
+    def unpack_data(cls, mode, data, pack_length, chnl_count, data_dtype, width, bit_con_byte, cut_length, head_length,
+                    data_length, step, is_complex):
         temp_head_length = head_length // bit_con_byte
         temp_pack_length = pack_length // bit_con_byte
         data_length //= bit_con_byte
@@ -323,7 +361,7 @@ class UnPackage:
             solve_data = data[: ceil_total_cut_length * chnl_count]  # 获取要截取的包长
             assert len(solve_data) >= ceil_total_cut_length * chnl_count, "匹配的数据长度 < 单采集通道截取长度 * 采集通道数"
             data = solve_data.reshape(ceil_total_cut_length // width_count, chnl_count, width_count)
-            data = np.einsum("abc->bac", data).reshape(chnl_count, ceil_total_cut_length)
+            data = data.transpose((1, 0, 2)).reshape(chnl_count, ceil_total_cut_length)
         else:
             if mode:
                 assert len(data) >= pack_length * chnl_count, "匹配的包数据长度 < 包长 * 采集通道数"
@@ -332,13 +370,15 @@ class UnPackage:
                 data = data[: temp_pack_length * chnl_count].reshape(chnl_count, temp_pack_length)
                 data = data[..., temp_head_length: ceil_total_cut_length + temp_head_length]
             else:
-                head_data = data[: head_length * chnl_count].reshape(head_length // (width // 4), chnl_count, width // 4)
-                head_data = np.einsum("abc->bac", head_data).reshape(chnl_count, head_length)
+                head_data = data[: head_length * chnl_count].reshape(head_length // (width // 4), chnl_count,
+                                                                     width // 4)
+                head_data = head_data.transpose((1, 0, 2)).reshape(chnl_count, head_length)
                 data.dtype = data_dtype
-                solve_data = data[temp_head_length * chnl_count: (ceil_total_cut_length + temp_head_length) * chnl_count]
+                solve_data = data[
+                             temp_head_length * chnl_count: (ceil_total_cut_length + temp_head_length) * chnl_count]
                 assert len(solve_data) >= ceil_total_cut_length * chnl_count, "匹配的包数据长度 < (截取长度 + 包头长度) * 采集通道数"
                 data = solve_data.reshape(ceil_total_cut_length // width_count, chnl_count, width_count)
-                data = np.einsum("abc->bac", data).reshape(chnl_count, ceil_total_cut_length)
+                data = data.transpose((1, 0, 2)).reshape(chnl_count, ceil_total_cut_length)
 
         data = data[..., step_index].astype("i8")
         # if is_complex:
@@ -353,7 +393,7 @@ class UnPackage:
 
 if __name__ == '__main__':
     with open('D://test_0.data', 'rb') as fp:
-        data = fp.read(526336-4)
+        data = fp.read(526336 - 4)
 
     data_ = np.frombuffer(data, dtype='u4')
     datas = UnPackage.solve_source_data(data_, [False, True, True, False, True, True, True, True])

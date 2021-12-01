@@ -1,6 +1,42 @@
-from tools.printLog import *
 from functools import wraps
+import warnings
 import time
+from threading import RLock
+
+from tools.printLog import *
+
+
+class APIBaseType(type):
+    _METHODS = frozenset({
+    })
+    _ATTRS = {}
+    _TEMPLATE = """def {method_name}(self, *args, **kwargs): warnings.warn('接口{method_name}未实现', RuntimeWarning)
+        """
+
+    def __new__(mcs, name, bases, attrs: dict, _root=False):
+        if _root:
+            for method_name in mcs._METHODS:
+                if method_name not in attrs:
+                    d = {'warnings': warnings}
+                    exec(mcs._TEMPLATE.format(method_name=method_name), d)
+                    attrs[method_name] = d[method_name]
+            for attr_name, default_value in mcs._ATTRS.items():
+                attrs.setdefault(attr_name, default_value)
+        return super().__new__(mcs, name, bases, attrs)
+
+
+class SingletonType(type):
+    """
+    单例模式，为了确保某个类只能存在一个实例，元类方法实现
+    """
+    single_lock = RLock()
+
+    def __call__(cls, *args, **kwargs):
+        with SingletonType.single_lock:
+            if not hasattr(cls, "_instance"):
+                cls._instance = super(SingletonType, cls).__call__(*args, **kwargs)
+
+        return cls._instance
 
 
 def solve_exception(flag=False):

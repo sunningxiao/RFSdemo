@@ -68,7 +68,7 @@ class DataSolve:
                 self._files.append(open(f'{filepath}/{filename}', 'wb'))
             self.write_unpack()
 
-        _thread = threading.Thread(target=self.solve, args=([True]*8, ))
+        _thread = threading.Thread(target=self.solve, args=([True]*16, ))
         _thread.start()
 
         us_signal.status_trigger.emit((1, 4, filepath))

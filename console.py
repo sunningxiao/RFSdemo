@@ -260,14 +260,14 @@ class JGFConsole(QtWidgets.QWidget):
         # 关联界面参数与json
         self.ui.select_clock.currentIndexChanged.connect(
             self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
-        self.ui.select_adc_sample.currentIndexChanged.connect(
-            self.change_param('ADC采样率', self.ui.select_adc_sample, int))
+        self.ui.txt_adc_sample.editingFinished.connect(
+            self.change_param('ADC采样率', self.ui.txt_adc_sample, int))
         self.ui.select_adc_extract.currentIndexChanged.connect(
             self.change_param('ADC 抽取倍数', self.ui.select_adc_extract, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
-        self.ui.select_dac_sample.currentIndexChanged.connect(
-            self.change_param('DAC采样率', self.ui.select_dac_sample, int))
+        self.ui.txt_dac_sample.editingFinished.connect(
+            self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
         self.ui.select_dac_extract.currentIndexChanged.connect(
             self.change_param('DAC 抽取倍数', self.ui.select_dac_extract, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
@@ -495,11 +495,11 @@ class JGFConsole(QtWidgets.QWidget):
     def show_param(self):
         self.action_is_master_changed('主机' if int(self.icd_param.get_param('脱机工作', 0)) == 0 else '单机')
         self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
-        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('ADC采样率', 1000)])
+        self.ui.txt_adc_sample.setText(self.icd_param.get_param('ADC采样率', 1000, str))
         self.ui.select_adc_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.icd_param.get_param('ADC 抽取倍数', 1)])
         self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
         self.ui.txt_adc_nyq.setText(self.icd_param.get_param('ADC 奈奎斯特区', 1, str))
-        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('DAC采样率', 1000)])
+        self.ui.txt_dac_sample.setText(self.icd_param.get_param('DAC采样率', 1000, str))
         self.ui.select_dac_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.icd_param.get_param('DAC 抽取倍数', 1)])
         self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
@@ -626,6 +626,12 @@ class JGFConsole(QtWidgets.QWidget):
             txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
             txt.editingFinished.connect(self.change_param(param_name, txt))
 
+        def _dds_sample(*args, **kwargs):
+            dac_sample = self.ui.txt_dac_sample.text()
+            multi = self.ui.select_dac_extract.currentText()
+            dds_sample = int(float(dac_sample)/float(multi))
+            self.icd_param.set_param('DDS采样率', dds_sample)
+
         for chl in range(8):
             edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
                      f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
@@ -635,6 +641,9 @@ class JGFConsole(QtWidgets.QWidget):
                       f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
             for edit, param in zip(edits, params):
                 _func(self.dds_config_ui, edit, param)
+
+            self.ui.txt_dac_sample.editingFinished.connect(_dds_sample)
+            self.ui.select_dac_extract.currentIndexChanged.connect(_dds_sample)
 
     def show_qmc_config_ui(self):
         def _func(_ui, edit_name, param_name):

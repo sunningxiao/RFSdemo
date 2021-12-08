@@ -102,12 +102,13 @@ class ICDParams:
         self.param.update({param_name: param})
 
     def fmt_command(self, command_name, file_name=None) -> bytes:
-        file_data = command = b''
+        file_data = b''
+        command = []
         file_length = 0
         if isinstance(file_name, str):
             file_data, file_length = self.__get_file(file_name)
         try:
-            target_bytes = b''
+            target_bytes = []
             if command_name in self.sequence:
                 sequence_data: pd.DataFrame = pd.read_excel(file_name)
                 sequence_cmd = self.sequence[command_name]
@@ -124,28 +125,30 @@ class ICDParams:
                             _reg = register
                             value = _reg[2]
                         value, _fmt = self.__fmt_register(_reg, value)
-                        target_bytes += struct.pack(_fmt_mode + _fmt, value)
+                        target_bytes.append(struct.pack(_fmt_mode + _fmt, value))
 
             for register in self.command[command_name]:
                 if isinstance(register, list):
                     value, _fmt = self.__fmt_register(register, register[2])
-                    command += struct.pack(_fmt_mode + _fmt, value)
+                    command.append(struct.pack(_fmt_mode + _fmt, value))
                 elif isinstance(register, str):
                     if register == file_context_flag:
-                        command += file_data
+                        command.append(file_data)
                     elif register == file_length_flag:
-                        command += struct.pack(_fmt_mode + 'I', file_length)
+                        command.append(struct.pack(_fmt_mode + 'I', file_length))
                     elif register in self.param:
                         value, _fmt = self.__fmt_register(self.param[register], self.param[register][2])
-                        command += struct.pack(_fmt_mode + _fmt, value)
+                        command.append(struct.pack(_fmt_mode + _fmt, value))
                     elif register == f'{{{{{command_name}}}}}':
-                        command += target_bytes
+                        command.extend(target_bytes)
                     else:
                         print(f'指令({command_name})的({register})不存在')
                 else:
                     print(f'指令({command_name})的({register})格式不正确')
         except Exception as e:
             print(e, '指令转码失败')
+
+        command = b''.join(command)
         assert len(command) >= 16, f'指令({command_name})不正确'
         return command[0: 12] + struct.pack(_fmt_mode + 'I', len(command)) + command[16:]
 

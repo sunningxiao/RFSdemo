@@ -132,7 +132,7 @@ def set_print_enable(dict_en):
         sys.stdout = WriteStream(print_queue)
 
 
-set_print_enable({'QT': False, 'debug': True, 'info': True, 'error': True, 'exception': True})
+set_print_enable({'QT': True, 'debug': True, 'info': True, 'error': True, 'exception': True})
 
 if enable_QT:
     def printColor(msg, color='red'):

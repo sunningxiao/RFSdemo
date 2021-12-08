@@ -2,17 +2,18 @@ import json
 import os
 import struct
 import time
+import pandas as pd
 
-from core.interface import CommandTCPInterface, DataTCPInterface
-from tools.utils import solve_exception
-from core.data_solve import DataSolve, us_signal
+from core.interface import CommandSerialInterface as CommandInterface
+from core.interface import DataTCPInterface as DataInterface
+# from tools.utils import solve_exception
+# from core.data_solve import DataSolve, us_signal
 from tools.printLog import *
 
 file_context_flag = '__file__'
 file_length_flag = '__filelength__'
 COMMAND_LENGTH = slice(12, 16)
 
-_fmt_mode = "="  # pack/unpack 大小端模式
 
 value_type = {
     "uint8": "B",
@@ -61,6 +62,8 @@ feedback_value_fmt = {
 
 
 class ICDParams:
+    fmt_mode = "="  # pack/unpack 大小端模式
+
     def __init__(self, file_name='icd.json'):
         self._connected = False
         self._file_name = file_name
@@ -68,29 +71,10 @@ class ICDParams:
         self.button = {}
         self.param = {}
         self.command = {}
+        self.sequence = {}
         self.after_connection = []
-        self.data_server = self.server = None
         self.recv_header = b''
         self.data_solve = None
-
-    @solve_exception()
-    def connect(self, ip=None, follow_ip=False, pthread=None):
-        if ip is not None:
-            if follow_ip:
-                _port = ip.split('.')[3][-2:]
-                _port = _port[0] + '00' + _port[1]
-                DataTCPInterface._local_port = int(_port)
-            CommandTCPInterface._conn_ip = ip
-            DataTCPInterface._conn_ip = ip
-        self.data_server = DataTCPInterface()
-        self.server = CommandTCPInterface()
-        self.data_solve = DataSolve(self.data_server)
-        # self.data_solve.start_solve()
-        self._connected = True
-        for command in self.after_connection:
-            self.send_command(command)
-        pthread.update_state(True)
-        return True
 
     def load_icd(self, reload=False):
         file_path = self._file_name.split('.')[0] + '_run.json' \
@@ -105,12 +89,13 @@ class ICDParams:
             self.button = self.icd_data['button']
             self.param = self.icd_data['param']
             self.command = self.icd_data['command']
+            self.sequence = self.icd_data['sequence']
             self.after_connection: list = self.icd_data['after_connection']
-            CommandTCPInterface._remote_port = self.icd_data['remote_command_port']
-            CommandTCPInterface._conn_ip = self.icd_data['remote_ip']
-            DataTCPInterface._local_port = self.icd_data['remote_data_port']
-            DataTCPInterface._conn_ip = self.icd_data['remote_ip']
-            self.recv_header = struct.pack(_fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
+            CommandInterface._remote_port = self.icd_data['remote_command_port']
+            CommandInterface._conn_ip = self.icd_data['remote_ip']
+            DataInterface._local_port = self.icd_data['remote_data_port']
+            DataInterface._conn_ip = self.icd_data['remote_ip']
+            self.recv_header = struct.pack(self.fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
             printInfo('参数载入成功')
         except Exception as e:
             printException(e, f'{file_path}不可用')
@@ -135,100 +120,78 @@ class ICDParams:
         param = self.param.get(param_name, [param_name, 'uint32', value])
         if isinstance(value, str) and value.startswith('0x'):
             param[2] = int(value, 16)
+        elif isinstance(value, str) and value.startswith('0b'):
+            param[2] = int(value, 2)
         else:
             param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})
 
-    def send_command(self, button_name: str,
-                     need_feedback=True, file_name=None, check_feedback=True,
-                     callback=lambda *args: True, wait: int = 0) -> bool:
-        if not self._connected:
-            printWarning('未连接板卡')
-            return False
-        self.server: CommandTCPInterface
-        _commands = self.button.get(button_name, None)
-        if _commands is None:
-            printWarning(f'没有此按钮')
-            return False
-        for _command_name in _commands:
-            if _command_name not in self.command:
-                printWarning(f'指令{_command_name}未找到')
-                return False
-            command_bak = command = self._fmt_command(_command_name, file_name)
-            command_len = len(command)
-            try:
-                while command_len > 0:
-                    sent = self.server.send_cmd(command)
-                    command = command[sent:]
-                    command_len -= sent
-            except Exception as e:
-                printException(e, f'指令({_command_name})发送失败')
-                return False
-            printInfo(f'指令({_command_name})已发送')
-            try:
-                if need_feedback:
-                    time.sleep(wait)
-                    _feedback = self.server.recv_cmd()
-                    if check_feedback:
-                        if not _feedback.startswith(self.recv_header):
-                            printWarning('返回指令包头错误')
-                            return False
-                        if command_bak[4:8] != _feedback[4:8]:
-                            printWarning('返回指令ID错误')
-                            return False
-                        _feedback = struct.unpack(_fmt_mode + 'IIIII', _feedback)
-                        if _feedback[4] != 0:
-                            printWarning('指令成功下发，但执行失败')
-                            return False
-            except Exception as e:
-                printException(e, f'指令({_command_name})无应答')
-                return False
-        printColor(f'成功执行指令{_commands}', 'green')
-        # 优化回调机制，防止出现在其他线程操作qtimer的情况
-        us_signal.status_trigger.emit((1, 3, callback))
-        return True
-
-    def _fmt_command(self, command_name, file_name=None) -> bytes:
-        file_data = command = b''
+    def fmt_command(self, command_name, file_name=None) -> bytes:
+        file_data = b''
+        command = []
         file_length = 0
         if isinstance(file_name, str):
             file_data, file_length = self.__get_file(file_name)
         try:
+            target_bytes = []
+            if command_name in self.sequence:
+                sequence_data: pd.DataFrame = pd.read_excel(file_name)
+                sequence_cmd = self.sequence[command_name]
+                for row in range(sequence_data.shape[0]):
+                    for register in sequence_cmd:
+                        if isinstance(register, str):
+                            _reg = self.param.get(register, None)
+                            assert _reg, f'未找到参数{register}'
+                            if register in sequence_data:
+                                value = sequence_data[register][row]
+                            else:
+                                value = _reg[2]
+                        else:
+                            _reg = register
+                            value = _reg[2]
+                        value, _fmt = self.__fmt_register(_reg, value)
+                        target_bytes.append(struct.pack(self.fmt_mode + _fmt, value))
+
             for register in self.command[command_name]:
                 if isinstance(register, list):
-                    value, _fmt = self.__fmt_register(register)
-                    command += struct.pack(_fmt_mode + _fmt, value)
+                    value, _fmt = self.__fmt_register(register, register[2])
+                    command.append(struct.pack(self.fmt_mode + _fmt, value))
                 elif isinstance(register, str):
                     if register == file_context_flag:
-                        command += file_data
+                        command.append(file_data)
                     elif register == file_length_flag:
-                        command += struct.pack(_fmt_mode + 'I', file_length)
+                        command.append(struct.pack(self.fmt_mode + 'I', file_length))
                     elif register in self.param:
-                        value, _fmt = self.__fmt_register(self.param[register])
-                        command += struct.pack(_fmt_mode + _fmt, value)
+                        value, _fmt = self.__fmt_register(self.param[register], self.param[register][2])
+                        command.append(struct.pack(self.fmt_mode + _fmt, value))
+                    elif register == f'{{{{{command_name}}}}}':
+                        command.extend(target_bytes)
                     else:
-                        printWarning(f'指令({command_name})的({register})不存在')
+                        print(f'指令({command_name})的({register})不存在')
                 else:
-                    printWarning(f'指令({command_name})的({register})格式不正确')
+                    print(f'指令({command_name})的({register})格式不正确')
         except Exception as e:
-            printException(e, '指令转码失败')
+            print(e, '指令转码失败')
+
+        command = b''.join(command)
         assert len(command) >= 16, f'指令({command_name})不正确'
-        return command[0: 12] + struct.pack(_fmt_mode + 'I', len(command)) + command[16:]
+        return command[0: 12] + struct.pack(self.fmt_mode + 'I', len(command)) + command[16:]
 
     @staticmethod
-    def __fmt_register(register: list):
+    def __fmt_register(register: list, value):
         try:
-            value = register[2]
             if isinstance(value, str) and value.startswith('0x'):
                 value = int(value, 16)
+            if isinstance(value, str) and value.startswith('0b'):
+                value = int(value, 2)
             if len(register) > 3:
                 # 发送时做参数计算
                 x = value
-                value = eval(register[3])
+                value = eval(register[-1])
             fmt_str = value_type[register[1]]
             return value_python[register[1]](value), fmt_str
         except Exception as e:
-            printException(e, f'寄存器({register[0]})有误')
+            print(e, f'寄存器({register[0]})有误')
         return 0, 'I'
 
     @staticmethod

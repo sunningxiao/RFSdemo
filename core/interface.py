@@ -1,14 +1,17 @@
 import socket
 from typing import Union
 from threading import Thread, Event
+import numpy as np
+import serial
 
 from core.xdma import Xdma
 
-from tools.dqueue import Queue
+from tools.dqueue import Queue, Undefined
 from tools.utils import SingletonType, APIBaseType
+from tools.printLog import *
 
 
-class __RFSAPIInterface(APIBaseType, SingletonType):
+class RFSInterfaceMeta(APIBaseType, SingletonType):
     _METHODS = frozenset({
         "recv_cmd", "send_cmd",
         "read_data", "write_data", "pre_read", "pre_write", "lookup_data",
@@ -19,20 +22,67 @@ class __RFSAPIInterface(APIBaseType, SingletonType):
     }
 
 
-class CommandTCPInterface(metaclass=__RFSAPIInterface, _root=True):
+class CommandSerialInterface(metaclass=RFSInterfaceMeta, _root=True):
+    _target_id = 'COM0'
+    _target_baud_rate = 115200
+    _timeout = 5
 
+    def __init__(self):
+        """
+        串口指令收发接口
+
+        """
+        self._device_serial = None
+
+    def accept(self, target_id=None, *args):
+        _target_id = self._target_id if target_id is None else target_id
+        self._device_serial = serial.Serial(port=_target_id,
+                                            baudrate=int(self._target_baud_rate),
+                                            timeout=self._timeout)
+
+    def recv_cmd(self, size=1024):
+        return self._device_serial.read(size)
+
+    def send_cmd(self, data):
+        self._device_serial: serial.Serial
+        return self._device_serial.write(data)
+
+    def close(self):
+        try:
+            self._device_serial.close()
+        except Exception as e:
+            pass
+
+    def __del__(self):
+        self.close()
+
+    def set_timeout(self, value):
+        self._device_serial.timeout = value
+
+
+class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
     _local_port = 5000
     _remote_port = 5001
-    _conn_ip = "192.168.1.161"
+    _target_id = "192.168.1.161"
     _serial_num = 1
     _timeout = 5
 
     def __init__(self):
+        """
+        网络指令收发接口
+        """
         self._tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.set_timeout(self._timeout)
-        self._tcp_server.connect((self._conn_ip, self._remote_port))
-        self._recv_addr = (self._conn_ip, self._remote_port)
+        self._recv_addr = (self._target_id, self._remote_port)
+
+    def accept(self, target_id=None, *args):
+        _target_id = self._target_id if target_id is None else target_id
+        if args:
+            self._tcp_server.connect((_target_id, *args))
+        else:
+            self._tcp_server.connect((_target_id, self._remote_port))
+        self._recv_addr = (_target_id, self._remote_port)
 
     def recv_cmd(self, size=1024):
         return self._tcp_server.recv(size)
@@ -60,18 +110,23 @@ class CommandTCPInterface(metaclass=__RFSAPIInterface, _root=True):
         self._serial_num += 1
 
 
-class DataTCPInterface(metaclass=__RFSAPIInterface, _root=True):
-    _local_port = 5002
+class DataTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
+    _local_port = 6001
     _remote_port = 5002
     _conn_ip = "192.168.1.161"
     _serial_num = 1
     _timeout = None
     queue_size = 10
+    DISCONNECT = 0
 
     def __init__(self):
+        """
+        网络数据上下行接口
+
+        """
         self.fd = None
-        self.read_put_queue: Union[None, Queue] = None
-        self.read_get_queue: Union[None, Queue] = None
+        self.read_put_queue: Union[type, Queue] = Undefined
+        self.read_get_queue: Union[type, Queue] = Undefined
         self.stop_event: Union[None, Event] = None
 
         self._tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -87,17 +142,27 @@ class DataTCPInterface(metaclass=__RFSAPIInterface, _root=True):
         self.read_put_queue = queue(self.queue_size)
         # self.read_get_queue = queue(self.queue_size)
         self.stop_event = stop_event
+        printColor('已建立连接', 'green')
 
-    def read_data(self):
-        return self.read_put_queue.m_get()
+    def read_data(self) -> Union[bool, np.ndarray]:
+        result = self.read_put_queue.m_get()
+        if not result:
+            return False
+        return result[1]
+
+    def lookup_data(self) -> Union[bool, np.ndarray]:
+        return self.read_put_queue.lookup()
 
     def pre_read(self, size=1024):
-        self.fd = self._recv_server.recv(size, socket.MSG_WAITALL)
+        fd = self._recv_server.recv(size, socket.MSG_WAITALL)
+        if len(fd) < size:
+            return self.DISCONNECT
+        fd = np.frombuffer(fd, dtype='u4')
 
         while not self.stop_event.is_set():
-            if self.read_put_queue.m_put(self.fd):
+            if self.read_put_queue.m_put(fd):
                 break
-        return True
+        return size
 
     def write_data(self):
         return
@@ -107,7 +172,7 @@ class DataTCPInterface(metaclass=__RFSAPIInterface, _root=True):
 
     def close(self):
         try:
-            self._tcp_server.close()
+            # self._tcp_server.close()
             self._recv_server.shutdown(socket.SHUT_RDWR)
             self._recv_server.close()
         except Exception as e:
@@ -135,25 +200,82 @@ class DataTCPInterface(metaclass=__RFSAPIInterface, _root=True):
     @property
     def recv_server(self):
         return self._recv_server
-    
-    
-class XdmaInterface(metaclass=__RFSAPIInterface, _root=True):
+
+
+class XdmaInterface(metaclass=RFSInterfaceMeta, _root=True):
     _board_id = 0
     chnl = 0
-    xdma_length = 16*1024**2
+    xdma_length = 16 * 1024 ** 2
     queue_size = 10
 
     def __init__(self):
+        """
+        XDMA数据上下行接口
+
+        """
         super(XdmaInterface, self).__init__()
         self.xdma = Xdma()
-        self.buffer_list = []
+        self.fd_list = self.buffer_list = []
+        self.read_wait_queue: Union[type, Queue] = Undefined
+        self.read_enable_queue: Union[type, Queue] = Undefined
+        self.read_stop_event: Union[type, Event] = Undefined
+        self.err_cnt = 0
+        self.last_buffer_index = None
 
     def accept(self, stop_event: Event, queue=Queue):
         self.xdma.open_board(self._board_id)
-        self.buffer_list = [self.xdma.alloc_buffer(self._board_id, self.xdma_length) for _ in range(self.queue_size)]
+        self.fd_list = [self.xdma.alloc_buffer(self._board_id, self.xdma_length) for _ in range(self.queue_size)]
+        self.buffer_list = [self.xdma.get_buffer(fd, self.xdma_length) for fd in self.fd_list]
+        self.read_stop_event = stop_event
+        self.read_wait_queue = queue(self.queue_size)
+        self.read_enable_queue = queue(self.queue_size)
+        [self.read_wait_queue.m_put(buf_index) for buf_index in range(self.queue_size)]
+        printColor('已开启DMA', 'green')
+
+    def pre_read(self, *args, **kwargs):
+        buf_index = self.read_wait_queue.m_get()
+        if buf_index is None:
+            return False
+
+        result = self.xdma.stream_read(self._board_id, self.chnl, self.fd_list[buf_index],
+                                       self.xdma_length, stop_event=self.read_stop_event.is_set, flag=self.err_cnt)
+        self.err_cnt += 1
+        if not result:
+            return False
+
+        while not self.read_stop_event.is_set():
+            if self.read_enable_queue.m_put(buf_index):
+                return self.xdma_length
+
+        return False
 
     def read_data(self, size=1024):
-        return self._recv_server.recv(size, socket.MSG_WAITALL)
+        # 为满足调用reda_data是唯一可以从循环队列中取数的操作
+        # 将上次read的数据放入等待队列
+        last_buffer_index = self.last_buffer_index
+        if self.last_buffer_index is not None:
+            while not self.read_stop_event.is_set():
+                if self.read_wait_queue.m_put(last_buffer_index):
+                    break
+
+        buf_index = self.read_enable_queue.m_get()
+        if not buf_index:
+            return False
+
+        self.last_buffer_index = buf_index[1]
+
+        return self.buffer_list[buf_index[1]]
+
+    def lookup_data(self):
+        buf_index = self.read_enable_queue.lookup()
+        if not buf_index:
+            return False
+        return self.buffer_list[buf_index]
 
     def write_data(self, data):
-        return self._recv_server.send(data)
+        pass
+
+    def close(self):
+        result = all(self.xdma.free_buffer(fd) for fd in self.fd_list)
+        result = result and self.xdma.close_board(self._board_id)
+        return result

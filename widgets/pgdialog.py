@@ -113,6 +113,7 @@ class pthread(threading.Thread):
         if mode == 0 or mode == 1:
             kwargs = {"pthread": self}
         else:
+            self.state = True
             kwargs = {}
         super(pthread, self).__init__(target=target, args=args, kwargs=kwargs)
 

@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Union, IO, List
+from _io import BufferedReader
+from itertools import product
 from functools import lru_cache
 
 import numpy as np
@@ -149,6 +151,74 @@ class UnPackage:
             if file_callback_function is not None or task_parser:
                 return f"{e}"
             return {}
+
+    @classmethod
+    def channel_data_filter(cls, _data: Union[BufferedReader, List[BufferedReader], bytes, np.ndarray],
+                            frame_idx: List[int], chnl_idx: List[int]):
+        """
+        取文件中对应通道的数据
+
+        :param _data:
+        :param frame_idx:
+        :param chnl_idx:
+        :return:
+        """
+        if isinstance(_data, (BufferedReader, list)):
+            return cls.__filter_from_file(_data, frame_idx, chnl_idx)
+
+        if isinstance(_data, bytes):
+            _data = np.frombuffer(_data, dtype='u4')
+        return cls.__filter_from_array(_data, frame_idx, chnl_idx)
+
+    @staticmethod
+    def __read_file(_fp: BufferedReader, offset=0, length=0):
+        _fp.seek(offset)
+        _data = _fp.read(length)
+        _fp.seek(0)
+        return _data
+
+    @classmethod
+    def __filter_from_file(cls, _fp: Union[BufferedReader, List[BufferedReader]],
+                           frame_idx: List[int], chnl_idx: List[int]):
+        if isinstance(_fp, BufferedReader):
+            _fp = [_fp]
+        _head = np.frombuffer(_fp[0].read(256), dtype='u4')
+        _fp[0].seek(0)
+
+        (pack_length, mode, data_length, head_length, data_dtype, width,
+         bit_con_byte, chnl_count, include_tail, is_complex) = UnPackage.get_pack_info(False, _head, None)
+
+        frame_length = pack_length*chnl_count
+
+        frames = {fp: {idx: cls.__read_file(fp, idx*frame_length, frame_length) for idx in frame_idx} for fp in _fp}
+
+        for fp, idx in product(_fp, frame_idx):
+            _data = np.frombuffer(frames[fp][idx], dtype='u4')
+            _, (__, _data) = UnPackage.common_solve_data(_data, qv_length=pack_length, head_tag=0x18EFDC01)
+            frames[fp][idx] = {chnl_id: _data[chnl_id] for chnl_id in chnl_idx}
+
+        return frames
+
+    @classmethod
+    def __filter_from_array(cls, _data: np.ndarray, frame_idx: List[int], chnl_idx: List[int]):
+        if len(_data.shape) == 1:
+            _data = _data.reshape(1, _data.size)
+        _head = _data[0, :64]
+
+        (pack_length, mode, data_length, head_length, data_dtype, width,
+         bit_con_byte, chnl_count, include_tail, is_complex) = UnPackage.get_pack_info(False, _head, None)
+
+        frame_length = (pack_length * chnl_count)//4
+
+        frames = {index: {idx: data[idx*frame_length: (idx+1)*frame_length] for idx in frame_idx}
+                  for index, data in enumerate(_data)}
+
+        for (index, data), idx in product(enumerate(_data), frame_idx):
+            _data = frames[index][idx]
+            _, (__, _data) = cls.common_solve_data(_data, qv_length=pack_length, head_tag=0x18EFDC01)
+            frames[index][idx] = {chnl_id: _data[chnl_id] for chnl_id in chnl_idx}
+
+        return frames
 
     @classmethod
     def __build_result(cls, head_data, data, channel_chart_show_status, result_data, mode, *args):

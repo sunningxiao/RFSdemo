@@ -80,9 +80,12 @@ class SerialUIMixin:
             if self._serial_stop_event.is_set():
                 break
 
-            self.device_serial: serial.Serial
-            data = self.device_serial.read(1024).decode('ascii')
-            if data != '':
-                printColor(data, '#DEB887')
+            try:
+                self.device_serial: serial.Serial
+                data = self.device_serial.read(1024).decode('ascii')
+                if data != '':
+                    printColor(data, '#DEB887')
+            except UnicodeDecodeError as e:
+                printException(e)
 
         self._serial_stopped_event.set()

@@ -1,8 +1,11 @@
 import threading
+import time
+
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import socket
+from serial.tools import list_ports
 
 import ui.main_frame as ui
 from ui.utils import SerialUIMixin
@@ -15,13 +18,16 @@ from ui.RF配置 import RFConfig
 
 from tools.printLog import *
 
-from core import icd_parser
-from core.data_solve import us_signal
+from core import RFSKit
+from core.interface import CommandSerialInterface, CommandTCPInterface
+from tools.data_unpacking import UnPackage
 
 from widgets.pgdialog import pgdialog
 
 
 class RFSControl(QtWidgets.QWidget, SerialUIMixin):
+    status_trigger = QtCore.pyqtSignal(object)
+
     max_channel_count = 8
     page_size = 50
     _speed_fmt = "传输速率: {:.2f} MB/s"
@@ -43,13 +49,17 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.rf_config_ui = RFConfig(self)
         self.initUI()
 
-        self.icd_param = icd_parser.ICDParams()
+        self.rfs_kit = RFSKit(cmd_interface=CommandTCPInterface)
+        # self.rfs_kit = icd_parser.ICDParams()
         self.load_param()
 
         # self.check_all_btn = self.ui.btn_checkall
         # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
         self.enable_chk_channels = []
         self.scanning_board()
+
+        self.status_timer = QtCore.QTimer(self)
+        self.status_timer.timeout.connect(self.action_get_status)
 
     def initUI(self):
         self.ui.setupUi(self)
@@ -86,48 +96,49 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
 
         self.ui.btn_start.clicked.connect(self.start_ui.show)
         self.start_ui.btn_config.clicked.connect(
-            self.linking_button('系统开启', need_feedback=True, need_file=False, callback=self.click_start))
+            self.linking_button('系统开启', need_feedback=True, need_file=False,
+                                callback=lambda: self.status_trigger.emit((1, 3, self.click_start))))
         self.link_start_ui()
 
         self.ui.btn_stop.clicked.connect(
-            self.linking_button('系统停止', need_feedback=True, need_file=False, callback=self.click_stop))
+            self.linking_button('系统停止', need_feedback=True, need_file=False,
+                                callback=lambda: self.status_trigger.emit((1, 3, self.click_stop))))
 
         # 多机RF配置
         self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
-        self.rf_config_ui.btn_master_clock_cfg.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000010))
+        self.rf_config_ui.btn_master_clock_cfg.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000010))
         self.rf_config_ui.btn_master_clock_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_slave_clock_cfg.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000011))
+        self.rf_config_ui.btn_slave_clock_cfg.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000011))
         self.rf_config_ui.btn_slave_clock_cfg.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_master_clock_sync.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000012))
+        self.rf_config_ui.btn_master_clock_sync.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000012))
         self.rf_config_ui.btn_master_clock_sync.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_slave_clock_sync.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000013))
+        self.rf_config_ui.btn_slave_clock_sync.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000013))
         self.rf_config_ui.btn_slave_clock_sync.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_sysref_gen.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000014))
+        self.rf_config_ui.btn_sysref_gen.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000014))
         self.rf_config_ui.btn_sysref_gen.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_master_rf_config.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+        self.rf_config_ui.btn_master_rf_config.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000003))
         self.rf_config_ui.btn_master_rf_config.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
 
-        self.rf_config_ui.btn_slave_rf_config.clicked.connect(lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+        self.rf_config_ui.btn_slave_rf_config.clicked.connect(lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000003))
         self.rf_config_ui.btn_slave_rf_config.clicked.connect(
             self.linking_button('RF配置', need_feedback=True, need_file=False))
         # self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
 
         # dds相关的输入关联
         self.ui.btn_dss_cfg.clicked.connect(self.dds_config_ui.show)
-        self.dds_config_ui.btn_config.clicked.connect(self.linking_button('DDS配置',
-                                                                          need_feedback=True,
-                                                                          need_file=False,
-                                                                          callback=self.dds_config_ui.close))
+        self.dds_config_ui.btn_config.clicked.connect(
+            self.linking_button('DDS配置', need_feedback=True, need_file=False,
+                                callback=lambda: self.status_trigger.emit((1, 3, self.dds_config_ui.close))))
         self.link_dds_config_ui()
 
         self.ui.btn_wave.clicked.connect(self.wave_file_config_ui.show)
@@ -192,16 +203,15 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         pg.mkPen()
         self.gui_state(0)
         self.ui.tabWidget.setCurrentIndex(0)
-        self.ui.tabWidget.setTabEnabled(1, False)
+        # self.ui.tabWidget.setTabEnabled(1, False)
         self.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # self.close(程序退出)触发
-        # self.icd_param.param.pop('DDS_RAM')
+        # self.rfs_kit.param.pop('DDS_RAM')
         self._serial_stop_event.set()
-        self.icd_param.save_icd()
-        self.icd_param.data_solve._stop_flag = True
-        self.icd_param.data_server.close()
+        self.rfs_kit.save_icd()
+        self.rfs_kit.close()
         if self._status == 2:
             # 判断状态，发送停止指令
             self.linking_button('系统停止', need_feedback=False, need_file=False)()
@@ -233,17 +243,21 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         s.sendto(b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00", dest)
         s.settimeout(3)
 
-        def _func():
+        def udp_func():
             try:
                 while True:
                     (_, addr) = s.recvfrom(2048)
                     self.ui.select_link_addr.addItem(addr[0])
             except:
                 s.close()
-                self.ui.select_link_addr.setCurrentIndex(0)
+                # self.ui.select_link_addr.setCurrentIndex(0)
                 printInfo('板卡扫描完成')
 
-        _thread = threading.Thread(target=_func)
+        def serial_func():
+            for serial in list_ports.comports():
+                self.ui.select_link_addr.addItem(serial.device)
+
+        _thread = threading.Thread(target=udp_func)
         _thread.start()
 
     def update_textlog(self, msg):
@@ -260,7 +274,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def click_connect(self):
         ip = self.ui.select_link_addr.currentText()
         follow = self.ui.chk_port_follow_ip.isChecked()
-        _pg = pgdialog(self, self.icd_param.connect, args=(ip, follow), label="系统连接", withcancel=False)
+        _pg = pgdialog(self, self.rfs_kit.start_command, args=(ip, ), label="系统连接", withcancel=False, mode=2)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
@@ -273,37 +287,51 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def click_start(self):
         self.gui_state(2)
         ip = self.ui.select_link_addr.currentText()
-        self.icd_param.data_solve.start_solve(write_file=self.ui.chk_write_file.isChecked(), file_name=ip.split('.')[3])
+        self.rfs_kit.start_stream(write_file=self.ui.chk_write_file.isChecked(), file_name=ip.split('.')[3])
         self.start_ui.close()
+        self.status_timer.start(1000)
+
+        def _func():
+            while self._status == 2:
+                data = self.rfs_kit.view_stream_data()
+                data = UnPackage.solve_source_data(data, [True]*16)
+                self.status_trigger.emit([1, 2, data])
+                time.sleep(1)
+
+        _thread = threading.Thread(target=_func, daemon=True)
+        _thread.start()
         return True
 
     def click_stop(self):
         self.gui_state(1)
-        self.icd_param.data_solve._stop_flag = True
-        self.icd_param.data_server.close_recv()
+        self.rfs_kit.stop_stream()
+        # self.rfs_kit.data_server.close_recv()
+        self.status_timer.stop()
+        self.show_unload_status([0, 0])
         return True
 
     def click_wave(self):
         def _func():
-            chl = self.icd_param.get_param('DDS_RAM')
+            chl = self.rfs_kit.get_param_value('DDS_RAM')
             try:
                 for dds in range(8):
-                    self.icd_param.set_param('DDS_RAM', dds)
-                    filename = self.icd_param.get_param(f'通道{dds}文件路径', '', str)
+                    self.rfs_kit.set_param_value('DDS_RAM', dds)
+                    filename = self.rfs_kit.get_param_value(f'通道{dds}文件路径', '', str)
                     if filename != '':
-                        assert self.icd_param.send_command('波形装载', file_name=filename)
+                        assert self.rfs_kit.execute_command('波形装载', file_name=filename)
                         printColor(f'通道{dds+1}波形装载完成', 'blue')
             except:
                 printWarning('波形装载失败')
             finally:
-                self.icd_param.set_param('DDS_RAM', chl)
-                us_signal.status_trigger.emit((1, 3, self.wave_file_config_ui.close))
+                self.rfs_kit.set_param_value('DDS_RAM', chl)
+                self.status_trigger.emit((1, 3, self.wave_file_config_ui.close))
                 # self.wave_file_config_ui.close()
 
         thread = threading.Thread(target=_func)
         thread.start()
 
     def show_unpack(self, data):
+        # data = UnPackage.solve_source_data(data, [True]*16)
         chk_info = [chk.isChecked() for chk in self.channel_plots]
         for index, (chk, chnl_pen) in enumerate(self.channel_plots.items()):
             if chk_info[index]:
@@ -342,10 +370,15 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                 # 执行回调函数,优化指令执行后的函数回调机制
                 status[1]()
             elif status[0] == 4:
-                self.icd_param.save_icd(status[1])
+                self.rfs_kit.save_icd(status[1])
         else:
             self.ui.label.setText(self._speed_fmt.format(0))
             self.ui.label_3.setText(self._save_speed_fmt.format(0))
+
+    def action_get_status(self):
+        status = self.rfs_kit.upload_status()
+        self.show_unload_status([1, 0, status[0]])
+        self.show_unload_status([1, 1, status[1]])
 
     def gui_state(self, state=1):
         # 未连接状态
@@ -374,63 +407,63 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.btn_auto_command.setEnabled(state[7])    # 自定义指令
 
     def load_param(self):
-        self.icd_param.load_icd()
+        self.rfs_kit.load_icd()
         self.show_param()
-        # self.ui.select_link_addr.addItem(self.icd_param.icd_data['remote_ip'])
-        # self.icd_param.start_data_server()
+        # self.ui.select_link_addr.addItem(self.rfs_kit.icd_data['remote_ip'])
+        # self.rfs_kit.start_data_server()
 
     def reload_param(self):
-        self.icd_param.load_icd(reload=True)
+        self.rfs_kit.load_icd(reload=True)
         self.show_param()
 
     def show_param(self):
-        self.action_is_master_changed('主机' if int(self.icd_param.get_param('脱机工作', 0)) == 0 else '单机')
-        self.ui.select_clock.setCurrentIndex(int(self.icd_param.get_param('系统参考时钟选择', 0)))
-        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('ADC采样率', 1000)])
-        self.ui.select_adc_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.icd_param.get_param('ADC 抽取倍数', 1)])
-        self.ui.txt_adc_noc_f.setText(self.icd_param.get_param('ADC NCO频率', 0, str))
-        self.ui.txt_adc_nyq.setText(self.icd_param.get_param('ADC 奈奎斯特区', 1, str))
-        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.icd_param.get_param('DAC采样率', 1000)])
-        self.ui.select_dac_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.icd_param.get_param('DAC 抽取倍数', 1)])
-        self.ui.txt_dac_noc_f.setText(self.icd_param.get_param('DAC NCO频率', 0, str))
-        self.ui.txt_dac_nyq.setText(self.icd_param.get_param('DAC 奈奎斯特区', 1, str))
-        self.ui.txt_pll_f.setText(self.icd_param.get_param('PLL参考时钟频率', 250, str))
-        self.ui.chk_pll_adc.setChecked(self.icd_param.get_param('ADC PLL使能', 0, bool))
-        self.ui.chk_pll_dac.setChecked(self.icd_param.get_param('DAC PLL使能', 0, bool))
+        self.action_is_master_changed('主机' if int(self.rfs_kit.get_param_value('脱机工作', 0)) == 0 else '单机')
+        self.ui.select_clock.setCurrentIndex(int(self.rfs_kit.get_param_value('系统参考时钟选择', 0)))
+        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.rfs_kit.get_param_value('ADC采样率', 1000)])
+        self.ui.select_adc_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('ADC 抽取倍数', 1)])
+        self.ui.txt_adc_noc_f.setText(self.rfs_kit.get_param_value('ADC NCO频率', 0, str))
+        self.ui.txt_adc_nyq.setText(self.rfs_kit.get_param_value('ADC 奈奎斯特区', 1, str))
+        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.rfs_kit.get_param_value('DAC采样率', 1000)])
+        self.ui.select_dac_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('DAC 抽取倍数', 1)])
+        self.ui.txt_dac_noc_f.setText(self.rfs_kit.get_param_value('DAC NCO频率', 0, str))
+        self.ui.txt_dac_nyq.setText(self.rfs_kit.get_param_value('DAC 奈奎斯特区', 1, str))
+        self.ui.txt_pll_f.setText(self.rfs_kit.get_param_value('PLL参考时钟频率', 250, str))
+        self.ui.chk_pll_adc.setChecked(self.rfs_kit.get_param_value('ADC PLL使能', 0, bool))
+        self.ui.chk_pll_dac.setChecked(self.rfs_kit.get_param_value('DAC PLL使能', 0, bool))
 
         self.ui.select_command.clear()
-        for btn in self.icd_param.button:
+        for btn in self.rfs_kit.icd_param.button:
             self.ui.select_command.addItem(btn)
 
     def change_param(self, param_name, param_label: [QtWidgets.QLineEdit, QtWidgets.QComboBox], type_fmt=str,
                      combo_flag='text'):
         def _func(*args, **kwargs):
             if isinstance(param_label, QtWidgets.QLineEdit):
-                self.icd_param.set_param(param_name, param_label.text(), type_fmt)
+                self.rfs_kit.set_param_value(param_name, param_label.text(), type_fmt)
             elif isinstance(param_label, QtWidgets.QComboBox):
                 if combo_flag == 'text':
-                    self.icd_param.set_param(param_name, param_label.currentText(), type_fmt)
+                    self.rfs_kit.set_param_value(param_name, param_label.currentText(), type_fmt)
                 elif combo_flag == 'index':
-                    self.icd_param.set_param(param_name, param_label.currentIndex(), type_fmt)
+                    self.rfs_kit.set_param_value(param_name, param_label.currentIndex(), type_fmt)
             elif isinstance(param_label, QtWidgets.QCheckBox):
-                self.icd_param.set_param(param_name, int(param_label.isChecked()), type_fmt)
+                self.rfs_kit.set_param_value(param_name, int(param_label.isChecked()), type_fmt)
             else:
                 printWarning('不受支持的控件类型')
 
         return _func
 
-    def linking_button(self, button_name, need_feedback=True, check_feedback=True, need_file=False, callback=lambda *args: True,
+    def linking_button(self, button_name, need_feedback=True, check_feedback=True, need_file=False, callback=lambda *args: None,
                        wait: int = 0):
         def _func(*args, **kwargs):
             if need_file:
                 filename = QFileDialog.getOpenFileName(self, '请选择文件')[0]
                 if filename == '':
                     return
-                thread = threading.Thread(target=self.icd_param.send_command,
+                thread = threading.Thread(target=self.rfs_kit.execute_command,
                                           args=[button_name, need_feedback, filename],
                                           kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait})
             else:
-                thread = threading.Thread(target=self.icd_param.send_command,
+                thread = threading.Thread(target=self.rfs_kit.execute_command,
                                           args=[button_name, need_feedback],
                                           kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait})
             thread.start()
@@ -444,7 +477,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                 return
             file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
             file_name_label.setText(filename)
-            self.icd_param.set_param(f'通道{dds}文件路径', filename, str)
+            self.rfs_kit.set_param_value(f'通道{dds}文件路径', filename, str)
 
         return _func
 
@@ -456,7 +489,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             for dds in range(8):
                 file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
                 file_name_label.setText(filename)
-                self.icd_param.set_param(f'通道{dds}文件路径', filename, str)
+                self.rfs_kit.set_param_value(f'通道{dds}文件路径', filename, str)
 
         return _func
 
@@ -465,20 +498,20 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.linking_button(btn, need_feedback=True, check_feedback=False, need_file=False)()
 
     def show_start_ui(self):
-        self.start_ui.select_prf_src.setCurrentIndex(self.icd_param.get_param('基准PRF来源', 0))
-        self.start_ui.txt_prf_cyc.setText(self.icd_param.get_param('基准PRF周期', 0, str))
-        self.start_ui.txt_prf_cnt.setText(self.icd_param.get_param('基准PRF数量', 1000, str))
+        self.start_ui.select_prf_src.setCurrentIndex(self.rfs_kit.get_param_value('基准PRF来源', 0))
+        self.start_ui.txt_prf_cyc.setText(self.rfs_kit.get_param_value('基准PRF周期', 0, str))
+        self.start_ui.txt_prf_cnt.setText(self.rfs_kit.get_param_value('基准PRF数量', 1000, str))
         for dds in range(8):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
-            select_source.setCurrentIndex(self.icd_param.get_param(f'DAC{dds}播放数据来源', 0, int))
+            select_source.setCurrentIndex(self.rfs_kit.get_param_value(f'DAC{dds}播放数据来源', 0, int))
             txt_gate_width: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_width_{dds}')
-            txt_gate_width.setText(self.icd_param.get_param(f'DAC{dds}播放波门宽度', 0, str))
+            txt_gate_width.setText(self.rfs_kit.get_param_value(f'DAC{dds}播放波门宽度', 0, str))
             txt_gate_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_delay_{dds}')
-            txt_gate_delay.setText(self.icd_param.get_param(f'DAC{dds}播放波门延迟', 0, str))
+            txt_gate_delay.setText(self.rfs_kit.get_param_value(f'DAC{dds}播放波门延迟', 0, str))
             txt_sampling_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_delay_{dds}')
-            txt_sampling_delay.setText(self.icd_param.get_param(f'ADC{dds}采样延迟', 0, str))
+            txt_sampling_delay.setText(self.rfs_kit.get_param_value(f'ADC{dds}采样延迟', 0, str))
             txt_sampling_points: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_points_{dds}')
-            txt_sampling_points.setText(self.icd_param.get_param(f'ADC{dds}采样点数', 1024, str))
+            txt_sampling_points.setText(self.rfs_kit.get_param_value(f'ADC{dds}采样点数', 1024, str))
 
     def link_start_ui(self):
         self.start_ui.select_prf_src.currentIndexChanged.connect(
@@ -500,7 +533,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def show_dds_config_ui(self):
         def _func(_ui, edit_name, param_name):
             txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
-            txt.setText(self.icd_param.get_param(param_name, 0, str))
+            txt.setText(self.rfs_kit.get_param_value(param_name, 0, str))
 
         for chl in range(8):
             edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
@@ -530,7 +563,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def show_qmc_config_ui(self):
         def _func(_ui, edit_name, param_name):
             txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
-            txt.setText(self.icd_param.get_param(param_name, 0, str))
+            txt.setText(self.rfs_kit.get_param_value(param_name, 0, str))
 
         for chl in range(8):
             edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
@@ -560,7 +593,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def show_wave_file_ui(self):
         for dds in range(8):
             file_name_label: QtWidgets.QLabel = getattr(self.wave_file_config_ui, f'file_name_label_{dds}')
-            file_name_label.setText(self.icd_param.get_param(f'通道{dds}文件路径', '', str))
+            file_name_label.setText(self.rfs_kit.get_param_value(f'通道{dds}文件路径', '', str))
 
     def link_wave_file_ui(self):
 
@@ -568,7 +601,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         def mouseDoubleClickEvent(label, _dds):
             def _func(e):
                 label.setText('')
-                self.icd_param.set_param(f'通道{_dds}文件路径', '', str)
+                self.rfs_kit.set_param_value(f'通道{_dds}文件路径', '', str)
             return _func
 
         for dds in range(8):
@@ -584,18 +617,18 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.btn_rf_cfg.clicked.disconnect()
 
         if status == '单机':
-            self.icd_param.set_param('脱机工作', 1, int)
+            self.rfs_kit.set_param_value('脱机工作', 1, int)
             self.ui.btn_rf_cfg.clicked.connect(
-                lambda: self.icd_param.set_param('RF指令ID', 0x31000003))
+                lambda: self.rfs_kit.set_param_value('RF指令ID', 0x31000003))
             self.ui.btn_rf_cfg.clicked.connect(self.linking_button('RF配置', need_feedback=True, need_file=False))
 
         elif status == '从机':
-            self.icd_param.set_param('脱机工作', 0, int)
+            self.rfs_kit.set_param_value('脱机工作', 0, int)
 
             self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
 
         elif status == '主机':
-            self.icd_param.set_param('脱机工作', 0, int)
+            self.rfs_kit.set_param_value('脱机工作', 0, int)
 
             self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
 
@@ -610,7 +643,7 @@ def init_ui():
 
     rfs = RFSControl()
 
-    us_signal.status_trigger.connect(rfs.show_unload_status)
+    rfs.status_trigger.connect(rfs.show_unload_status)
     printInfo("软件已启动")
 
     return global_application

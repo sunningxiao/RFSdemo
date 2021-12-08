@@ -63,6 +63,20 @@ class Queue(queue.Queue):
             return True
 
 
+class Undefined:
+    @classmethod
+    def m_put(cls, *args, **kwargs):
+        return True
+
+    @classmethod
+    def m_get(cls, *args, **kwargs):
+        return False
+
+    @classmethod
+    def lookup(cls, *args, **kwargs):
+        return False
+
+
 if __name__ == '__main__':
     import socket
     import time

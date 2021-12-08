@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Union
 
 import numpy as np
+from scipy.signal import chirp
 
 
 class ChannelInfo:
@@ -29,6 +30,16 @@ class PackingError(RuntimeError):
 class Packing:
     frame_tag_head = b'\x01\xdc\xef\x18'
     frame_tag_tail = b'\x18\xef\xdc\x01'
+
+    _data_type_relate = {
+        0: [np.uint32, 32, False],
+        1: [np.int32, 32, False],
+        2: [np.uint8, 8, False],
+        3: [np.int8, 8, False],
+        4: [np.uint16, 16, False],
+        5: [np.int16, 16, False],
+        6: [np.uint32, 32, True]  # complex类型, IQ int16组合
+    }
 
     def __init__(self):
         self.frame_prt = 0  # PRT计数，从0自增
@@ -187,15 +198,65 @@ class Packing:
 
         return bit_0 + bit_1 + bit_2 + bit_3 + bit_4
 
+    def signal_generate(self, center_frq, band_width=0, sign=0, pulse_width=16384e-9, init_phase=0, sampling_rate=4e9,
+                        point_num=None, point_type=None, parallel_channels=1) -> np.ndarray:
+        """
+        生成信号数据
+
+        :param center_frq: 中心频率(Hz)
+        :param band_width: 带宽(Hz) 默认0
+        :param sign: 调频斜率符号  0表示正, 1表示负 默认0
+        :param pulse_width: 脉宽(s) 默认16.384μs
+        :param init_phase: 初始相位(°) 默认0°
+        :param sampling_rate: 采样率(Hz) 默认4GHz
+        :param point_num: 生成数据点数 默认由pulse_width与采样率计算得出
+        :param point_type: 点的数据类型：  0：uint32；1：int32；
+                                        2：uint8；3：int8；
+                                        4：uint16；5：int16；
+        :param parallel_channels: 并行通道数
+        :return:
+        """
+        assert center_frq > 0, '中心频率应大于0'
+        assert band_width >= 0, '信号带宽应大于等于0'
+
+        n = int(sampling_rate * pulse_width)
+        if band_width == 0:
+            t = np.array([np.arange(n) / n * pulse_width for i in range(parallel_channels)])
+        else:
+            t = np.linspace(np.zeros(parallel_channels),
+                            np.zeros(parallel_channels)+pulse_width,
+                            n).T.copy(order='C')
+
+        f0, f1 = (center_frq+band_width/2, center_frq-band_width/2) if sign \
+            else (center_frq-band_width/2, center_frq+band_width/2)
+        signal = chirp(t, f0=f0, f1=f1, t1=pulse_width, phi=init_phase)
+
+        if point_type is None:
+            try:
+                point_type = self.channels[0].frame_data_type
+            except IndexError as e:
+                point_type = 5
+
+        dtype, length, _ = self._data_type_relate[point_type]
+        signal = dtype(signal*32767)
+        signal = np.frombuffer(signal, dtype='u4').reshape(int(parallel_channels), int(n//(32/length)))
+
+        if point_num is not None and point_num > n:
+            box = np.zeros((int(parallel_channels), int(point_num*length/32)), dtype='u4')
+            box[:, :signal.shape[1]] = signal
+            signal = box
+        return signal
+
 
 if __name__ == '__main__':
-    a = np.cos([(np.arange(64*1024) * 0.01 - 0.25 * i) * np.pi for i in range(8)]) * 32768
-    b = np.int16(a)
-    c = np.frombuffer(b, dtype='u4').reshape(8, 32*1024)
+    # a = np.cos([(np.arange(64*1024) * 0.01 - 0.25 * i) * np.pi for i in range(8)]) * 32768
+    # b = np.int16(a)
+    # c = np.frombuffer(b, dtype='u4').reshape(8, 32*1024)
 
     packing = Packing()
-    packing.channel_num = 8
-    for index, chnl in enumerate(packing.channels):
-        chnl.chnl_id = index
-
-    d = packing.packing_data(c)
+    # packing.channel_num = 8
+    # for index, chnl in enumerate(packing.channels):
+    #     chnl.chnl_id = index
+    #
+    # d = packing.packing_data(c)
+    b = packing.signal_generate(1e9, 5e8)

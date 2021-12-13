@@ -79,12 +79,13 @@ class UnPackage:
             return {}
 
     @classmethod
-    def solve_source_data(cls, data, channel_chart_show_status: iter, *args, file_callback_function=None,
+    def solve_source_data(cls, data, channel_chart_show_status: iter, qv_length, *args, file_callback_function=None,
                           task_parser=False, step=0, for_save=False):
         """
         :param channel_info: 通道模型类对象.get_dict()
         :param data: 解析数据
         :param channel_chart_show_status: 通道显示状态
+        :param qv_length: 截取数据长度
         :param args:
         :param file_callback_function: 文件快视回调方法
         :param task_parser: 任务数据解析
@@ -98,7 +99,7 @@ class UnPackage:
             chnl_position = None
             chnl_value_bit = 2
             pack_info = None
-            qv_length = QvLength  # 快视数据截取长度
+            # qv_length = QvLength  # 快视数据截取长度
             pack_mode = False
             first_num = 0
 
@@ -466,6 +467,6 @@ if __name__ == '__main__':
         data = fp.read(526336 - 4)
 
     data_ = np.frombuffer(data, dtype='u4')
-    datas = UnPackage.solve_source_data(data_, [False, True, True, False, True, True, True, True])
+    datas = UnPackage.solve_source_data(data_, [False, True, True, False, True, True, True, True], 4096)
     info = UnPackage.get_pack_info(False, data_[:64])
     print(datas)

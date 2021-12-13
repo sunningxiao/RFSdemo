@@ -14,7 +14,7 @@ class Custom:
     """
 
     @classmethod
-    def get_coherence(cls, sig, para):
+    def get_coherence(cls, sig, para) -> np.ndarray:
         """
         处理正弦信号，获取幅相一致性指标并生成校正因子
         输入：
@@ -97,7 +97,7 @@ class Custom:
             'Bw': 1.8e9                     # 带宽/Hz
             'Tp':10e-6                      # 脉宽/s
             'RefChannel': 0,                # 参考通道,默认为通道0
-            'InterpNum': 1,                 # FFT插值倍数，默认为500
+            'InterpNum': 1,                 # FFT插值倍数，默认为100
         }
         输出：uniform：延迟一致性/ns
         """
@@ -112,8 +112,8 @@ class Custom:
         kr = bw / tp
         # 生成mf因子并进行匹配滤波
         t_mf = np.arange(int(fs * tp)) / fs
-        mf = np.exp(1j * pi * kr * (t_mf - tp / 2) ** 2 + 1j * 2 * pi * fc * t_mf)
-        mf = np.conjugate(fft(mf, len(mf)))  # 原信号频谱取共轭是mf因子
+        mf = np.exp(1j * np.pi * kr * (t_mf - tp / 2) ** 2 + 1j * 2 * np.pi * fc * t_mf)
+        mf = np.conjugate(fft(mf, nr))  # 原信号频谱取共轭是mf因子
         spec = fft(chirp, nr)
         chirp = mf * spec  # 匹配滤波
         # 窗函数
@@ -132,7 +132,7 @@ class Custom:
         if para.get('InterpNum'):
             m = int(para['InterpNum'])  # 获取插值倍数
         else:
-            m = 500  # 默认不生成校正因子
+            m = 100  # 默认fft插值100点
         sig = cls.interpft(chirp, nr * m)  # 进行m倍fft插值
         fs = fs * m  # 插值信号后的采样率
         # print('时间精度：%fps' % (1 / fs * 1e12))

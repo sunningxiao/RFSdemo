@@ -15,6 +15,7 @@ from ui.波形预置 import WaveFileConfig
 from ui.频谱显示 import SpectrumScreen
 from ui.QMC配置 import QMCConfig
 from ui.RF配置 import RFConfig
+from ui.连接界面 import LinkSystemUI
 
 from tools.printLog import *
 
@@ -47,19 +48,19 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.spectrum_screen = SpectrumScreen(self)
         self.qmc_config_ui = QMCConfig(self)
         self.rf_config_ui = RFConfig(self)
+        self.link_system_ui = LinkSystemUI(self)
+
+        self.enable_chk_channels = []
+        self.status_timer = QtCore.QTimer(self)
+        self.status_timer.timeout.connect(self.action_get_status)
+
         self.initUI()
 
-        self.rfs_kit = RFSKit(cmd_interface=CommandTCPInterface)
+        self.rfs_kit = RFSKit(cmd_interface=CommandTCPInterface, auto_load_icd=True)
         # self.rfs_kit = icd_parser.ICDParams()
         self.load_param()
 
-        # self.check_all_btn = self.ui.btn_checkall
-        # self.page = Page(self.ui, self.page_size, self.update_table)  # 分页
-        self.enable_chk_channels = []
         self.scanning_board()
-
-        self.status_timer = QtCore.QTimer(self)
-        self.status_timer.timeout.connect(self.action_get_status)
 
     def initUI(self):
         self.ui.setupUi(self)
@@ -152,14 +153,14 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         # 关联界面参数与json
         self.ui.select_clock.currentIndexChanged.connect(
             self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
-        self.ui.select_adc_sample.currentIndexChanged.connect(
-            self.change_param('ADC采样率', self.ui.select_adc_sample, int))
+        self.ui.txt_adc_sample.editingFinished.connect(
+            self.change_param('ADC采样率', self.ui.txt_adc_sample, int))
         self.ui.select_adc_extract.currentIndexChanged.connect(
             self.change_param('ADC 抽取倍数', self.ui.select_adc_extract, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
-        self.ui.select_dac_sample.currentIndexChanged.connect(
-            self.change_param('DAC采样率', self.ui.select_dac_sample, int))
+        self.ui.txt_dac_sample.editingFinished.connect(
+            self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
         self.ui.select_dac_extract.currentIndexChanged.connect(
             self.change_param('DAC 抽取倍数', self.ui.select_dac_extract, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
@@ -294,7 +295,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         def _func():
             while self._status == 2:
                 data = self.rfs_kit.view_stream_data()
-                data = UnPackage.solve_source_data(data, [True]*16)
+                data = UnPackage.solve_source_data(data, [True]*16, 16384)
                 self.status_trigger.emit([1, 2, data])
                 time.sleep(1)
 
@@ -407,7 +408,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.btn_auto_command.setEnabled(state[7])    # 自定义指令
 
     def load_param(self):
-        self.rfs_kit.load_icd()
+        # self.rfs_kit.load_icd()
         self.show_param()
         # self.ui.select_link_addr.addItem(self.rfs_kit.icd_data['remote_ip'])
         # self.rfs_kit.start_data_server()
@@ -419,11 +420,11 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def show_param(self):
         self.action_is_master_changed('主机' if int(self.rfs_kit.get_param_value('脱机工作', 0)) == 0 else '单机')
         self.ui.select_clock.setCurrentIndex(int(self.rfs_kit.get_param_value('系统参考时钟选择', 0)))
-        self.ui.select_adc_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.rfs_kit.get_param_value('ADC采样率', 1000)])
+        self.ui.txt_adc_sample.setText(self.rfs_kit.get_param_value('ADC采样率', 1000, str))
         self.ui.select_adc_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('ADC 抽取倍数', 1)])
         self.ui.txt_adc_noc_f.setText(self.rfs_kit.get_param_value('ADC NCO频率', 0, str))
         self.ui.txt_adc_nyq.setText(self.rfs_kit.get_param_value('ADC 奈奎斯特区', 1, str))
-        self.ui.select_dac_sample.setCurrentIndex({1000: 0, 2000: 1, 4000: 2, 6000: 3}[self.rfs_kit.get_param_value('DAC采样率', 1000)])
+        self.ui.txt_dac_sample.setText(self.rfs_kit.get_param_value('DAC采样率', 1000, str))
         self.ui.select_dac_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('DAC 抽取倍数', 1)])
         self.ui.txt_dac_noc_f.setText(self.rfs_kit.get_param_value('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.rfs_kit.get_param_value('DAC 奈奎斯特区', 1, str))
@@ -461,11 +462,13 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                     return
                 thread = threading.Thread(target=self.rfs_kit.execute_command,
                                           args=[button_name, need_feedback, filename],
-                                          kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait})
+                                          kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait},
+                                          daemon=True)
             else:
                 thread = threading.Thread(target=self.rfs_kit.execute_command,
                                           args=[button_name, need_feedback],
-                                          kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait})
+                                          kwargs={'check_feedback': check_feedback, 'callback': callback, 'wait': wait},
+                                          daemon=True)
             thread.start()
 
         return _func
@@ -550,6 +553,12 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             txt: QtWidgets.QLineEdit = getattr(_ui, edit_name)
             txt.editingFinished.connect(self.change_param(param_name, txt))
 
+        def _dds_sample(*args, **kwargs):
+            dac_sample = self.ui.txt_dac_sample.text()
+            multi = self.ui.select_dac_extract.currentText()
+            dds_sample = int(float(dac_sample)/float(multi))
+            self.rfs_kit.set_param_value('DDS采样率', dds_sample)
+
         for chl in range(8):
             edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
                      f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
@@ -559,6 +568,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                       f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
             for edit, param in zip(edits, params):
                 _func(self.dds_config_ui, edit, param)
+
+        self.ui.txt_dac_sample.editingFinished.connect(_dds_sample)
+        self.ui.select_dac_extract.currentIndexChanged.connect(_dds_sample)
 
     def show_qmc_config_ui(self):
         def _func(_ui, edit_name, param_name):
@@ -644,6 +656,7 @@ def init_ui():
     rfs = RFSControl()
 
     rfs.status_trigger.connect(rfs.show_unload_status)
+    # rfs.link_system_ui.show()
     printInfo("软件已启动")
 
     return global_application

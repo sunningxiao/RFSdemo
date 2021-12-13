@@ -36,9 +36,12 @@ class CommandSerialInterface(metaclass=RFSInterfaceMeta, _root=True):
 
     def accept(self, target_id=None, *args):
         _target_id = self._target_id if target_id is None else target_id
-        self._device_serial = serial.Serial(port=_target_id,
-                                            baudrate=int(self._target_baud_rate),
-                                            timeout=self._timeout)
+        if args:
+            self._device_serial = serial.Serial(target_id, *args)
+        else:
+            self._device_serial = serial.Serial(port=_target_id,
+                                                baudrate=int(self._target_baud_rate),
+                                                timeout=self._timeout)
 
     def recv_cmd(self, size=1024):
         return self._device_serial.read(size)

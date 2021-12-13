@@ -1,13 +1,8 @@
 import json
 import os
 import struct
-import time
 import pandas as pd
 
-from core.interface import CommandSerialInterface as CommandInterface
-from core.interface import DataTCPInterface as DataInterface
-# from tools.utils import solve_exception
-# from core.data_solve import DataSolve, us_signal
 from tools.printLog import *
 
 file_context_flag = '__file__'
@@ -85,20 +80,19 @@ class ICDParams:
                 self.icd_data = json.load(fp)
             except json.decoder.JSONDecodeError as e:
                 printWarning('icd.json文件不可用')
+                return False
         try:
             self.button = self.icd_data['button']
             self.param = self.icd_data['param']
             self.command = self.icd_data['command']
             self.sequence = self.icd_data['sequence']
             self.after_connection: list = self.icd_data['after_connection']
-            CommandInterface._remote_port = self.icd_data['remote_command_port']
-            CommandInterface._conn_ip = self.icd_data['remote_ip']
-            DataInterface._local_port = self.icd_data['remote_data_port']
-            DataInterface._conn_ip = self.icd_data['remote_ip']
             self.recv_header = struct.pack(self.fmt_mode + 'I', int(self.icd_data['recv_header'], 16))
             printInfo('参数载入成功')
         except Exception as e:
             printException(e, f'{file_path}不可用')
+            return False
+        return True
 
     def save_icd(self, path=''):
         path = path + '\\' if path else path

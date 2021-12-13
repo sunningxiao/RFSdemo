@@ -4,7 +4,6 @@ import struct
 from threading import Event
 import numpy as np
 
-from core import config
 from core.data_solve import DataSolve
 from core import interface
 from core.icd_parser import ICDParams
@@ -36,6 +35,10 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         self.icd_param = ICDParams()
         self._stop_event = Event()
         self._connected = False
+        self.__icd_loaded = False
+
+        if kwargs.get('auto_load_icd', False):
+            self.load_icd()
         self._auto_write_file = kwargs.get('auto_write_file', True)
         cmd_interface = kwargs.get('cmd_interface', interface.CommandTCPInterface)
         data_interface = kwargs.get('data_interface', interface.DataTCPInterface)
@@ -51,7 +54,8 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         self.data_interface.close()
 
     def load_icd(self, reload=False):
-        return self.icd_param.load_icd(reload)
+        self.__icd_loaded = self.icd_param.load_icd(reload)
+        return self.__icd_loaded
 
     def save_icd(self, path=''):
         return self.icd_param.save_icd(path)
@@ -64,13 +68,15 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
             self.execute_command(command)
         return True
 
-    def start_stream(self, auto_write_file=True, filepath=None, write_file=True, file_name=''):
+    def start_stream(self, auto_write_file=None, filepath=None, write_file=True, file_name=''):
         """
         开启上下行流程
 
         :return:
         """
-        return self._data_solve.start_solve(auto_write_file, filepath, write_file, file_name)
+        if auto_write_file is not None:
+            self._auto_write_file = auto_write_file
+        return self._data_solve.start_solve(self._auto_write_file, filepath, write_file, file_name)
 
     def stop_stream(self):
         self._stop_event.set()
@@ -92,6 +98,8 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
 
         :return:
         """
+        if self._auto_write_file:
+            raise RuntimeError('开启自动写盘，此接口不可用')
         return self.data_interface.read_data()
 
     def upload_status(self):
@@ -167,7 +175,15 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         return True
 
     def set_param_value(self, param_name: str, value, fmt_type=int):
+        if not self.__icd_loaded:
+            return False
         return self.icd_param.set_param(param_name, value, fmt_type)
 
     def get_param_value(self, param_name: str, default=0, fmt_type=int):
+        if not self.__icd_loaded:
+            return False
         return self.icd_param.get_param(param_name, default, fmt_type)
+
+    @property
+    def icd_loaded(self):
+        return self.__icd_loaded

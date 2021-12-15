@@ -72,7 +72,7 @@
           <item row="7" column="7">
            <widget class="QLineEdit" name="txt_dac_gain_step_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -107,7 +107,7 @@
           <item row="7" column="10">
            <widget class="QLineEdit" name="txt_dac_offset_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -152,7 +152,7 @@
           <item row="11" column="0">
            <widget class="QLabel" name="label_4">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -294,7 +294,7 @@
           <item row="7" column="11">
            <widget class="QLineEdit" name="txt_dac_phase_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -313,7 +313,7 @@
           <item row="5" column="7">
            <widget class="QLineEdit" name="txt_dac_gain_step_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -391,7 +391,7 @@
           <item row="9" column="10">
            <widget class="QLineEdit" name="txt_dac_offset_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -439,7 +439,7 @@
           <item row="5" column="10">
            <widget class="QLineEdit" name="txt_dac_offset_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -458,7 +458,7 @@
           <item row="5" column="6">
            <widget class="QLineEdit" name="txt_dac_gain_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -500,7 +500,7 @@
           <item row="7" column="0">
            <widget class="QLabel" name="label_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -573,7 +573,7 @@
           <item row="9" column="8">
            <widget class="QLineEdit" name="txt_dac_gain_target_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -630,7 +630,7 @@
           <item row="5" column="8">
            <widget class="QLineEdit" name="txt_dac_gain_target_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -663,7 +663,7 @@
           <item row="5" column="3">
            <widget class="QLineEdit" name="txt_adc_offset_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -682,7 +682,7 @@
           <item row="7" column="3">
            <widget class="QLineEdit" name="txt_adc_offset_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -717,7 +717,7 @@
           <item row="7" column="8">
            <widget class="QLineEdit" name="txt_dac_gain_target_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -736,7 +736,7 @@
           <item row="9" column="11">
            <widget class="QLineEdit" name="txt_dac_phase_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -794,7 +794,7 @@
           <item row="11" column="3">
            <widget class="QLineEdit" name="txt_adc_offset_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -813,7 +813,7 @@
           <item row="11" column="6">
            <widget class="QLineEdit" name="txt_dac_gain_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -881,7 +881,7 @@
           <item row="9" column="4">
            <widget class="QLineEdit" name="txt_adc_phase_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -910,7 +910,7 @@
           <item row="5" column="2">
            <widget class="QLineEdit" name="txt_adc_gain_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -980,7 +980,7 @@
           <item row="9" column="2">
            <widget class="QLineEdit" name="txt_adc_gain_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="maximumSize">
              <size>
@@ -1019,7 +1019,7 @@
           <item row="11" column="10">
            <widget class="QLineEdit" name="txt_dac_offset_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1054,7 +1054,7 @@
           <item row="5" column="4">
            <widget class="QLineEdit" name="txt_adc_phase_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1089,7 +1089,7 @@
           <item row="9" column="3">
            <widget class="QLineEdit" name="txt_adc_offset_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1108,7 +1108,7 @@
           <item row="11" column="2">
            <widget class="QLineEdit" name="txt_adc_gain_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="maximumSize">
              <size>
@@ -1159,7 +1159,7 @@
           <item row="5" column="11">
            <widget class="QLineEdit" name="txt_dac_phase_0">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1178,7 +1178,7 @@
           <item row="7" column="2">
            <widget class="QLineEdit" name="txt_adc_gain_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1197,7 +1197,7 @@
           <item row="9" column="0">
            <widget class="QLabel" name="label_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1263,7 +1263,7 @@
           <item row="11" column="4">
            <widget class="QLineEdit" name="txt_adc_phase_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1413,7 +1413,7 @@
           <item row="7" column="6">
            <widget class="QLineEdit" name="txt_dac_gain_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1462,7 +1462,7 @@
           <item row="9" column="6">
            <widget class="QLineEdit" name="txt_dac_gain_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1481,7 +1481,7 @@
           <item row="9" column="7">
            <widget class="QLineEdit" name="txt_dac_gain_step_2">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1500,7 +1500,7 @@
           <item row="11" column="11">
            <widget class="QLineEdit" name="txt_dac_phase_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1519,7 +1519,7 @@
           <item row="7" column="4">
            <widget class="QLineEdit" name="txt_adc_phase_1">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1561,7 +1561,7 @@
           <item row="5" column="0">
            <widget class="QLabel" name="label">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1657,7 +1657,7 @@
           <item row="11" column="8">
            <widget class="QLineEdit" name="txt_dac_gain_target_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>
@@ -1683,7 +1683,7 @@
           <item row="11" column="7">
            <widget class="QLineEdit" name="txt_dac_gain_step_3">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="minimumSize">
              <size>

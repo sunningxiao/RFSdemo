@@ -6,6 +6,8 @@ from ui.附加功能.cail_from_file import Ui_CailFromFile
 from ui.附加功能.rcm_config import Ui_RCMConfig
 from ui.附加功能.utils import Custom
 
+from tools.printLog import *
+
 
 class CalibrationConfig:
 
@@ -33,30 +35,31 @@ class RCMConfigUI(QtWidgets.QWidget, Ui_RCMConfig):
         self.setWindowTitle('RCM配置')
         self.btn_config.clicked.connect(
             self.ui_parent.linking_button('RCM配置', need_feedback=True, need_file=False,
-                                          callback=lambda: self.status_trigger.emit((1, 3, self.close)))
+                                          callback=lambda: self.ui_parent.status_trigger.emit((1, 3, self.close)))
         )
 
     def link_rcm_config_ui(self):
-        self.select_chnl.currentIndexChanged.connect(
-            self.ui_parent.change_param("RCM槽位号", self.select_chnl, 'text')
-        )
-        self.select_chnl.currentIndexChanged.connect(
-            self.ui_parent.change_param("通道掩码", self.select_chnl, 'text')
-        )
+        self.select_chnl.currentIndexChanged.connect(self.action_select_chnl)
 
         self.txt_transmit_atte.editingFinished.connect(
-            self.ui_parent.change_param("发送衰减", self.txt_transmit_atte)
+            self.ui_parent.change_param("发送衰减", self.txt_transmit_atte, float)
         )
         self.txt_recv_atte.editingFinished.connect(
-            self.ui_parent.change_param("接收衰减_1", self.txt_transmit_atte)
+            self.ui_parent.change_param("接收衰减_1", self.txt_recv_atte)
         )
         self.txt_recv_atte.editingFinished.connect(
-            self.ui_parent.change_param("接收衰减_2", self.txt_transmit_atte)
+            self.ui_parent.change_param("接收衰减_2", self.txt_recv_atte)
         )
+
+    def action_select_chnl(self, *args):
+        chnl = self.select_chnl.currentText()
+        chnl = 8 if chnl == '全部' else int(chnl)-1
+        self.ui_parent.rfs_kit.set_param_value("RCM槽位号", chnl, int)
+        self.ui_parent.rfs_kit.set_param_value("通道掩码", min(1 << chnl, 0xFF), int)
 
     def show_rcm_config_ui(self):
         self.select_chnl.setCurrentIndex(
-            self.ui_parent.rfs_kit.get_param_value("RCM槽位号", 0, int) - 5
+            {4: 0, 5: 1, 6: 2, 7: 3, 8: 4}[self.ui_parent.rfs_kit.get_param_value("RCM槽位号", 0, int)]
         )
         self.txt_transmit_atte.setText(
             self.ui_parent.rfs_kit.get_param_value("发送衰减", 0, str)

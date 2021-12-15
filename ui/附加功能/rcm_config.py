@@ -63,6 +63,6 @@ class Ui_RCMConfig(object):
         self.select_chnl.setItemText(1, _translate("RCMConfig", "6"))
         self.select_chnl.setItemText(2, _translate("RCMConfig", "7"))
         self.select_chnl.setItemText(3, _translate("RCMConfig", "8"))
-        self.select_chnl.setItemText(4, _translate("RCMConfig", "9"))
+        self.select_chnl.setItemText(4, _translate("RCMConfig", "全部"))
         self.label_3.setText(_translate("RCMConfig", "接收增益(dB)"))
         self.btn_config.setText(_translate("RCMConfig", "确定"))

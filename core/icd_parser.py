@@ -110,12 +110,14 @@ class ICDParams:
             return fmt_type(default)
         return fmt_type(param[2])
 
-    def set_param(self, param_name: str, value, fmt_type=int):
+    def set_param(self, param_name: str, value, fmt_type=None):
         param = self.param.get(param_name, [param_name, 'uint32', value])
         if isinstance(value, str) and value.startswith('0x'):
             param[2] = int(value, 16)
         elif isinstance(value, str) and value.startswith('0b'):
             param[2] = int(value, 2)
+        elif isinstance(value, str) and '.' in value:
+            param[2] = float(value)
         else:
             param[2] = value_python[param[1]](value)
         self.param.update({param_name: param})

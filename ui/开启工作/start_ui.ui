@@ -26,7 +26,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0">
           <property name="spacing">
            <number>7</number>
           </property>
@@ -52,6 +52,9 @@
           </item>
           <item row="8" column="4">
            <widget class="QLineEdit" name="txt_gate_width_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -72,6 +75,9 @@
           </item>
           <item row="10" column="2">
            <widget class="QComboBox" name="select_source_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -92,6 +98,9 @@
           </item>
           <item row="4" column="4">
            <widget class="QLineEdit" name="txt_gate_width_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -156,6 +165,9 @@
           </item>
           <item row="8" column="6">
            <widget class="QLineEdit" name="txt_sampling_points_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -173,6 +185,9 @@
           </item>
           <item row="8" column="2">
            <widget class="QComboBox" name="select_source_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -193,6 +208,9 @@
           </item>
           <item row="6" column="6">
            <widget class="QLineEdit" name="txt_sampling_points_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -217,6 +235,9 @@
           </item>
           <item row="10" column="0">
            <widget class="QLabel" name="label_4">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道4</string>
             </property>
@@ -224,6 +245,9 @@
           </item>
           <item row="6" column="2">
            <widget class="QComboBox" name="select_source_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -244,6 +268,9 @@
           </item>
           <item row="6" column="5">
            <widget class="QLineEdit" name="txt_sampling_delay_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -261,6 +288,9 @@
           </item>
           <item row="4" column="6">
            <widget class="QLineEdit" name="txt_sampling_points_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -271,6 +301,9 @@
           </item>
           <item row="10" column="3">
            <widget class="QLineEdit" name="txt_gate_delay_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -281,6 +314,9 @@
           </item>
           <item row="10" column="5">
            <widget class="QLineEdit" name="txt_sampling_delay_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -291,6 +327,9 @@
           </item>
           <item row="8" column="3">
            <widget class="QLineEdit" name="txt_gate_delay_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -301,6 +340,9 @@
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道1</string>
             </property>
@@ -332,6 +374,9 @@
           </item>
           <item row="6" column="3">
            <widget class="QLineEdit" name="txt_gate_delay_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -356,6 +401,9 @@
           </item>
           <item row="4" column="3">
            <widget class="QLineEdit" name="txt_gate_delay_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -376,6 +424,9 @@
           </item>
           <item row="8" column="0">
            <widget class="QLabel" name="label_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道3</string>
             </property>
@@ -626,6 +677,9 @@
           </item>
           <item row="10" column="4">
            <widget class="QLineEdit" name="txt_gate_width_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -670,6 +724,9 @@
           </item>
           <item row="8" column="5">
            <widget class="QLineEdit" name="txt_sampling_delay_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -680,6 +737,9 @@
           </item>
           <item row="4" column="2">
            <widget class="QComboBox" name="select_source_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -710,6 +770,9 @@
           </item>
           <item row="4" column="5">
            <widget class="QLineEdit" name="txt_sampling_delay_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -744,6 +807,9 @@
           </item>
           <item row="6" column="0">
            <widget class="QLabel" name="label_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道2</string>
             </property>
@@ -768,6 +834,9 @@
           </item>
           <item row="6" column="4">
            <widget class="QLineEdit" name="txt_gate_width_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>
@@ -818,6 +887,9 @@
           </item>
           <item row="10" column="6">
            <widget class="QLineEdit" name="txt_sampling_points_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>130</width>

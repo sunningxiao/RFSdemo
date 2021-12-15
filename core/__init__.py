@@ -47,6 +47,8 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         self.data_interface = data_interface()
         self._data_solve = DataSolve(self, self.data_interface, self._stop_event)
 
+        self.__data_interface = data_interface
+
     def close(self):
         self._stop_event.set()
         self.save_icd()
@@ -62,6 +64,13 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
 
     def start_command(self, target=None, target_param=tuple()):
         self.cmd_interface.accept(target, *target_param)
+
+        ip = self.cmd_interface._recv_addr[0]
+        _port = ip.split('.')[3][-2:]
+        _port = _port[0] + '00' + _port[1]
+        self.__data_interface._local_port = int(_port)
+        self.data_interface = self.__data_interface()
+        self._data_solve = DataSolve(self, self.data_interface, self._stop_event)
 
         self._connected = True
         for command in self.icd_param.after_connection:
@@ -146,7 +155,7 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
                     sent = self.cmd_interface.send_cmd(command)
                     command = command[sent:]
                     command_len -= sent
-                    printColor(f'未发送{command_len}字节', 'green')
+                    # printColor(f'未发送{command_len}字节', 'green')
             except Exception as e:
                 printException(e, f'指令({_command_name})发送失败')
                 return False

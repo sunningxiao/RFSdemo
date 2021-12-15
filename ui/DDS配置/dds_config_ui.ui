@@ -26,7 +26,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0">
           <property name="spacing">
            <number>7</number>
           </property>
@@ -39,6 +39,9 @@
           </item>
           <item row="8" column="7">
            <widget class="QLineEdit" name="txt_dds_pulse_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -49,6 +52,9 @@
           </item>
           <item row="2" column="3">
            <widget class="QLineEdit" name="txt_dds_fc_step_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -59,6 +65,9 @@
           </item>
           <item row="6" column="3">
            <widget class="QLineEdit" name="txt_dds_fc_step_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -120,6 +129,9 @@
           </item>
           <item row="4" column="7">
            <widget class="QLineEdit" name="txt_dds_pulse_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -211,6 +223,9 @@
           </item>
           <item row="6" column="6">
            <widget class="QLineEdit" name="txt_dds_band_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -270,6 +285,9 @@
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道2</string>
             </property>
@@ -284,6 +302,9 @@
           </item>
           <item row="8" column="11">
            <widget class="QLineEdit" name="txt_dds_phase_range_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -316,6 +337,9 @@
           </item>
           <item row="4" column="3">
            <widget class="QLineEdit" name="txt_dds_fc_step_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -373,6 +397,9 @@
           </item>
           <item row="8" column="3">
            <widget class="QLineEdit" name="txt_dds_fc_step_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -407,6 +434,9 @@
           </item>
           <item row="6" column="4">
            <widget class="QLineEdit" name="txt_dds_fc_range_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -417,6 +447,9 @@
           </item>
           <item row="6" column="11">
            <widget class="QLineEdit" name="txt_dds_phase_range_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -471,6 +504,9 @@
           </item>
           <item row="2" column="10">
            <widget class="QLineEdit" name="txt_dds_phase_step_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -503,6 +539,9 @@
           </item>
           <item row="6" column="7">
            <widget class="QLineEdit" name="txt_dds_pulse_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -520,6 +559,9 @@
           </item>
           <item row="4" column="4">
            <widget class="QLineEdit" name="txt_dds_fc_range_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -540,6 +582,9 @@
           </item>
           <item row="2" column="9">
            <widget class="QLineEdit" name="txt_dds_phase_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -557,6 +602,9 @@
           </item>
           <item row="4" column="9">
            <widget class="QLineEdit" name="txt_dds_phase_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -577,6 +625,9 @@
           </item>
           <item row="8" column="2">
            <widget class="QLineEdit" name="txt_dds_fc_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -628,6 +679,9 @@
           </item>
           <item row="8" column="10">
            <widget class="QLineEdit" name="txt_dds_phase_step_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -648,6 +702,9 @@
           </item>
           <item row="6" column="2">
            <widget class="QLineEdit" name="txt_dds_fc_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -678,6 +735,9 @@
           </item>
           <item row="2" column="2">
            <widget class="QLineEdit" name="txt_dds_fc_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -715,6 +775,9 @@
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道1</string>
             </property>
@@ -722,6 +785,9 @@
           </item>
           <item row="4" column="11">
            <widget class="QLineEdit" name="txt_dds_phase_range_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -759,6 +825,9 @@
           </item>
           <item row="2" column="6">
            <widget class="QLineEdit" name="txt_dds_band_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -779,6 +848,9 @@
           </item>
           <item row="6" column="9">
            <widget class="QLineEdit" name="txt_dds_phase_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -836,6 +908,9 @@
           </item>
           <item row="8" column="4">
            <widget class="QLineEdit" name="txt_dds_fc_range_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -873,6 +948,9 @@
           </item>
           <item row="4" column="6">
            <widget class="QLineEdit" name="txt_dds_band_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -883,6 +961,9 @@
           </item>
           <item row="6" column="0">
            <widget class="QLabel" name="label_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道3</string>
             </property>
@@ -911,6 +992,9 @@
           </item>
           <item row="4" column="10">
            <widget class="QLineEdit" name="txt_dds_phase_step_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -941,6 +1025,9 @@
           </item>
           <item row="2" column="7">
            <widget class="QLineEdit" name="txt_dds_pulse_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -972,6 +1059,9 @@
           </item>
           <item row="8" column="0">
            <widget class="QLabel" name="label_4">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>通道4</string>
             </property>
@@ -998,6 +1088,9 @@
           </item>
           <item row="8" column="6">
            <widget class="QLineEdit" name="txt_dds_band_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -1008,6 +1101,9 @@
           </item>
           <item row="4" column="2">
            <widget class="QLineEdit" name="txt_dds_fc_1">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -1018,6 +1114,9 @@
           </item>
           <item row="8" column="9">
            <widget class="QLineEdit" name="txt_dds_phase_3">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -1062,6 +1161,9 @@
           </item>
           <item row="6" column="10">
            <widget class="QLineEdit" name="txt_dds_phase_step_2">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -1096,6 +1198,9 @@
           </item>
           <item row="2" column="4">
            <widget class="QLineEdit" name="txt_dds_fc_range_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -1116,6 +1221,9 @@
           </item>
           <item row="2" column="11">
            <widget class="QLineEdit" name="txt_dds_phase_range_0">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="maximumSize">
              <size>
               <width>150</width>

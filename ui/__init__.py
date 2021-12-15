@@ -16,6 +16,7 @@ from ui.频谱显示 import SpectrumScreen
 from ui.QMC配置 import QMCConfig
 from ui.RF配置 import RFConfig
 from ui.连接界面 import LinkSystemUI
+from ui.附加功能 import RCMConfigUI
 
 from tools.printLog import *
 
@@ -49,6 +50,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.qmc_config_ui = QMCConfig(self)
         self.rf_config_ui = RFConfig(self)
         self.link_system_ui = LinkSystemUI(self)
+        self.rcm_config_ui = RCMConfigUI(self)
 
         self.enable_chk_channels = []
         self.status_timer = QtCore.QTimer(self)
@@ -94,6 +96,10 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.linking_button('QMC配置', need_feedback=True, need_file=False)
         )
         self.link_qmc_config_ui()
+
+        # RCM相关
+        self.ui.btn_rcm_cfg.clicked.connect(self.rcm_config_ui.show)
+        self.rcm_config_ui.link_rcm_config_ui()
 
         self.ui.btn_start.clicked.connect(self.start_ui.show)
         self.start_ui.btn_config.clicked.connect(
@@ -204,7 +210,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         pg.mkPen()
         self.gui_state(0)
         self.ui.tabWidget.setCurrentIndex(0)
-        # self.ui.tabWidget.setTabEnabled(1, False)
+        self.ui.tabWidget.setTabEnabled(1, False)
         self.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:

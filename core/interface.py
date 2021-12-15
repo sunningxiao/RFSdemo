@@ -11,7 +11,7 @@ from tools.utils import SingletonType, APIBaseType
 from tools.printLog import *
 
 
-class RFSInterfaceMeta(APIBaseType, SingletonType):
+class RFSInterfaceMeta(APIBaseType):
     _METHODS = frozenset({
         "recv_cmd", "send_cmd",
         "read_data", "write_data", "pre_read", "pre_write", "lookup_data",
@@ -114,7 +114,7 @@ class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
 
 
 class DataTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
-    _local_port = 6001
+    _local_port = 5001
     _remote_port = 5002
     _conn_ip = "192.168.1.161"
     _serial_num = 1

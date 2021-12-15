@@ -2,7 +2,7 @@
 
 * 打包方法
 
-  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' -Fw console.py`
+  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' -Fw main.py`
 
 * 环境安装
   

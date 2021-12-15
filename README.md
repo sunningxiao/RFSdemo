@@ -8,6 +8,9 @@
   
   `pip install -r requirements.txt`
 
+## 二次开发套件RFSKit文档
+* [内网访问](http://192.168.1.2/pages/viewpage.action?pageId=144443947)
+
 ## 变更记录
 ### v2
 * UI界面修改与搭建

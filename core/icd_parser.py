@@ -116,7 +116,7 @@ class ICDParams:
             param[2] = int(value, 16)
         elif isinstance(value, str) and value.startswith('0b'):
             param[2] = int(value, 2)
-        elif isinstance(value, str) and '.' in value:
+        elif isinstance(value, str) and '.' in value and param[1] != 'file':
             param[2] = float(value)
         else:
             param[2] = value_python[param[1]](value)

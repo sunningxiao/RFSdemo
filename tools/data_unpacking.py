@@ -215,9 +215,9 @@ class UnPackage:
                   for index, data in enumerate(_data)}
 
         for (index, data), idx in product(enumerate(_data), frame_idx):
-            _data = frames[index][idx]
-            _, (__, _data) = cls.common_solve_data(_data, qv_length=pack_length, head_tag=0x18EFDC01)
-            frames[index][idx] = {chnl_id: _data[chnl_id] for chnl_id in chnl_idx}
+            chnl_data = frames[index][idx]
+            _, (__, chnl_data) = cls.common_solve_data(chnl_data, qv_length=pack_length, head_tag=0x18EFDC01)
+            frames[index][idx] = {chnl_id: chnl_data[chnl_id] for chnl_id in chnl_idx}
 
         return frames
 

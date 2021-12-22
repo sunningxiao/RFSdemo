@@ -1,6 +1,6 @@
 import socket
 from typing import Union
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 import numpy as np
 import serial
 
@@ -36,6 +36,8 @@ class CommandSerialInterface(metaclass=RFSInterfaceMeta, _root=True):
 
     def accept(self, target_id=None, *args):
         _target_id = self._target_id if target_id is None else target_id
+        if self._device_serial is not None:
+            self._device_serial.close()
         if args:
             self._device_serial = serial.Serial(target_id, *args)
         else:
@@ -79,19 +81,27 @@ class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
         self.set_timeout(self._timeout)
         self._recv_addr = (self._target_id, self._remote_port)
 
+        self.busy_lock = Lock()
+
     def accept(self, target_id=None, *args):
         _target_id = self._target_id if target_id is None else target_id
-        if args:
-            self._tcp_server.connect((_target_id, *args))
-        else:
-            self._tcp_server.connect((_target_id, self._remote_port))
+        with self.busy_lock:
+            self.close()
+            self._tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if args:
+                self._tcp_server.connect((_target_id, *args))
+            else:
+                self._tcp_server.connect((_target_id, self._remote_port))
         self._recv_addr = (_target_id, self._remote_port)
 
     def recv_cmd(self, size=1024):
-        return self._tcp_server.recv(size)
+        with self.busy_lock:
+            return self._tcp_server.recv(size)
 
     def send_cmd(self, data):
-        return self._tcp_server.send(data)
+        with self.busy_lock:
+            return self._tcp_server.send(data)
 
     def close(self):
         try:

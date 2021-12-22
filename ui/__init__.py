@@ -20,7 +20,7 @@ from ui.连接界面 import LinkSystemUI
 from tools.printLog import *
 
 from core import RFSKit
-from core.interface import CommandSerialInterface, CommandTCPInterface
+from core.interface import DataTCPInterface, CommandTCPInterface
 from tools.data_unpacking import UnPackage
 
 from widgets.pgdialog import pgdialog
@@ -54,13 +54,21 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.status_timer = QtCore.QTimer(self)
         self.status_timer.timeout.connect(self.action_get_status)
 
-        self.initUI()
+        self.status_trigger.connect(self.show_unload_status)
+        self.link_system_ui.show()
 
-        self.rfs_kit = RFSKit(cmd_interface=CommandTCPInterface, auto_load_icd=True)
-        # self.rfs_kit = icd_parser.ICDParams()
+    def init_system(self, cmd_interface=CommandTCPInterface, data_interface=DataTCPInterface):
+        self.rfs_kit = RFSKit(
+            cmd_interface=cmd_interface,
+            data_interface=data_interface,
+            auto_load_icd=True)
+        self.initUI()
         self.load_param()
 
-        self.scanning_board()
+        self.ui.select_link_addr.setCurrentText(cmd_interface._target_id)
+        self.ui.select_link_addr.setDisabled(True)
+
+        self.click_connect()
 
     def initUI(self):
         self.ui.setupUi(self)
@@ -74,6 +82,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.setWindowIcon(ico)
 
         self.ui.splitter_log.moveSplitter(0, 1)
+        self.ui.chk_port_follow_ip.setHidden(True)
         self.ui.btn_connect_com.clicked.connect(self.click_connect_com)
 
         print_wheel.txt_trigger.connect(self.update_textlog)
@@ -226,41 +235,6 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         stream_str = self.ui.select_com_stream.currentText()
         self.connect_com(port, baud, check_sum, byte_size, stop_bit, stream_str)
 
-    def scanning_board(self):
-        dest = ('<broadcast>', 5003)
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        addrs = socket.getaddrinfo(socket.gethostname(), None)
-        addr = [addr[4][0] for addr in addrs if addr[4][0].startswith('192.168.1.')]
-        if not addr:
-            printWarning('本机没有192.168.1.0网段的ip地址，不能完成扫描')
-            return
-        printInfo(f'本机IP：{addr[0]}')
-        try:
-            s.bind((addr[0], 15000))
-        except:
-            printWarning('扫描端口15000绑定失败，不能完成扫描')
-            return
-        s.sendto(b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00", dest)
-        s.settimeout(3)
-
-        def udp_func():
-            try:
-                while True:
-                    (_, addr) = s.recvfrom(2048)
-                    self.ui.select_link_addr.addItem(addr[0])
-            except:
-                s.close()
-                # self.ui.select_link_addr.setCurrentIndex(0)
-                printInfo('板卡扫描完成')
-
-        def serial_func():
-            for serial in list_ports.comports():
-                self.ui.select_link_addr.addItem(serial.device)
-
-        _thread = threading.Thread(target=udp_func)
-        _thread.start()
-
     def update_textlog(self, msg):
         try:
             if self._text_line >= 5000:
@@ -273,9 +247,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             printException(e)
 
     def click_connect(self):
-        ip = self.ui.select_link_addr.currentText()
-        follow = self.ui.chk_port_follow_ip.isChecked()
-        _pg = pgdialog(self, self.rfs_kit.start_command, args=(ip, ), label="系统连接", withcancel=False, mode=2)
+        # ip = self.ui.select_link_addr.currentText()
+        # follow = self.ui.chk_port_follow_ip.isChecked()
+        _pg = pgdialog(self, self.rfs_kit.start_command, label="系统连接", withcancel=False, mode=2)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
@@ -654,8 +628,6 @@ def init_ui():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("naishu")
 
     rfs = RFSControl()
-
-    rfs.status_trigger.connect(rfs.show_unload_status)
     # rfs.link_system_ui.show()
     printInfo("软件已启动")
 

@@ -3,6 +3,7 @@ from serial.tools import list_ports
 from threading import Thread, Lock, Event
 from tools.printLog import *
 from PyQt5.QtCore import QTimer
+from PyQt5 import QtWidgets, QtCore
 
 
 class SerialUIMixin:
@@ -89,3 +90,16 @@ class SerialUIMixin:
                 printException(e)
 
         self._serial_stopped_event.set()
+
+
+def center_move2_point(widget: QtWidgets.QWidget, point: QtCore.QPoint) -> None:
+    """
+    将widget的中心移动导指定的点
+
+    :param widget: 目标widget
+    :param point: 目标点
+    :return: 无
+    """
+    frame = widget.frameGeometry()
+    frame.moveCenter(point)
+    widget.move(frame.topLeft())

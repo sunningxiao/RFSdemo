@@ -146,7 +146,7 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
                     sent = self.cmd_interface.send_cmd(command)
                     command = command[sent:]
                     command_len -= sent
-                    printColor(f'未发送{command_len}字节', 'green')
+                    # printColor(f'未发送{command_len}字节', 'green')
             except Exception as e:
                 printException(e, f'指令({_command_name})发送失败')
                 return False

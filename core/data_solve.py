@@ -1,16 +1,12 @@
 import time
 from typing import Union
 
-from PyQt5 import QtCore
 import threading
 import os
 import numpy as np
 from core.interface import DataTCPInterface, XdmaInterface
 from tools.data_unpacking import UnPackage
 from tools.printLog import *
-
-# 是否解包存储
-UNPACK = False
 
 
 class DataSolve:
@@ -84,8 +80,8 @@ class DataSolve:
         disconnect = DataTCPInterface.DISCONNECT
         try:
             self.server.accept(self.upload_stop_event)
-            # self.server.recv_server.settimeout(None)
-            # printColor('已建立连接', 'green')
+            printColor('已建立连接', 'green')
+
             while not self.upload_stop_event.is_set():
                 if self.server.pre_read(1024):
                     header = self.server.lookup_data()
@@ -100,6 +96,7 @@ class DataSolve:
             while not self.upload_stop_event.is_set():
                 if self.server.pre_read(once_package-1024):
                     break
+
             self.__start_upload_time = time.time()
             self.__upload_data_length = 0
             self.__prev_data_length = 0
@@ -118,22 +115,6 @@ class DataSolve:
             self.server.close()
             printException(e)
         self.upload_stop_event.set()
-
-    # def solve(self, chl_flag: iter):
-    #     """ 数据解包 """
-    #     try:
-    #         while not self.upload_stop_event.is_set():
-    #             _data = self.server.lookup_data()
-    #             if _data:
-    #                 data = np.frombuffer(_data, dtype='u4')
-    #                 data = UnPackage.solve_source_data(data, chl_flag, for_save=True, step=0)
-    #                 if data:
-    #                     # us_signal.status_trigger.emit((1, 2, data))
-    #                     time.sleep(1.5)
-    #     except AssertionError as e:
-    #         printDebug(e)
-    #     except Exception as e:
-    #         printException(e)
 
     def write(self, file, write_file):
         """

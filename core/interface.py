@@ -22,6 +22,11 @@ class RFSInterfaceMeta(APIBaseType, SingletonType):
     }
 
 
+class CmdInterfaceBusy(RuntimeError):
+    def __str__(self):
+        return f'{self.__class__.__name__}: {self.args[0]}'
+
+
 class CommandSerialInterface(metaclass=RFSInterfaceMeta, _root=True):
     _target_id = 'COM0'
     _target_baud_rate = 115200
@@ -89,6 +94,8 @@ class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
             self.close()
             self._tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.set_timeout(self._timeout)
+            self._recv_addr = (self._target_id, self._remote_port)
             if args:
                 self._tcp_server.connect((_target_id, *args))
             else:
@@ -100,6 +107,9 @@ class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
             return self._tcp_server.recv(size)
 
     def send_cmd(self, data):
+        if self.busy_lock.locked():
+            # printColor('等待上一条指令处理完成')
+            raise CmdInterfaceBusy('等待上一条指令处理完成')
         with self.busy_lock:
             return self._tcp_server.send(data)
 

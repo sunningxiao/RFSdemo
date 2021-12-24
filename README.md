@@ -2,7 +2,8 @@
 
 * 打包方法
 
-  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' -Fw console.py`
+  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' --add-data='.\VERSION;./' --exclude-module=matplotlib --exclude-module=matplotlib-inline --exclude-module=ipython --exclude-module=ipython-genutils -i static/logo-blue.ico -Fw main.py
+`
 
 * 环境安装
   

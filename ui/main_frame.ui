@@ -924,20 +924,20 @@
                 <item>
                  <widget class="QCheckBox" name="chk1">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>通道1</string>
                   </property>
                   <property name="checked">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QCheckBox" name="chk2">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>通道2</string>
@@ -947,7 +947,7 @@
                 <item>
                  <widget class="QCheckBox" name="chk3">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>通道3</string>
@@ -957,7 +957,7 @@
                 <item>
                  <widget class="QCheckBox" name="chk4">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>通道4</string>

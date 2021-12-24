@@ -634,6 +634,9 @@ def init_ui():
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("naishu")
 
+    if __file__.endswith('.pyc'):
+        import pyi_splash
+        pyi_splash.close()
     rfs = RFSControl()
     # rfs.link_system_ui.show()
     printInfo("软件已启动")

@@ -86,6 +86,11 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
                 self.txt_tcp_port.setText(_port)
 
     def scanning_board(self):
+        """
+        扫描板卡
+
+        :return:
+        """
         dest = ('<broadcast>', 5003)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)

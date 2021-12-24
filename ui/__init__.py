@@ -1,14 +1,13 @@
 import threading
 import time
+import os
 
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
-import socket
-from serial.tools import list_ports
 
 import ui.main_frame as ui
-from ui.utils import SerialUIMixin
+from ui.utils import SerialUIMixin, get_git_version
 from ui.DDS配置 import DDSConfig
 from ui.开启工作 import StartConfig
 from ui.波形预置 import WaveFileConfig
@@ -24,6 +23,12 @@ from core.interface import DataTCPInterface, CommandTCPInterface
 from tools.data_unpacking import UnPackage
 
 from widgets.pgdialog import pgdialog
+
+UiVersion = 'v3.0'
+get_git_version()
+
+with open(f'{os.path.dirname(os.path.abspath(__file__))}/../VERSION', 'r', encoding='utf-8') as fp:
+    UiVersion = fp.read()
 
 
 class RFSControl(QtWidgets.QWidget, SerialUIMixin):
@@ -80,6 +85,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         ico = QtGui.QIcon()
         ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
+
+        self.ui.label_version.setText(UiVersion)
 
         self.ui.splitter_log.moveSplitter(0, 1)
         self.ui.chk_port_follow_ip.setHidden(True)

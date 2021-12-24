@@ -28,6 +28,10 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
         self.label_logo.setPixmap(pix)
         self.label_logo.setScaledContents(True)
 
+        ico = QtGui.QIcon()
+        ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(ico)
+
         self.chk_udp_cmd.setDisabled(True)
         self.widget_serial.setHidden(True)
         self.chk_follow.setChecked(True)

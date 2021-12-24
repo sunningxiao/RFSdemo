@@ -103,3 +103,13 @@ def center_move2_point(widget: QtWidgets.QWidget, point: QtCore.QPoint) -> None:
     frame = widget.frameGeometry()
     frame.moveCenter(point)
     widget.move(frame.topLeft())
+
+
+def get_git_version():
+    if __file__.endswith('.pyc'):
+        return
+    import git
+    _git = git.Git()
+    version = _git.describe('--tags')
+    with open('./VERSION', 'w', encoding='utf-8') as fp:
+        fp.write(version)

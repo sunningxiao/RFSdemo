@@ -3,6 +3,5 @@ venv/
 .idea/
 build/
 dist/
-*.spec
 *.dat*
 test/

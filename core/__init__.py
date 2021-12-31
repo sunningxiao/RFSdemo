@@ -61,12 +61,15 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         return self.icd_param.save_icd(path)
 
     def start_command(self, target=None, target_param=tuple()):
-        self.cmd_interface.accept(target, *target_param)
+        try:
+            self.cmd_interface.accept(target, *target_param)
 
-        self._connected = True
-        for command in self.icd_param.after_connection:
-            self.execute_command(command)
-        return True
+            self._connected = True
+            for command in self.icd_param.after_connection:
+                self.execute_command(command)
+            return True
+        except ConnectionRefusedError as e:
+            return False
 
     def start_stream(self, auto_write_file=None, filepath=None, write_file=True, file_name=''):
         """

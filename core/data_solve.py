@@ -127,6 +127,7 @@ class DataSolve:
         try:
             start_time = time.time()
             data_length = 0
+            self.__write_speed = 0
             while not self.upload_stop_event.is_set():
                 _data = self.server.read_data()
                 if write_file and isinstance(_data, np.ndarray):

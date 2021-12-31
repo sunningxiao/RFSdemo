@@ -27,7 +27,7 @@ class Queue(queue.Queue):
             if self._count < 2:
                 item = self._get()
                 self.not_full.notify()
-                return True, item
+                return True, item[0]
 
             if sign in self._value:
                 if self.flag == self._count:
@@ -35,13 +35,13 @@ class Queue(queue.Queue):
                     self.not_full.notify()
                     self.not_end.notify_all()
                     self.flag = 1
-                    return True, item
+                    return True, item[0]
                 else:
                     # item = list(self.queue)[0]
                     item = self.queue[0]  # deque支持索引取值
                     self.flag += 1
                     self.not_end.wait()
-                    return False, item
+                    return False, item[0]
         return False
 
     def lookup(self, timeout=1):
@@ -50,7 +50,11 @@ class Queue(queue.Queue):
                 if not self.not_empty.wait(timeout):
                     return False
 
-            return self.queue[-1]
+            data = self.queue[-1]
+            if data[1]:
+                data[1] = False
+                return data[0]
+            return False
 
     def m_put(self, item, timeout=1):
         with self.not_full:
@@ -58,7 +62,7 @@ class Queue(queue.Queue):
                 while self._qsize() >= self.maxsize:
                     if not self.not_full.wait(timeout):
                         return False
-            self._put(item)
+            self._put([item, True])
             self.not_empty.notify_all()
             return True
 

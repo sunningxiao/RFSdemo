@@ -253,10 +253,17 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         except Exception as e:
             printException(e)
 
+    def wrap_start_command(self, *args, pthread=None):
+        if pthread:
+            res = self.rfs_kit.start_command(*args)
+            pthread.update_state(res)
+        else:
+            return self.rfs_kit.start_command(*args)
+
     def click_connect(self):
         # ip = self.ui.select_link_addr.currentText()
         # follow = self.ui.chk_port_follow_ip.isChecked()
-        _pg = pgdialog(self, self.rfs_kit.start_command, label="系统连接", withcancel=False, mode=2)
+        _pg = pgdialog(self, self.wrap_start_command, label="系统连接", withcancel=False, mode=0)
         if _pg.perform():
             self.gui_state(1)
             self.ui.tabWidget.setCurrentIndex(0)
@@ -277,8 +284,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             while self._status == 2:
                 data = self.rfs_kit.view_stream_data()
                 data = UnPackage.solve_source_data(data, [True]*16, 16384)
-                self.status_trigger.emit([1, 2, data])
-                time.sleep(1)
+                if data:
+                    self.status_trigger.emit([1, 2, data])
+                    time.sleep(1)
 
         _thread = threading.Thread(target=_func, daemon=True)
         _thread.start()

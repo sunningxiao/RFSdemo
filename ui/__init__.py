@@ -317,7 +317,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                 self.status_trigger.emit((1, 3, self.wave_file_config_ui.close))
                 # self.wave_file_config_ui.close()
 
-        thread = threading.Thread(target=_func)
+        thread = threading.Thread(target=_func, daemon=True)
         thread.start()
 
     def show_unpack(self, data):

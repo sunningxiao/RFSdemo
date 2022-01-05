@@ -53,7 +53,7 @@ class DataSolve:
     def start_solve(self, auto_write_file=True, filepath=None, write_file=True, file_name=''):
         # self._cache = Queue(1024)
         # 启动数据接收线程
-        _thread = threading.Thread(target=self.wait_connect)
+        _thread = threading.Thread(target=self.wait_connect, daemon=True)
         _thread.start()
 
         if not auto_write_file:
@@ -66,7 +66,7 @@ class DataSolve:
 
         filename = f'data-{file_name}_0.data'
         self._files.append(open(f'{filepath}/{filename}', 'wb'))
-        _thread = threading.Thread(target=self.write, args=(self._files[-1], write_file))
+        _thread = threading.Thread(target=self.write, args=(self._files[-1], write_file), daemon=True)
         _thread.start()
 
         # _thread = threading.Thread(target=self.solve, args=([True]*16, ))

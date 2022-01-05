@@ -115,7 +115,7 @@ class pthread(threading.Thread):
         else:
             self.state = True
             kwargs = {}
-        super(pthread, self).__init__(target=target, args=args, kwargs=kwargs)
+        super(pthread, self).__init__(target=target, args=args, kwargs=kwargs, daemon=True)
 
     def stop(self):
         self._stop_event.set()

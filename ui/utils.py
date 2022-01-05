@@ -73,7 +73,7 @@ class SerialUIMixin:
         self._serial_stopped_event.clear()
         self._serial_stop_event.clear()
         if self.device_serial.isOpen():
-            _thread = Thread(target=self.start_recv)
+            _thread = Thread(target=self.start_recv, daemon=True)
             _thread.start()
 
     def start_recv(self):

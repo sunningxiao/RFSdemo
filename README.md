@@ -2,8 +2,7 @@
 
 * 打包方法
 
-  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' --add-data='.\VERSION;./' --exclude-module=matplotlib --exclude-module=matplotlib-inline --exclude-module=ipython --exclude-module=ipython-genutils -i static/logo-blue.ico -Fw main.py
-`
+  `pyinstaller --add-binary='.\core\xdma\xdma_api.dll;./core/xdma' --add-data='.\VERSION;./' --exclude-module=matplotlib --exclude-module=matplotlib-inline --exclude-module=ipython --exclude-module=ipython-genutils --upx-dir="D:\Software\upx-3.96-win64\" --splash='.\static\splash.png' -i static/logo-blue.ico -Fw main.py`
 
 * 环境安装
   

@@ -6,6 +6,7 @@
 """
 import numpy as np
 from scipy.fftpack import fft, ifft
+import matplotlib.pyplot as plt
 
 
 class Custom:
@@ -53,6 +54,8 @@ class Custom:
             max_index = np.argmax(amp_expect_zero) % n_spec
         if fc < 0:
             max_index = max_index + n_spec
+            if (nr % 2) == 1:
+                max_index = max_index+1
         peak_amp = cls.mag2db(spec[:, max_index])           # 各通道提取同一频率处的值
         peak_phase = np.angle(spec[:, max_index])
         f = cls.freq(fs, nr)

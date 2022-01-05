@@ -122,8 +122,8 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
             for serial in list_ports.comports():
                 self.select_serial_addr.addItem(serial.device)
 
-        _thread = threading.Thread(target=udp_func)
+        _thread = threading.Thread(target=udp_func, daemon=True)
         _thread.start()
 
-        _thread = threading.Thread(target=serial_func)
+        _thread = threading.Thread(target=serial_func, daemon=True)
         _thread.start()

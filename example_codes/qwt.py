@@ -9,7 +9,7 @@ if __name__ == '__main__':
         chnl.chnl_id = i
 
     data = np.array([], dtype='u4')
-    for frq in range(2240, 3841, 160):
+    for frq in range(2200, 3801, 10):
         signal = np.zeros((8, 32768), dtype='u4')
         for i in range(8):
             signal[i] = packing.signal_generate(frq*1e6, init_phase=i*30, sampling_rate=4e9, parallel_channels=1)

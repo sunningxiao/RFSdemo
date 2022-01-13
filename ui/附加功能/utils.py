@@ -15,7 +15,7 @@ class Custom:
     """
 
     @classmethod
-    def get_coherence(cls, sig, para) -> np.ndarray:
+    def get_coherence(cls, sig, para) -> dict:
         """
         处理正弦信号，获取幅相一致性指标并生成校正因子
         输入：
@@ -27,12 +27,14 @@ class Custom:
             'RefChannel': 0,                # 参考通道,默认为通道0
             'GenCaliFactorEn': 1,           # 生成校正因子使能，默认不使能
         }
-        输出：uniform，一致性指标，3列数组，分别为幅度一致性/dB、相位一致性/°和延迟一致性/ps
+        输出：uniformity为字典，peak_amp_uniform幅度一致性/dB、peak_phase_uniform相位一致性/°和delay_uniform延迟一致性/ps
+        peak_amp原始幅度/dB、peak_phase原始相位/°
+        cali_factor_complex归一化复校正因子，cali_factor_uint校正因子(uint)，cali_factor_hex16进制校正因子
 
         """
         nc = sig.shape[0]           # 获取信号通道数
         nr = sig.shape[1]
-
+        uniformity = dict()
         # 正弦信号整周期截取
         fs = para['fs']
         fc_orig = para['fc']
@@ -58,6 +60,8 @@ class Custom:
                 max_index = max_index+1
         peak_amp = cls.mag2db(spec[:, max_index])           # 各通道提取同一频率处的值
         peak_phase = np.angle(spec[:, max_index])
+        uniformity['peak_amp'] = peak_amp
+        uniformity['peak_phase'] = np.degrees(peak_phase)
         f = cls.freq(fs, nr)
         fmax = f[max_index]
         if para.get('RefChannel'):
@@ -70,7 +74,10 @@ class Custom:
         peak_phase_uniform = np.angle(np.exp(1j * peak_phase_uniform))
         delay_uniform = -peak_phase_uniform / (2 * np.pi * fc_orig / 1e12)               # 延迟需要用原始频率计算,单位ps
         peak_phase_uniform = np.degrees(peak_phase_uniform)                             # 用角度表示相位一致性
-        uniform = np.vstack((peak_amp_uniform, peak_phase_uniform, delay_uniform)).T      # 一致性指标
+        uniformity['peak_amp_uniform'] = peak_amp_uniform
+        uniformity['peak_phase_uniform'] = peak_phase_uniform
+        uniformity['delay_uniform'] = delay_uniform
+        # uniform = np.vstack((peak_amp_uniform, peak_phase_uniform, delay_uniform, peak_amp, peak_phase)).T      # 一致性指标
 
         # 生成校正因子
         if para.get('GenCaliFactorEn'):
@@ -80,12 +87,15 @@ class Custom:
         if gen_cali_factor_en:
             peak_amp_uniform = peak_amp_uniform-max(peak_amp_uniform)
             cali_factor = 10**(peak_amp_uniform/20)*np.exp(1j*peak_phase_uniform/180*np.pi)      # 各通道福相因子
-            cali_factor = 1/cali_factor
+            cali_factor = 1/cali_factor                                                          # 倒数为校正因子
+            uniformity['cali_factor_complex'] = cali_factor/max(abs(cali_factor))
             cali_factor_uint, cali_factor = cls.float_complex_2qi(cali_factor)
             cali_factor_hex = [0] * nc
             for i in range(nc):
                 cali_factor_hex[i] = hex(int(cali_factor_uint[i]))          # 16进制校正因子
-        return uniform
+            uniformity['cali_factor_uint'] = cali_factor_uint
+            # uniformity['cali_factor_hex'] = cali_factor_hex
+        return uniformity
 
     @classmethod
     def get_chirp_coherence(cls, chirp, para):
@@ -152,7 +162,7 @@ class Custom:
         else:
             ref_channel = 0  # 默认参考通道为0
         uniform = delay - delay[ref_channel]
-        return uniform
+        return {'delay_uniform': uniform}
 
     @classmethod
     def float_complex_2qi(cls, complex_data, n_bit=16):

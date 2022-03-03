@@ -26,7 +26,7 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_5" columnstretch="0,0,0,0,0,0,0">
           <property name="spacing">
            <number>7</number>
           </property>
@@ -86,6 +86,11 @@
             <item>
              <property name="text">
               <string>RAM预置</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
              </property>
             </item>
            </widget>
@@ -189,6 +194,11 @@
               <string>RAM预置</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="6" column="6">
@@ -238,6 +248,11 @@
             <item>
              <property name="text">
               <string>RAM预置</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
              </property>
             </item>
            </widget>
@@ -493,6 +508,11 @@
               <string>RAM预置</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="0" column="4">
@@ -561,6 +581,11 @@
               <string>RAM预置</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="14" column="0">
@@ -615,6 +640,11 @@
               <string>RAM预置</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item row="19" column="6">
@@ -650,6 +680,11 @@
             <item>
              <property name="text">
               <string>RAM预置</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
              </property>
             </item>
            </widget>
@@ -694,6 +729,11 @@
             <item>
              <property name="text">
               <string>RAM预置</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>DDS调制</string>
              </property>
             </item>
            </widget>

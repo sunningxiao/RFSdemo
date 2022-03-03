@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 from numpy import fft
+from scipy.signal import windows
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -31,7 +32,9 @@ class SpectrumScreen(QtWidgets.QDialog, spectrum_ui.Ui_Dialog):
 
     def show_data(self, index, need_show, data=(), _pen='w'):
         if need_show:
-            self.channel_plots[index].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(data)))), pen=_pen)
+            window = windows.hamming(len(data))
+            # chirp = data * fft.ifftshift(window)   # 加窗
+            self.channel_plots[index].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(data*window)))), pen=_pen)
             self.channel_plots[index].show()
         else:
             self.channel_plots[index].hide()

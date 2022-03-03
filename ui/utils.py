@@ -1,3 +1,4 @@
+import socket
 import serial
 from serial.tools import list_ports
 from threading import Thread, Lock, Event
@@ -113,3 +114,32 @@ def get_git_version():
     version = _git.describe('--tags')
     with open('./VERSION', 'w', encoding='utf-8') as fp:
         fp.write(version)
+
+
+def send_command(ip, port, command):
+    """
+    最简指令发送
+
+    :param ip:
+    :param port:
+    :param command:
+    :return:
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.settimeout(5)
+    try:
+        sock.connect((ip, port))
+        command_len = len(command)
+        while command_len > 0:
+            sent = sock.send(command)
+            command = command[sent:]
+            command_len -= sent
+            # printColor(f'未发送{command_len}字节', 'green')
+        _feedback = sock.recv(20)
+
+        sock.close()
+    except Exception as e:
+        return False
+
+    return True

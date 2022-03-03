@@ -62,7 +62,13 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
             CommandTCPInterface._target_id = self.select_tcp_addr.currentText()
             CommandTCPInterface._timeout = 10
             DataTCPInterface._local_port = int(self.txt_tcp_port.text())
-            self.__parent.init_system(CommandTCPInterface, DataTCPInterface)
+
+            addrs = []
+            for i in range(self.select_tcp_addr.count()):
+                ip = self.select_tcp_addr.itemText(i)
+                if ip != CommandTCPInterface._target_id:
+                    addrs.append(ip)
+            self.__parent.init_system(CommandTCPInterface, DataTCPInterface, addrs=addrs)
         self.close()
 
     def action_change_cmd_type(self):

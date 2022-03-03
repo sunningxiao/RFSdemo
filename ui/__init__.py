@@ -7,7 +7,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
 import ui.main_frame as ui
-from ui.utils import SerialUIMixin, get_git_version
+from ui.utils import SerialUIMixin, get_git_version, send_command
 from ui.DDS配置 import DDSConfig
 from ui.开启工作 import StartConfig
 from ui.波形预置 import WaveFileConfig
@@ -56,13 +56,14 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.link_system_ui = LinkSystemUI(self)
 
         self.enable_chk_channels = []
+        self.slave_rfs = []
         self.status_timer = QtCore.QTimer(self)
         self.status_timer.timeout.connect(self.action_get_status)
 
         self.status_trigger.connect(self.show_unload_status)
         self.link_system_ui.show()
 
-    def init_system(self, cmd_interface=CommandTCPInterface, data_interface=DataTCPInterface):
+    def init_system(self, cmd_interface=CommandTCPInterface, data_interface=DataTCPInterface, **kwargs):
         self.rfs_kit = RFSKit(
             cmd_interface=cmd_interface,
             data_interface=data_interface,
@@ -75,6 +76,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
 
         self.click_connect()
 
+        # 获取其余从机ip
+        self.slave_rfs = kwargs.get('addrs', [])
+
     def initUI(self):
         self.ui.setupUi(self)
         self.init_serial_ui()
@@ -85,6 +89,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         ico = QtGui.QIcon()
         ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
+
+        self.ui.select_is_master.setVisible(False)
 
         self.ui.label_version.setText(UiVersion)
 
@@ -97,6 +103,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.select_is_master.currentTextChanged.connect(self.action_is_master_changed)
 
         # 关联按钮
+        self.ui.btn_rf_collaboration.clicked.connect(self.action_click_collaboration)
+
         self.ui.btn_auto_command.clicked.connect(self.linking_auto_button)
 
         self.ui.btn_reload_icd.clicked.connect(self.reload_param)
@@ -632,6 +640,52 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.rfs_kit.set_param_value('脱机工作', 0, int)
 
             self.ui.btn_rf_cfg.clicked.connect(self.rf_config_ui.show)
+
+    def action_click_collaboration(self, *args):
+        """
+        主从协同RF配置
+
+        :param args:
+        :return:
+        """
+        slaves = self.slave_rfs
+
+        def _func():
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000010)
+            self.rfs_kit.execute_command('RF配置')
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000011)
+            data = self.rfs_kit.icd_param.fmt_command('RF配置')
+            for ip in slaves:
+                send_command(ip, 5001, data)
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000012)
+            self.rfs_kit.execute_command('RF配置')
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000013)
+            data = self.rfs_kit.icd_param.fmt_command('RF配置')
+            for ip in slaves:
+                send_command(ip, 5001, data)
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000014)
+            self.rfs_kit.execute_command('RF配置')
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000003)
+            data = self.rfs_kit.icd_param.fmt_command('RF配置')
+            for ip in slaves:
+                send_command(ip, 5001, data)
+            time.sleep(0.5)
+
+            self.rfs_kit.set_param_value('RF指令ID', 0x31000003)
+            self.rfs_kit.execute_command('RF配置')
+
+        thread = threading.Thread(target=_func, daemon=True)
+        thread.start()
 
 
 def init_ui():

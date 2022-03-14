@@ -11,7 +11,7 @@ from tools.utils import SingletonType, APIBaseType
 from tools.printLog import *
 
 
-class RFSInterfaceMeta(APIBaseType, SingletonType):
+class RFSInterfaceMeta(APIBaseType):
     _METHODS = frozenset({
         "recv_cmd", "send_cmd",
         "read_data", "write_data", "pre_read", "pre_write", "lookup_data",
@@ -25,6 +25,32 @@ class RFSInterfaceMeta(APIBaseType, SingletonType):
 class CmdInterfaceBusy(RuntimeError):
     def __str__(self):
         return f'{self.__class__.__name__}: {self.args[0]}'
+
+
+class DataNoneInterface(metaclass=RFSInterfaceMeta, _root=True):
+    def accept(self, target_id=None, *args):
+        pass
+
+    def recv_cmd(self, size=1024):
+        pass
+
+    def send_cmd(self, data):
+        pass
+
+    def close(self):
+        pass
+
+    def __del__(self):
+        self.close()
+
+    def set_timeout(self, value=2):
+        pass
+
+    def get_number(self):
+        pass
+
+    def update_number(self):
+        pass
 
 
 class CommandSerialInterface(metaclass=RFSInterfaceMeta, _root=True):

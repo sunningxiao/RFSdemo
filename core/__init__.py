@@ -14,7 +14,7 @@ from tools.utils import SingletonType, APIBaseType
 __all__ = ['RFSKit']
 
 
-class __RFSDevelopKit(APIBaseType, SingletonType):
+class __RFSDevelopKit(APIBaseType):
     _METHODS = frozenset({
         "load_icd", "save_icd", "execute_command", "set_param_value", "get_param_value",
         "start_command", "start_stream", "stop_stream", "close",

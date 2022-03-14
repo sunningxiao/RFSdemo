@@ -1,7 +1,7 @@
 import re
 
 from core import RFSKit
-from core.interface import DataTCPInterface, CommandTCPInterface
+from core.interface import DataNoneInterface, CommandTCPInterface
 
 ip_match = r'^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.' \
            r'(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$'
@@ -111,8 +111,8 @@ class Driver:
         self.rfs_kit = RFSKit(auto_load_icd=True,
                               auto_write_file=True,
                               cmd_interface=CommandTCPInterface,
-                              data_interface=DataTCPInterface)
-        self.data_interface_class = DataTCPInterface
+                              data_interface=DataNoneInterface)
+        self.data_interface_class = DataNoneInterface
         self.cmd_interface_class = CommandTCPInterface
 
     def open(self, ipaddr: str, timeout=5):
@@ -130,15 +130,15 @@ class Driver:
         # 接收数据时本机为tcp server端
         # 修改数传interface的本地端口，存在一个此端口跟随rfsoc的ip改变的规则
         # 例如rfsoc的ip为192.168.1.171，则接收数据的本地端口为7001
-        if len(ipaddr) >= 12 and re.match(ip_match, ipaddr):
-            _port = ipaddr.split('.')[3][-2:]
-            _port = int(_port[0] + '00' + _port[1])
-            self.data_interface_class._local_port = _port
+        # if len(ipaddr) >= 12 and re.match(ip_match, ipaddr):
+        #     _port = ipaddr.split('.')[3][-2:]
+        #     _port = int(_port[0] + '00' + _port[1])
+        #     self.data_interface_class._local_port = _port
 
         self.rfs_kit = RFSKit(auto_load_icd=True,
                               auto_write_file=True,
                               cmd_interface=CommandTCPInterface,
-                              data_interface=DataTCPInterface)
+                              data_interface=DataNoneInterface)
         # 此时会连接rfsoc的指令接收tcp server
         self.rfs_kit.start_command()
         # 系统开启前必须进行过一次RF配置
@@ -183,13 +183,13 @@ class Driver:
             # 目前没有各个通道的单独开关
             # 八个通道统一启停
             if value:
-                self.rfs_kit.start_stream()
+                # self.rfs_kit.start_stream()
                 self.rfs_kit.execute_command('QMC配置')
                 # self.rfs_kit.execute_command('DDS配置')
                 self.rfs_kit.execute_command('系统开启')
             else:
                 self.rfs_kit.execute_command('系统停止')
-                self.rfs_kit.stop_stream()
+                # self.rfs_kit.stop_stream()
 
         elif name == 'PRFNum':
             # 采用内部PRF时，可以通过这个参数控制开启后prf的数量

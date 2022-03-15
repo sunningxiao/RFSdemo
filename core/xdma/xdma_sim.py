@@ -5,6 +5,7 @@
 # Date: Jan. 3, 2019
 ############################
 import platform
+from core.tools.printLog import *
 import numpy as np
 import random
 

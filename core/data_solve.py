@@ -5,8 +5,8 @@ import threading
 import os
 import numpy as np
 from core.interface import DataTCPInterface, XdmaInterface
-from tools.data_unpacking import UnPackage
-from tools.printLog import *
+from core.tools.data_unpacking import UnPackage
+from core.tools.printLog import *
 
 
 class DataSolve:

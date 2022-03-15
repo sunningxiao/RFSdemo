@@ -1,4 +1,4 @@
-from tools.printLog import printWarning
+from core.tools.printLog import printWarning
 simulation_ctl = False
 try:
     if simulation_ctl:

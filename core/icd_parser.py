@@ -3,7 +3,7 @@ import os
 import struct
 import pandas as pd
 
-from tools.printLog import *
+from core.tools.printLog import *
 
 file_context_flag = '__file__'
 file_length_flag = '__filelength__'

@@ -1,10 +1,10 @@
-from typing import Union, IO, List
+from typing import Union, List
 from _io import BufferedReader
 from itertools import product
 from functools import lru_cache
 
 import numpy as np
-from tools.printLog import *
+from core.tools.printLog import *
 
 QvLength = 4096
 

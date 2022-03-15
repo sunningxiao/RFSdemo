@@ -1,4 +1,4 @@
-from typing import Union, IO, List
+from typing import Union
 import time
 import struct
 from threading import Event
@@ -8,8 +8,8 @@ from core.data_solve import DataSolve
 from core import interface
 from core.icd_parser import ICDParams
 
-from tools.printLog import *
-from tools.utils import SingletonType, APIBaseType
+from core.tools.printLog import *
+from core.tools.utils import SingletonType, APIBaseType
 
 __all__ = ['RFSKit']
 

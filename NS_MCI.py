@@ -1,14 +1,26 @@
-import re
+import numpy as np
+import struct
 
+from core.tools.data_unpacking import UnPackage
 from core import RFSKit
 from core.interface import DataNoneInterface, CommandTCPInterface
 
-ip_match = r'^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.' \
-           r'(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$'
-
 # 参数修改后需要执行的指令
 param_cmd_map = {
-    ("ADC0增益",
+    ("系统参考时钟选择",
+     "ADC采样率",
+     "ADC PLL使能",
+     "PLL参考时钟频率",
+     "ADC 抽取倍数",
+     "ADC NCO频率",
+     "ADC 奈奎斯特区",
+     "DAC采样率",
+     "DAC PLL使能",
+     "PLL参考时钟频率",
+     "DAC 抽取倍数",
+     "DAC NCO频率",
+     "DAC 奈奎斯特区",
+     "ADC0增益",
      "ADC0偏置",
      "ADC0相位",
      "ADC0增益步进",
@@ -87,20 +99,9 @@ param_cmd_map = {
      "DAC7偏置",
      "DAC7相位",
      "DAC7衰减步进",
-     "DAC7衰减截止"): 'QMC配置',
-    ("系统参考时钟选择",
-     "ADC采样率",
-     "ADC PLL使能",
-     "PLL参考时钟频率",
-     "ADC 抽取倍数",
-     "ADC NCO频率",
-     "ADC 奈奎斯特区",
-     "DAC采样率",
-     "DAC PLL使能",
-     "PLL参考时钟频率",
-     "DAC 抽取倍数",
-     "DAC NCO频率",
-     "DAC 奈奎斯特区"): 'RF配置',
+     "DAC7衰减截止"): '初始化',
+    ("基准PRF周期",
+     "基准PRF数量"): '内部PRF产生',
 }
 
 
@@ -109,7 +110,7 @@ class Driver:
 
     def __init__(self):
         self.rfs_kit = RFSKit(auto_load_icd=True,
-                              auto_write_file=True,
+                              auto_write_file=False,
                               cmd_interface=CommandTCPInterface,
                               data_interface=DataNoneInterface)
         self.data_interface_class = DataNoneInterface
@@ -136,13 +137,13 @@ class Driver:
         #     self.data_interface_class._local_port = _port
 
         self.rfs_kit = RFSKit(auto_load_icd=True,
-                              auto_write_file=True,
+                              auto_write_file=False,
                               cmd_interface=CommandTCPInterface,
                               data_interface=DataNoneInterface)
         # 此时会连接rfsoc的指令接收tcp server
         self.rfs_kit.start_command()
-        # 系统开启前必须进行过一次RF配置
-        self.rfs_kit.execute_command('RF配置')
+        # 系统开启前必须进行过一次初始化
+        self.rfs_kit.execute_command('初始化')
 
     def close(self):
         """
@@ -162,33 +163,32 @@ class Driver:
                 "Output" --> bool
         :param channel：通道号
         """
+        self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
             with open(self.wave_file_name, 'wb') as fp:
                 fp.write(value)
-            self.rfs_kit.set_param_value('DDS_RAM', channel)
-            self.rfs_kit.execute_command('波形装载', file_name=self.wave_file_name)
+            self.rfs_kit.execute_command('DAC数据更新', file_name=self.wave_file_name)
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('QMC配置')
+            self.rfs_kit.execute_command('初始化')
         elif name == 'Offset':
             param_name = f'DAC{channel}偏置'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('QMC配置')
+            self.rfs_kit.execute_command('初始化')
         elif name == 'Phase':
             param_name = f'DAC{channel}相位'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('QMC配置')
+            self.rfs_kit.execute_command('初始化')
         elif name == 'Output':
             # 目前没有各个通道的单独开关
             # 八个通道统一启停
             if value:
                 # self.rfs_kit.start_stream()
-                self.rfs_kit.execute_command('QMC配置')
                 # self.rfs_kit.execute_command('DDS配置')
-                self.rfs_kit.execute_command('系统开启')
+                self.rfs_kit.execute_command('内部PRF产生')
             else:
-                self.rfs_kit.execute_command('系统停止')
+                self.rfs_kit.execute_command('复位')
                 # self.rfs_kit.stop_stream()
 
         elif name == 'PRFNum':
@@ -210,9 +210,7 @@ class Driver:
         """
         if name == 'Data':
             # 返回快视数据
-            data = self.rfs_kit.view_stream_data()
-            # 这里也可以将数据解包后返回指定通道，未添加
-            return data
+            return self.__get_adc_data(channel)
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
             return self.rfs_kit.get_param_value(param_name)
@@ -225,10 +223,30 @@ class Driver:
         else:
             return self.rfs_kit.get_param_value(name)
 
+    def __get_adc_data(self, channel=0) -> np.ndarray:
+        """
+        通过网络获取一包数据
+
+        :param channel: 通道号
+        :return:
+        """
+        # 下发指令
+        self.rfs_kit.execute_command('ADC数据获取', need_feedback=False)
+        # 判断反馈指令长度
+        _feedback = self.rfs_kit.cmd_interface.recv_cmd(16)
+        length = struct.unpack('I', _feedback[12:])[0] - 16
+        _data = b''
+        # 接收全部反馈数据
+        while len(_data) != length:
+            _data += self.rfs_kit.cmd_interface.recv_cmd(length-len(_data))
+        # 解包获取对应通道的数据
+        data = UnPackage.channel_data_filter(_data, [0], [channel])
+        return data[0][0][channel]
+
 
 if __name__ == '__main__':
     # 导入一个生成随机数字信号的函数
-    from example_codes.random_digital_signal import random_gen
+    from core.example_codes.random_digital_signal import random_gen
 
     driver = Driver()
     driver.open('127.0.0.1')

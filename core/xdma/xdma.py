@@ -6,7 +6,6 @@
 ############################
 
 from core.xdma import xdma_base
-from tools.printLog import *
 import time
 TIMEOUT = 1000
 TIMEOUT_FLAG = TIMEOUT / 1000 - 1e-3

@@ -4,9 +4,9 @@ from typing import Union
 import threading
 import os
 import numpy as np
-from core.interface import DataTCPInterface, XdmaInterface
-from core.tools.data_unpacking import UnPackage
-from core.tools.printLog import *
+from rfskit.interface import DataTCPInterface, XdmaInterface
+from rfskit.tools.data_unpacking import UnPackage
+from rfskit.tools.printLog import *
 
 
 class DataSolve:

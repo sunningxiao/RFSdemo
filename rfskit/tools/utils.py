@@ -3,7 +3,7 @@ import warnings
 import time
 from threading import RLock
 
-from core.tools.printLog import *
+from rfskit.tools.printLog import *
 
 
 class APIBaseType(type):

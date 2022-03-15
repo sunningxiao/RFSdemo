@@ -1,9 +1,9 @@
 import numpy as np
 import struct
 
-from core.tools.data_unpacking import UnPackage
-from core import RFSKit
-from core.interface import DataNoneInterface, CommandTCPInterface
+from rfskit.tools.data_unpacking import UnPackage
+from rfskit.basekit import RFSKit
+from rfskit.interface import DataNoneInterface, CommandTCPInterface
 
 # 参数修改后需要执行的指令
 param_cmd_map = {
@@ -251,7 +251,7 @@ class Driver:
 
 if __name__ == '__main__':
     # 导入一个生成随机数字信号的函数
-    from core.example_codes.random_digital_signal import random_gen
+    from rfskit.example_codes.random_digital_signal import random_gen
 
     driver = Driver()
     driver.open('127.0.0.1')

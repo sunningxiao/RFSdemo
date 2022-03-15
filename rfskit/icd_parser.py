@@ -2,8 +2,9 @@ import json
 import os
 import struct
 import pandas as pd
+import pathlib
 
-from core.tools.printLog import *
+from rfskit.tools.printLog import *
 
 file_context_flag = '__file__'
 file_length_flag = '__filelength__'
@@ -59,7 +60,7 @@ feedback_value_fmt = {
 class ICDParams:
     fmt_mode = "="  # pack/unpack 大小端模式
 
-    def __init__(self, file_name='icd.json'):
+    def __init__(self, file_name=os.path.join(pathlib.Path(__file__).parent.absolute(), 'icd.json')):
         self._connected = False
         self._file_name = file_name
         self.icd_data = {}

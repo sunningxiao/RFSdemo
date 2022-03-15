@@ -4,7 +4,7 @@ from itertools import product
 from functools import lru_cache
 
 import numpy as np
-from core.tools.printLog import *
+from rfskit.tools.printLog import *
 
 QvLength = 4096
 

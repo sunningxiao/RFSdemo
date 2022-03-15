@@ -1,4 +1,4 @@
-from core.tools.printLog import printWarning
+from rfskit.tools.printLog import printWarning
 simulation_ctl = True
 try:
     if simulation_ctl:

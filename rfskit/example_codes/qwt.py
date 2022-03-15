@@ -1,4 +1,4 @@
-from core.tools.data_packing import Packing
+from rfskit.tools.data_packing import Packing
 import numpy as np
 
 

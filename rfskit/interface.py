@@ -4,11 +4,11 @@ from threading import Event, Lock
 import numpy as np
 import serial
 
-from core.xdma import Xdma
+from rfskit.xdma import Xdma
 
-from core.tools.dqueue import Undefined
-from core.tools.utils import APIBaseType
-from core.tools import *
+from rfskit.tools.dqueue import Undefined
+from rfskit.tools.utils import APIBaseType
+from rfskit.tools import *
 
 
 class RFSInterfaceMeta(APIBaseType):

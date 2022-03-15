@@ -4,14 +4,12 @@ import struct
 from threading import Event
 import numpy as np
 
-from core.data_solve import DataSolve
-from core import interface
-from core.icd_parser import ICDParams
+from rfskit.data_solve import DataSolve
+from rfskit import interface
+from rfskit.icd_parser import ICDParams
 
-from core.tools.printLog import *
-from core.tools.utils import SingletonType, APIBaseType
-
-__all__ = ['RFSKit']
+from rfskit.tools.printLog import *
+from rfskit.tools.utils import SingletonType, APIBaseType
 
 
 class __RFSDevelopKit(APIBaseType):

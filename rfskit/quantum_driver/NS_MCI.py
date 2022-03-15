@@ -145,6 +145,8 @@ class Driver:
         self.rfs_kit.start_command()
         # 系统开启前必须进行过一次初始化
         self.rfs_kit.execute_command('初始化')
+        self.rfs_kit.execute_command('DAC配置')
+        self.rfs_kit.execute_command('ADC配置')
 
     def close(self):
         """
@@ -152,7 +154,7 @@ class Driver:
         """
         self.rfs_kit.close()
 
-    def set(self, name, value, channel=1):
+    def set(self, name, value =0 , channel=1):
         """
         设置设备属性
         :param name: 属性名
@@ -170,10 +172,13 @@ class Driver:
             with open(self.wave_file_name, 'wb') as fp:
                 fp.write(value)
             self.rfs_kit.execute_command('DAC数据更新', file_name=self.wave_file_name)
+            '''
             param_name = f'DAC{channel}门宽'
             sample_rate = 6  #GHz
             self.rfs_kit.set_param_value(param_name, len(value)/sample_rate)
+            print('数据时长', len(value)/sample_rate, 'ns')
             self.rfs_kit.execute_command('DAC配置')
+            '''
         elif name == 'Delay':
             param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
@@ -200,6 +205,9 @@ class Driver:
                 if name in params:
                     self.rfs_kit.execute_command(cmd)
 
+    def setValue(self, name, value = 0, channel=1):
+        self.set(name, value, channel)
+
     def get(self, name, channel=1):
         """
         查询设备属性，获取数据
@@ -220,6 +228,9 @@ class Driver:
         else:
             return self.rfs_kit.get_param_value(name)
 
+    def getValue(self, name, channel=1):
+        self.get(name, channel)
+
     def __get_adc_data(self, channel=0) -> np.ndarray:
         """
         通过网络获取一包数据
@@ -230,8 +241,11 @@ class Driver:
         # 下发指令
         self.rfs_kit.execute_command('ADC数据获取', need_feedback=False)
         # 判断反馈指令长度
-        _feedback = self.rfs_kit.cmd_interface.recv_cmd(16)
-        total_length = struct.unpack('I', _feedback[12:])[0] - 16
+        _feedback = self.rfs_kit.cmd_interface.recv_cmd(20)
+        total_length = struct.unpack('I', _feedback[12:16])[0] - 20
+        if total_length == 0:
+            print('未获取到数据')
+            return
         recv_length = 0
         _data = b''
         # 接收全部反馈数据
@@ -244,14 +258,24 @@ class Driver:
             _data += self.rfs_kit.cmd_interface.recv_cmd(total_length-recv_length)
             recv_length += total_length-recv_length
         # 解包获取对应通道的数据
+        print('接收数据字节', total_length)
+        print('接收数据长度', total_length/2)
+        print('recv长度', recv_length)
+        print('_data长度', len(_data))
         if recv_length == total_length:
+            data = np.frombuffer(_data, dtype='int16')
+            np.save('./adc_data.npy',_data)
+            return _data, data
             data = UnPackage.channel_data_filter(_data, [0], [channel])
             return data[0][0][channel]
+        else:
+            print('数量接收不匹配')
+            return
 
 
 if __name__ == '__main__':
     # 导入一个生成随机数字信号的函数
-    from rfskit.example_codes.random_digital_signal import random_gen
+    from core.example_codes.random_digital_signal import random_gen
 
     driver = Driver()
     driver.open('127.0.0.1')

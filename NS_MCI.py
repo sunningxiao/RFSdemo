@@ -163,37 +163,33 @@ class Driver:
                 "Output" --> bool
         :param channel：通道号
         """
+        channel = channel - 1
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
             with open(self.wave_file_name, 'wb') as fp:
                 fp.write(value)
             self.rfs_kit.execute_command('DAC数据更新', file_name=self.wave_file_name)
-        elif name == 'Amplitude':
-            param_name = f'DAC{channel}增益'
+            param_name = f'DAC{channel}门宽'
+            sample_rate = 6  #GHz
+            self.rfs_kit.set_param_value(param_name, len(value)/sample_rate)
+            self.rfs_kit.execute_command('DAC配置')
+        elif name == 'Delay':
+            param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('初始化')
-        elif name == 'Offset':
-            param_name = f'DAC{channel}偏置'
-            self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('初始化')
-        elif name == 'Phase':
-            param_name = f'DAC{channel}相位'
-            self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('初始化')
-        elif name == 'Output':
-            # 目前没有各个通道的单独开关
-            # 八个通道统一启停
-            if value:
-                # self.rfs_kit.start_stream()
-                # self.rfs_kit.execute_command('DDS配置')
-                self.rfs_kit.execute_command('内部PRF产生')
-            else:
-                self.rfs_kit.execute_command('复位')
-                # self.rfs_kit.stop_stream()
+            self.rfs_kit.execute_command('DAC配置')
+        elif name == 'AWG':
+            # value = {'period': xx(ns), 'count': xxx}
 
-        elif name == 'PRFNum':
-            # 采用内部PRF时，可以通过这个参数控制开启后prf的数量
-            self.rfs_kit.set_param_value('基准PRF数量', value)
+            self.rfs_kit.set_param_value('基准PRF周期', value['period'])
+            self.rfs_kit.set_param_value('基准PRF数量', value['count'])
+            self.rfs_kit.execute_command('内部PRF产生')
+
+        elif name == 'Output':
+            param_name = f'DAC{channel}使能'
+            tmp = 1 if value else 0
+            self.rfs_kit.execute_command(param_name, tmp)
+        elif name == 'Reset':
+            self.rfs_kit.execute_command('复位')
 
         else:
             # 参数名透传，直接根据icd.json中的参数名配置对应值

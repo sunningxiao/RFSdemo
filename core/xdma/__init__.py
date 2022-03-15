@@ -1,5 +1,5 @@
 from core.tools.printLog import printWarning
-simulation_ctl = False
+simulation_ctl = True
 try:
     if simulation_ctl:
         from .xdma_sim import Xdma

@@ -107,6 +107,7 @@ param_cmd_map = {
 
 class Driver:
     wave_file_name = 'wave_cache_file.dat'
+    recv_block_size = 1024
 
     def __init__(self):
         self.rfs_kit = RFSKit(auto_load_icd=True,
@@ -230,14 +231,22 @@ class Driver:
         self.rfs_kit.execute_command('ADC数据获取', need_feedback=False)
         # 判断反馈指令长度
         _feedback = self.rfs_kit.cmd_interface.recv_cmd(16)
-        length = struct.unpack('I', _feedback[12:])[0] - 16
+        total_length = struct.unpack('I', _feedback[12:])[0] - 16
+        recv_length = 0
         _data = b''
         # 接收全部反馈数据
-        while len(_data) != length:
-            _data += self.rfs_kit.cmd_interface.recv_cmd(length-len(_data))
+        # 每次接收一个self.recv_block_size
+        while total_length-recv_length > self.recv_block_size:
+            _data += self.rfs_kit.cmd_interface.recv_cmd(self.recv_block_size)
+            recv_length += self.recv_block_size
+        else:
+            # 收尾
+            _data += self.rfs_kit.cmd_interface.recv_cmd(total_length-recv_length)
+            recv_length += total_length-recv_length
         # 解包获取对应通道的数据
-        data = UnPackage.channel_data_filter(_data, [0], [channel])
-        return data[0][0][channel]
+        if recv_length == total_length:
+            data = UnPackage.channel_data_filter(_data, [0], [channel])
+            return data[0][0][channel]
 
 
 if __name__ == '__main__':

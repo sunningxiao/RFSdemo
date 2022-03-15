@@ -252,11 +252,12 @@ class Driver:
         # 每次接收一个self.recv_block_size
         while total_length-recv_length > self.recv_block_size:
             _data += self.rfs_kit.cmd_interface.recv_cmd(self.recv_block_size)
-            recv_length += self.recv_block_size
+            recv_length = len(_data)
         else:
             # 收尾
-            _data += self.rfs_kit.cmd_interface.recv_cmd(total_length-recv_length)
-            recv_length += total_length-recv_length
+            while len(_data) != total_length:
+                _data += self.rfs_kit.cmd_interface.recv_cmd(total_length-len(_data))
+            recv_length = len(_data)
         # 解包获取对应通道的数据
         print('接收数据字节', total_length)
         print('接收数据长度', total_length/2)
@@ -275,7 +276,7 @@ class Driver:
 
 if __name__ == '__main__':
     # 导入一个生成随机数字信号的函数
-    from core.example_codes.random_digital_signal import random_gen
+    from rfskit.example_codes.random_digital_signal import random_gen
 
     driver = Driver()
     driver.open('127.0.0.1')

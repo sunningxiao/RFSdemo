@@ -169,6 +169,9 @@ class Driver:
         channel = channel - 1
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
+            bit = 16
+            value = (2**(bit-1)) * value
+            value = value.astype('int16')
             with open(self.wave_file_name, 'wb') as fp:
                 fp.write(value)
             self.rfs_kit.execute_command('DAC数据更新', file_name=self.wave_file_name)
@@ -266,7 +269,7 @@ class Driver:
         if recv_length == total_length:
             data = np.frombuffer(_data, dtype='int16')
             np.save('./adc_data.npy',_data)
-            return _data, data
+            # return data
             data = UnPackage.channel_data_filter(_data, [0], [channel])
             return data[0][0][channel]
         else:

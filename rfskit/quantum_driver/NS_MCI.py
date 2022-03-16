@@ -270,8 +270,11 @@ class Driver:
             data = np.frombuffer(_data, dtype='int16')
             np.save('./adc_data.npy',_data)
             # return data
-            data = UnPackage.channel_data_filter(_data, [0], [channel])
-            return data[0][0][channel]
+            data = UnPackage.channel_data_filter(_data, [], [channel])
+
+            # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
+            data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
+            return data
         else:
             print('数量接收不匹配')
             return

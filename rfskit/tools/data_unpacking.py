@@ -1,5 +1,6 @@
 from typing import Union, List
 from _io import BufferedReader
+import os
 from itertools import product
 from functools import lru_cache
 
@@ -190,6 +191,9 @@ class UnPackage:
          bit_con_byte, chnl_count, include_tail, is_complex) = UnPackage.get_pack_info(False, _head, None)
 
         frame_length = pack_length*chnl_count
+        if len(frame_idx) == 0:
+            frame_num = os.path.getsize(os.path.abspath(_fp[0].name)) // frame_length
+            frame_idx = list(range(frame_num))
 
         frames = {fp: {idx: cls.__read_file(fp, idx*frame_length, frame_length) for idx in frame_idx} for fp in _fp}
 
@@ -210,6 +214,9 @@ class UnPackage:
          bit_con_byte, chnl_count, include_tail, is_complex) = UnPackage.get_pack_info(False, _head, None)
 
         frame_length = (pack_length * chnl_count)//4
+        if len(frame_idx) == 0:
+            frame_num = _data.shape[1] // frame_length
+            frame_idx = list(range(frame_num))
 
         frames = {index: {idx: data[idx*frame_length: (idx+1)*frame_length] for idx in frame_idx}
                   for index, data in enumerate(_data)}

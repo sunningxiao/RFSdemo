@@ -4,7 +4,7 @@ import struct
 from rfskit.tools.data_unpacking import UnPackage
 from rfskit.basekit import RFSKit
 from rfskit.interface import DataNoneInterface, CommandTCPInterface
-
+from waveforms import sin, cos
 # 参数修改后需要执行的指令
 param_cmd_map = {
     ("系统参考时钟选择",
@@ -104,6 +104,13 @@ param_cmd_map = {
      "基准PRF数量"): '内部PRF产生',
 }
 
+def coff_para(t=[],freq=200e6):
+    coeff_list_I = np.array(cos(2*np.pi*(freq))(t))
+    coeff_list_Q = np.array(sin(2*np.pi*(freq))(t))
+    return coeff_list_I+1j*coeff_list_Q
+
+def getTraceIQ(y,coff_para=np.asarray([])):
+    return  np.abs(y).dot(coff_para.T)/len(y)
 
 class Driver:
     wave_file_name = 'wave_cache_file.dat'
@@ -116,6 +123,11 @@ class Driver:
                               data_interface=DataNoneInterface)
         self.data_interface_class = DataNoneInterface
         self.cmd_interface_class = CommandTCPInterface
+        self.ADrate = 4e9   # ns
+        self.DArate = 6e9   # ns
+        self.Freqlist = {i:[] for i in range(8)}
+        self.Cofflist = {i:[] for i in range(8)}
+        self.PointNumber = 1000
 
     def open(self, ipaddr: str, timeout=5):
         """
@@ -202,7 +214,29 @@ class Driver:
         elif name == 'MixMode':
             self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
             self.rfs_kit.execute_command('初始化')
-
+        elif name == 'RefClock':
+            tmp = 4
+            if value == 'out':
+                tmp = 3
+            self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
+            self.rfs_kit.execute_command('初始化')
+        elif name == 'PointNumber':
+            param_name = f'ADC{channel}门宽'
+            self.rfs_kit.set_param_value(param_name, value)
+            self.rfs_kit.execute_command('ADC配置')
+             # 转为16ns倍数对应的点数
+            tmp = self.ADrate * 1e-9 * value
+            self.PointNumber = int(tmp//16*16)
+        elif name == 'TriggerDelay':
+            param_name = f'ADC{channel}延迟'
+            self.rfs_kit.set_param_value(param_name, value)
+            self.rfs_kit.execute_command('ADC配置')
+        elif name == 'Freqlist':
+            self.Freqlist[channel] = value
+            tm = np.linspace(0, (self.PointNumber - 1) * (1/self.ADrate), self.PointNumber)
+            self.Cofflist[channel] = []
+            for i in range(len(value)):
+                self.Cofflist[channel].append(coff_para(tm, value[i]))
         else:
             # 参数名透传，直接根据icd.json中的参数名配置对应值
             # 如果在param_cmd_map中找到了对应参数配置后要执行的指令，则执行相应指令
@@ -219,9 +253,24 @@ class Driver:
         查询设备属性，获取数据
 
         """
-        if name == 'Data':
+        channel = channel - 1
+        if name == 'TraceIQ':
             # 返回快视数据
+            self.rfs_kit.set_param_value('获取内容', 0)
             return self.__get_adc_data(channel)
+        elif name == 'IQ':
+            self.rfs_kit.set_param_value('获取内容', 1)
+            return self.__get_adc_data(channel)
+        elif name == 'SIQ':
+            self.rfs_kit.set_param_value('获取内容', 0)
+            data = self.__get_adc_data(channel)
+            sdlist = []
+            for i in range(len(self.Cofflist[channel])):
+                sd = [getTraceIQ(data[j, :], self.Cofflist[channel][i]) for j in range(len(data))]
+                sdlist.append(sd)
+            return sdlist
+
+
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
             return self.rfs_kit.get_param_value(param_name)

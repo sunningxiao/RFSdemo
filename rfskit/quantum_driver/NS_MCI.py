@@ -170,7 +170,7 @@ class Driver:
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
             bit = 16
-            value = (2**(bit-1)) * value
+            value = (2 ** (bit - 1) - 1) * value
             value = value.astype('int16')
             with open(self.wave_file_name, 'wb') as fp:
                 fp.write(value)
@@ -199,6 +199,9 @@ class Driver:
             self.rfs_kit.execute_command(param_name, tmp)
         elif name == 'Reset':
             self.rfs_kit.execute_command('复位')
+        elif name == 'MixMode':
+            self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
+            self.rfs_kit.execute_command('初始化')
 
         else:
             # 参数名透传，直接根据icd.json中的参数名配置对应值

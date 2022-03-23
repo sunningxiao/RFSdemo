@@ -237,6 +237,11 @@ class Driver:
             self.Cofflist[channel] = []
             for i in range(len(value)):
                 self.Cofflist[channel].append(coff_para(tm, value[i]))
+                param_name = f'解调频率{i}'
+                self.rfs_kit.set_param_value(param_name, value[i])
+            self.rfs_kit.set_param_value('解调通道', channel)
+            self.rfs_kit.execute_command('量子解调配置')
+
         else:
             # 参数名透传，直接根据icd.json中的参数名配置对应值
             # 如果在param_cmd_map中找到了对应参数配置后要执行的指令，则执行相应指令
@@ -260,7 +265,7 @@ class Driver:
             return self.__get_adc_data(channel)
         elif name == 'IQ':
             self.rfs_kit.set_param_value('获取内容', 1)
-            return self.__get_adc_data(channel)
+            return self.__get_adc_data(channel, False)
         elif name == 'SIQ':
             self.rfs_kit.set_param_value('获取内容', 0)
             data = self.__get_adc_data(channel)
@@ -286,7 +291,7 @@ class Driver:
     def getValue(self, name, channel=1):
         self.get(name, channel)
 
-    def __get_adc_data(self, channel=0) -> np.ndarray:
+    def __get_adc_data(self, channel=0, unpack = True) -> np.ndarray:
         """
         通过网络获取一包数据
 
@@ -319,14 +324,17 @@ class Driver:
         print('recv长度', recv_length)
         print('_data长度', len(_data))
         if recv_length == total_length:
-            data = np.frombuffer(_data, dtype='int16')
-            np.save('./adc_data.npy',_data)
+            # np.save('./adc_data.npy',_data)
             # return data
-            data = UnPackage.channel_data_filter(_data, [], [channel])
+            if unpack:
+                data = UnPackage.channel_data_filter(_data, [], [channel])
 
-            # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
-            data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
-            return data
+                # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
+                data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
+                return data
+            else:
+                data = np.frombuffer(_data, dtype='int32')
+                return data, data.reshape(int(len(data)/2),2).T
         else:
             print('数量接收不匹配')
             return

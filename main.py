@@ -1,6 +1,6 @@
 import time
 from xmlrpc.client import ServerProxy
-from rfskit import RFSKit
+from NS_MCI import RFSKit
 from typing import Union
 from rpcserver import RFSKitRPCServer
 import numpy as np

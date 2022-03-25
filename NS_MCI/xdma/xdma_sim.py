@@ -5,7 +5,7 @@
 # Date: Jan. 3, 2019
 ############################
 import platform
-from rfskit.tools.printLog import *
+from NS_MCI.tools.printLog import *
 import numpy as np
 import random
 

@@ -3,9 +3,9 @@ import struct
 from typing import List
 import xmlrpc.client
 
-from rfskit.tools.data_unpacking import UnPackage
-from rfskit.basekit import RFSKit
-from rfskit.interface import DataNoneInterface, CommandTCPInterface
+from NS_MCI.tools.data_unpacking import UnPackage
+from NS_MCI.basekit import RFSKit
+from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
 from waveforms import sin, cos
 # 参数修改后需要执行的指令
 param_cmd_map = {

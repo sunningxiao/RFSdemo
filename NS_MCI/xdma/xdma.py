@@ -5,8 +5,8 @@
 # Date: Dec. 10, 2018
 ############################
 
-from rfskit.xdma import xdma_base
-from rfskit.tools.printLog import *
+from NS_MCI.xdma import xdma_base
+from NS_MCI.tools.printLog import *
 import time
 TIMEOUT = 1000
 TIMEOUT_FLAG = TIMEOUT / 1000 - 1e-3

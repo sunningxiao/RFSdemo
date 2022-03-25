@@ -1,4 +1,4 @@
-from rfskit.quantum_driver.MCIbase import DriverAchieve, Quantity
+from NS_MCI.quantum_driver.MCIbase import DriverAchieve, Quantity
 
 
 class Driver(DriverAchieve):
@@ -54,7 +54,7 @@ class Driver(DriverAchieve):
 
 if __name__ == '__main__':
     # 导入一个生成随机数字信号的函数
-    from rfskit.example_codes.random_digital_signal import random_gen
+    from NS_MCI.example_codes.random_digital_signal import random_gen
 
     driver = Driver('127.0.0.1', 3)
 

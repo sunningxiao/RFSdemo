@@ -4,7 +4,7 @@ import struct
 import pandas as pd
 import pathlib
 
-from rfskit.tools.printLog import *
+from NS_MCI.tools.printLog import *
 
 file_context_flag = '__file__'
 file_length_flag = '__filelength__'

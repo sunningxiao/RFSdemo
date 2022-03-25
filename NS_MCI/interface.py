@@ -4,11 +4,11 @@ from threading import Event, Lock
 import numpy as np
 import serial
 
-from rfskit.xdma import Xdma
+from NS_MCI.xdma import Xdma
 
-from rfskit.tools.dqueue import Undefined, Queue
-from rfskit.tools.utils import APIBaseType
-from rfskit.tools.printLog import *
+from NS_MCI.tools.dqueue import Undefined, Queue
+from NS_MCI.tools.utils import APIBaseType
+from NS_MCI.tools.printLog import *
 
 
 class RFSInterfaceMeta(APIBaseType):

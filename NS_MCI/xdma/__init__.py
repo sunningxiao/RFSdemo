@@ -1,4 +1,4 @@
-from rfskit.tools.printLog import printWarning
+from NS_MCI.tools.printLog import printWarning
 simulation_ctl = True
 try:
     if simulation_ctl:

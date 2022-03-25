@@ -3,10 +3,10 @@ from xmlrpc.client import Binary
 import numpy as np
 from typing import Tuple
 
-from rfskit.interface import DataNoneInterface, CommandTCPInterface
-from rfskit import RFSKit
-from rfskit.tools.data_unpacking import UnPackage
-from rfskit.xdma import xdma_base
+from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
+from NS_MCI import RFSKit
+from NS_MCI.tools.data_unpacking import UnPackage
+from NS_MCI.xdma import xdma_base
 
 
 class RFSKitRPCServer(SimpleXMLRPCServer):

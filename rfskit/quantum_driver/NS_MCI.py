@@ -27,7 +27,7 @@ class Driver(DriverAchieve):
         Quantity('RefClock', value=1),  # 系统参考时钟选择
     ]
 
-    def __init__(self, addr: str = '', timeout: float = 3.0, **kw):
+    def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
         super(Driver, self).__init__(addr, timeout, **kw)
 
     def open(self, **kw):
@@ -35,13 +35,13 @@ class Driver(DriverAchieve):
         输入IP打开设备，配置默认超时时间为5秒
         打开设备时配置RFSoC采样时钟，采样时钟以参数定义
         """
-        super(Driver, self).open(**kw)
+        self._open()
 
     def close(self, **kw):
         """
         关闭设备
         """
-        super(Driver, self).close(**kw)
+        super(Driver, self)._close(**kw)
 
     def write(self, name: str, value, **kw):
         channel = kw.get('channel', 1)

@@ -129,6 +129,8 @@ class ICDParams:
         file_length = 0
         if isinstance(file_name, str):
             file_data, file_length = self.__get_file(file_name)
+        elif isinstance(file_name, bytes):
+            file_data, file_length = file_name, len(file_name)
         try:
             target_bytes = []
             if command_name in self.sequence:

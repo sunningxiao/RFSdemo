@@ -3,30 +3,7 @@ import sys
 import os
 import queue
 
-from PyQt5 import QtCore
-
-__all__ = ["print_wheel", "printInfo", "printError", "printException", "printColor", "printDebug", "printWarning"]
-
-
-class QPrintSignal(QtCore.QObject):
-    txt_trigger = QtCore.pyqtSignal(str)
-
-    def __init__(self, queue, *args, **kwargs):
-        QtCore.QObject.__init__(self, *args, **kwargs)
-        self.queue = queue
-
-    def printLog(self):
-        while True:
-            text = self.queue.get()
-            self.txt_trigger.emit(text)
-
-
-print_queue = queue.Queue()
-QT_thread = QtCore.QThread()
-print_wheel = QPrintSignal(print_queue)
-print_wheel.moveToThread(QT_thread)
-QT_thread.started.connect(print_wheel.printLog)
-QT_thread.start()
+__all__ = ["printInfo", "printError", "printException", "printColor", "printDebug", "printWarning"]
 
 
 if 'Windows' in platform.system():
@@ -128,8 +105,6 @@ def set_print_enable(dict_en):
     enable_info = dict_en['info']
     enable_error = dict_en['error']
     enable_exception = dict_en['exception']
-    if enable_QT:
-        sys.stdout = WriteStream(print_queue)
 
 
 set_print_enable({'QT': False, 'debug': True, 'info': True, 'error': True, 'exception': True})

@@ -6,9 +6,9 @@ import serial
 
 from rfskit.xdma import Xdma
 
-from rfskit.tools.dqueue import Undefined
+from rfskit.tools.dqueue import Undefined, Queue
 from rfskit.tools.utils import APIBaseType
-from rfskit.tools import *
+from rfskit.tools.printLog import *
 
 
 class RFSInterfaceMeta(APIBaseType):

@@ -1,6 +1,7 @@
 import numpy as np
 import struct
 from typing import List
+import xmlrpc.client
 
 from rfskit.tools.data_unpacking import UnPackage
 from rfskit.basekit import RFSKit
@@ -136,11 +137,11 @@ class DriverAchieve:
         self.DArate = 6e9  # ns
         self.srate = self.DArate  # 设备采样率
 
-        self.rfs_kit = RFSKit(auto_load_icd=True,
-                              auto_write_file=False,
-                              cmd_interface=CommandTCPInterface,
-                              data_interface=DataNoneInterface)
-        self.handle = self.rfs_kit
+        # self.rfs_kit = RFSKit(auto_load_icd=True,
+        #                       auto_write_file=False,
+        #                       cmd_interface=CommandTCPInterface,
+        #                       data_interface=DataNoneInterface)
+        # self.handle = self.rfs_kit
         self.addr = addr
         self.timeout = timeout
 
@@ -150,13 +151,11 @@ class DriverAchieve:
         self.Cofflist = {i:[] for i in range(8)}
         self.PointNumber = 1000
 
-    def open(self, **kw):
-        self._open()
-
-    def close(self, **kw):
+    def _close(self, **kw):
         """
         关闭设备
         """
+        self.rfs_kit.release_dma()
         self.rfs_kit.close()
 
     # -----------------------------------------------------------------
@@ -169,21 +168,14 @@ class DriverAchieve:
         :param ipaddr: RFS的ip地址
         :param timeout: 指令发送超时时间
         """
-        # 修改指令interface的目标ip地址
-        self.rfs_kit.close()
-        self.cmd_interface_class._target_id = self.addr
-        self.cmd_interface_class._timeout = self.timeout
-
-        self.rfs_kit = RFSKit(auto_load_icd=True,
-                              auto_write_file=False,
-                              cmd_interface=CommandTCPInterface,
-                              data_interface=DataNoneInterface)
+        self.rfs_kit = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', allow_none=True, use_builtin_types=True)
         # 此时会连接rfsoc的指令接收tcp server
         self.rfs_kit.start_command()
         # 系统开启前必须进行过一次初始化
-        self.rfs_kit.execute_command('初始化')
-        self.rfs_kit.execute_command('DAC配置')
-        self.rfs_kit.execute_command('ADC配置')
+        self.__exec_command('初始化')
+        self.__exec_command('DAC配置')
+        self.__exec_command('ADC配置')
+        self.rfs_kit.init_dma()
 
     def set(self, name, value=0, channel=1):
         """
@@ -202,27 +194,27 @@ class DriverAchieve:
         if name == 'Waveform':
             bit = 16
             value = (2 ** (bit - 1) - 1) * value
-            value = value.astype('int16')
-            with open(self.wave_file_name, 'wb') as fp:
-                fp.write(value)
-            self.rfs_kit.execute_command('DAC数据更新', file_name=self.wave_file_name)
+            # value = value.astype('int16')
+            # with open(self.wave_file_name, 'wb') as fp:
+            #     fp.write(value)
+            self.__exec_command('DAC数据更新', True, value.tobytes())
             '''
             param_name = f'DAC{channel}门宽'
             sample_rate = 6  #GHz
             self.rfs_kit.set_param_value(param_name, len(value)/sample_rate)
             print('数据时长', len(value)/sample_rate, 'ns')
-            self.rfs_kit.execute_command('DAC配置')
+            self.__exec_command('DAC配置')
             '''
         elif name == 'Delay':
             param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('DAC配置')
+            self.__exec_command('DAC配置')
         elif name == 'AWG':
             # value = {'period': xx(ns), 'count': xxx}
 
             self.rfs_kit.set_param_value('基准PRF周期', value['period'])
             self.rfs_kit.set_param_value('基准PRF数量', value['count'])
-            self.rfs_kit.execute_command('内部PRF产生')
+            self.__exec_command('内部PRF产生')
 
         elif name == 'Output':
             param_name = f'DAC{channel}使能'
@@ -231,29 +223,29 @@ class DriverAchieve:
             elif value == 'ON':
                 value
             tmp = 1 if value else 0
-            self.rfs_kit.execute_command(param_name, tmp)
+            self.rfs_kit.set_param_value(param_name, tmp)
         elif name == 'Reset':
-            self.rfs_kit.execute_command('复位')
+            self.__exec_command('复位')
         elif name == 'MixMode':
             self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
-            self.rfs_kit.execute_command('初始化')
+            self.__exec_command('初始化')
         elif name == 'RefClock':
             tmp = 4
             if value == 'out':
                 tmp = 3
             self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
-            self.rfs_kit.execute_command('初始化')
+            self.__exec_command('初始化')
         elif name == 'PointNumber':
             param_name = f'ADC{channel}门宽'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('ADC配置')
+            self.__exec_command('ADC配置')
             # 转为16ns倍数对应的点数
             tmp = self.ADrate * 1e-9 * value
             self.PointNumber = int(tmp//16*16)
         elif name == 'TriggerDelay':
             param_name = f'ADC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
-            self.rfs_kit.execute_command('ADC配置')
+            self.__exec_command('ADC配置')
         elif name == 'Freqlist':
             self.Freqlist[channel] = value
             tm = np.linspace(0, (self.PointNumber - 1) * (1/self.ADrate), self.PointNumber)
@@ -263,7 +255,7 @@ class DriverAchieve:
                 param_name = f'解调频率{i}'
                 self.rfs_kit.set_param_value(param_name, value[i])
             self.rfs_kit.set_param_value('解调通道', channel)
-            self.rfs_kit.execute_command('量子解调配置')
+            self.__exec_command('量子解调配置')
 
         else:
             # 参数名透传，直接根据icd.json中的参数名配置对应值
@@ -271,7 +263,7 @@ class DriverAchieve:
             self.rfs_kit.set_param_value(name, value)
             for params, cmd in param_cmd_map.items():
                 if name in params:
-                    self.rfs_kit.execute_command(cmd)
+                    self.__exec_command(cmd)
 
     def setValue(self, name, value=0, channel=1):
         self.set(name, value, channel)
@@ -315,7 +307,7 @@ class DriverAchieve:
     def getValue(self, name, channel=1):
         self.get(name, channel)
 
-    def __get_adc_data(self, channel=0, unpack=True) -> np.ndarray:
+    def __get_adc_data(self, channel=0, unpack=True):
         """
         通过网络获取一包数据
 
@@ -323,42 +315,22 @@ class DriverAchieve:
         :return:
         """
         # 下发指令
-        self.rfs_kit.execute_command('ADC数据获取', need_feedback=False)
-        # 判断反馈指令长度
-        _feedback = self.rfs_kit.cmd_interface.recv_cmd(20)
-        total_length = struct.unpack('I', _feedback[12:16])[0] - 20
-        if total_length == 0:
-            print('未获取到数据')
-            return
-        recv_length = 0
-        _data = b''
-        # 接收全部反馈数据
-        # 每次接收一个self.recv_block_size
-        while total_length-recv_length > self.recv_block_size:
-            _data += self.rfs_kit.cmd_interface.recv_cmd(self.recv_block_size)
-            recv_length = len(_data)
+        data, dtype, shape = self.rfs_kit.get_adc_data(channel, unpack)
+        data = np.frombuffer(data, dtype=dtype)
+        if unpack:
+            return data.reshape(shape)
         else:
-            # 收尾
-            while len(_data) != total_length:
-                _data += self.rfs_kit.cmd_interface.recv_cmd(total_length-len(_data))
-            recv_length = len(_data)
-        # 解包获取对应通道的数据
-        print('接收数据字节', total_length)
-        print('接收数据长度', total_length/2)
-        print('recv长度', recv_length)
-        print('_data长度', len(_data))
-        if recv_length == total_length:
-            # np.save('./adc_data.npy',_data)
-            # return data
-            if unpack:
-                data = UnPackage.channel_data_filter(_data, [], [channel])
+            data = data.reshape(shape)
+            return data, data.reshape(int(len(data) / 2), 2).T
 
-                # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
-                data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
-                return data
-            else:
-                data = np.frombuffer(_data, dtype='int32')
-                return data, data.reshape(int(len(data)/2),2).T
+    def __exec_command(self, button_name: str,
+                       need_feedback=True, file_name=None, check_feedback=True,
+                       callback=lambda *args: True, wait: int = 0):
+        flag = self.rfs_kit.execute_command(button_name, need_feedback, file_name, check_feedback)
+        if flag:
+            print(f'指令{button_name}执行成功')
         else:
-            print('数量接收不匹配')
-            return
+            print(f'指令{button_name}执行失败')
+
+    def __del__(self):
+        self._close()

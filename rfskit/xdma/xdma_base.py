@@ -2,7 +2,10 @@ import ctypes
 import platform
 import numpy as np
 import os
+
 TIMEOUT = 0xffffffff  # 无限等待
+FAIL = 0xffffffffffffffff
+DMA_WAIT_FOR_EVER = 0xFFFFFFFF
 
 isWindows = False
 libxdma = None
@@ -35,6 +38,7 @@ libxdma.fpga_recv.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_void_p, cty
 
 libxdma.fpga_wait_dma.argtypes = [ctypes.c_void_p, ctypes.c_int]
 libxdma.fpga_poll_dma.argtypes = [ctypes.c_void_p]
+libxdma.fpga_pause_dma.argtypes = [ctypes.c_void_p]
 libxdma.fpga_break_dma.argtypes = [ctypes.c_void_p]
 libxdma.fpga_wr_lite.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_uint]
 libxdma.fpga_rd_lite.argtypes = [ctypes.c_uint, ctypes.c_uint]
@@ -42,7 +46,6 @@ libxdma.fpga_wait_irq.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_int]
 libxdma.fpga_get_dma_speed.argtypes = [ctypes.c_void_p]
 libxdma.fpga_debug_dma_regs.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_uint, ctypes.c_char_p]
 libxdma.fpga_debug_int_regs.argtypes = [ctypes.c_uint, ctypes.c_char_p]
-
 
 libxdma.fpga_open.restype = ctypes.c_bool
 libxdma.fpga_alloc_dma.restype = ctypes.c_void_p
@@ -92,8 +95,10 @@ def fpga_recv(board, chnl, fd, _, length, offset=0, last=1, mm_addr=0, mm_addr_i
 
 
 # this is for windows only
-def fpga_recv_multiple(board, chnl, dma_arr, dma_num, length, offset=0, last=1, mm_addr=0, mm_addr_inc=0, timeout=TIMEOUT):
-    return libxdma.fpga_recv_multiple(board, chnl, dma_arr, dma_num, length, offset, last, mm_addr, mm_addr_inc, timeout)
+def fpga_recv_multiple(board, chnl, dma_arr, dma_num, length, offset=0, last=1, mm_addr=0, mm_addr_inc=0,
+                       timeout=TIMEOUT):
+    return libxdma.fpga_recv_multiple(board, chnl, dma_arr, dma_num, length, offset, last, mm_addr, mm_addr_inc,
+                                      timeout)
 
 
 def fpga_wait_dma(fd, timeout=TIMEOUT):
@@ -106,6 +111,10 @@ def fpga_poll_dma(fd):
 
 def fpga_break_dma(fd):
     return libxdma.fpga_break_dma(fd)
+
+
+def fpga_pause_dma(fd):
+    return libxdma.fpga_pause_dma(fd)
 
 
 def fpga_wr_lite(board, addr, data):
@@ -138,4 +147,3 @@ def fpga_debug_int_regs(board):
     sd = ctypes.create_string_buffer(256)
     libxdma.fpga_debug_int_regs(board, sd)
     return sd.value
-

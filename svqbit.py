@@ -42,13 +42,13 @@ class SolveQubit:
             self.cofflist[chnl][i] = coff_para(self.tm, freqlist[i])
         print("generate freq list " + str(time() - start))
 
-    def calculateCPU(self, data, chnl, return_complex=True):
+    def calculateCPU(self, data, chnl, no_complex=False):
         result = np.empty((len(data), len(self.freqlist[chnl]))).astype(complex)
         start = time()
         for i in range(self.shots):
             for j in range(len(self.freqlist[chnl])):
                 result[i][j] = demodCPU(data[i], self.cofflist[chnl][j])
         print("Calculate by CPU " + str(time() - start))
-        if not return_complex:
+        if no_complex:
             result = np.array([np.real(result), np.imag(result)])
         return result

@@ -1,5 +1,4 @@
 from xmlrpc.server import SimpleXMLRPCServer
-from xmlrpc.client import Binary
 import numpy as np
 from typing import Tuple
 
@@ -57,8 +56,6 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
-            bit = 16
-            value = (2 ** (bit - 1) - 1) * value
             self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
         elif name == 'GenWave':
             pass
@@ -120,7 +117,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if name in params and execute:
                     self.rfs_kit.execute_command(cmd)
 
-    def rpc_get(self, name, channel=1):
+        return True
+
+    def rpc_get(self, name, value=0, channel=1):
         """
         查询设备属性，获取数据
 
@@ -132,7 +131,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             return self.get_adc_data(channel, False)
         elif name == 'IQ':
             self.rfs_kit.set_param_value('获取内容', 1)
-            return self.get_adc_data(channel, True)
+            return self.get_adc_data(channel, True, value)
 
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
@@ -146,22 +145,27 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         else:
             return self.rfs_kit.get_param_value(name)
 
-    def get_adc_data(self, channel=0, solve=True) -> Tuple[bytes, str, Tuple]:
+    def get_adc_data(self, channel=0, solve=True, no_complex=0) -> Tuple[bytes, str, Tuple]:
         """
         通过pcie获取数据
 
         :param channel:
         :param solve:
+        :param is_complex
         :return:
         """
-        self._cache_dma_data()
+        try:
+            self._cache_dma_data()
+        except Exception as e:
+            print('取数失败')
+            print(e)
         print('缓存数据更新完成')
         _data = self.ad_data
         data = UnPackage.channel_data_filter(_data, [], [channel])
         # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
         data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
         if solve:
-            data = self.qubit_solver.calculateCPU(data, channel)
+            data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
         return data.tobytes(), str(data.dtype), data.shape
 
     def execute_command(self, button_name: str,

@@ -1,4 +1,4 @@
-from NS_MCI.quantum_driver.MCIbase import DriverAchieve, Quantity
+from MCIbase import DriverAchieve, Quantity
 import numpy as np
 
 

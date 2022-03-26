@@ -2,8 +2,6 @@ import numpy as np
 from typing import List
 import xmlrpc.client
 
-from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
-
 
 class Quantity(object):
     def __init__(self, name: str, value=None, ch: int = 1, unit: str = ''):
@@ -27,9 +25,6 @@ class DriverAchieve:
         self.addr = addr
         self.timeout = timeout
         self.default_length = default_length
-
-        self.data_interface_class = DataNoneInterface
-        self.cmd_interface_class = CommandTCPInterface
 
     def _close(self, **kw):
         """
@@ -78,19 +73,24 @@ class DriverAchieve:
                 "Output" --> bool
         :param channel：通道号
         """
+        if name == 'Waveform':
+            bit = 16
+            value = (2 ** (bit - 1) - 1) * value
+            value = value.astype('int16')
         if isinstance(value, np.ndarray):
             value = [value.tobytes(), str(value.dtype), value.shape]
-        self.rfs_kit.rpc_set(name, value, channel)
+        if self.rfs_kit.rpc_set(name, value, channel):
+            print(f'{name} 配置成功')
 
     def setValue(self, name, value=0, channel=1):
         self.set(name, value, channel)
 
-    def get(self, name, channel=1):
+    def get(self, name, channel=1, value=0):
         """
         查询设备属性，获取数据
 
         """
-        tmp = self.rfs_kit.rpc_get(name, channel)
+        tmp = self.rfs_kit.rpc_get(name, value, channel)
         if name in {'TraceIQ', 'IQ'}:
             data = np.frombuffer(tmp[0], dtype=tmp[1])
             tmp = data.reshape(tmp[2])

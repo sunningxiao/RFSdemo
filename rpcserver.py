@@ -64,6 +64,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             self.qubit_solver.setshots(value)
         elif name == 'StartCapture':
             self.clear_ad_cache()
+            self.rfs_kit.execute_command('复位')
         elif name == 'FrequencyList':
             self.qubit_solver.setfreqlist(value, channel)
         elif name == 'PointNumber':

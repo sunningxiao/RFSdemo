@@ -25,6 +25,19 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self.qubit_solver = SolveQubit()
         self._setup_dma()
 
+    @staticmethod
+    def _transform_value(value):
+        """
+        支撑numpy.ndarray rpc
+
+        :param value:
+        :return:
+        """
+        if isinstance(value, list) and len(value)==3 and isinstance(value[0], bytes) and isinstance(value[1], str) and isinstance(value[2], list):
+            data = np.frombuffer(value[0], dtype=value[1])
+            value = data.reshape(data)
+        return value
+
     def rpc_set(self, name, value=0, channel=1, execute=True):
         """
         设置设备属性
@@ -40,6 +53,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param execute: 是否立即生效
         """
         channel = channel - 1
+        value = self._transform_value(value)
 
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':

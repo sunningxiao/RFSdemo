@@ -3,19 +3,6 @@ from typing import List
 import xmlrpc.client
 
 from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
-from waveforms import sin, cos
-
-
-def coff_para(t=None, freq=200e6):
-    if t is None:
-        t = []
-    coeff_list_I = np.array(cos(2 * np.pi * freq)(t))
-    coeff_list_Q = np.array(sin(2 * np.pi * freq)(t))
-    return coeff_list_I+1j*coeff_list_Q
-
-
-def getTraceIQ(y,coff_para=np.asarray([])):
-    return np.abs(y).dot(coff_para.T)/len(y)
 
 
 class Quantity(object):
@@ -30,9 +17,8 @@ class DriverAchieve:
 
     quants: List[Quantity] = []
 
-    def __init__(self, addr: str = '', timeout: float = 3.0, **kw):
+    def __init__(self, addr: str = '', timeout: float = 3.0, default_length=6, **kw):
         self.model = 'NS_MCI'  # 默认为设备名字
-
         # self.rfs_kit = RFSKit(auto_load_icd=True,
         #                       auto_write_file=False,
         #                       cmd_interface=CommandTCPInterface,
@@ -40,12 +26,10 @@ class DriverAchieve:
         # self.handle = self.rfs_kit
         self.addr = addr
         self.timeout = timeout
+        self.default_length = default_length
 
         self.data_interface_class = DataNoneInterface
         self.cmd_interface_class = CommandTCPInterface
-        self.Freqlist = {i:[] for i in range(8)}
-        self.Cofflist = {i:[] for i in range(8)}
-        self.PointNumber = 1000
 
     def _close(self, **kw):
         """
@@ -69,9 +53,11 @@ class DriverAchieve:
         self.rfs_kit.start_command()
 
         # 配置系统初始值
-        for param in self.quants:
-            channel = param.default['ch'] if param.default['ch'] else 1
-            self.rfs_kit.rpc_set(param.name, param.default['value'], channel, False)
+        for param in self.quants[:self.default_length]:
+            value = param.default.get('value', None)
+            if value is not None:
+                channel = param.default['ch'] if param.default['ch'] else 1
+                self.rfs_kit.rpc_set(param.name, value, channel, False)
 
         # 系统开启前必须进行过一次初始化
         self.__exec_command('初始化')
@@ -92,6 +78,8 @@ class DriverAchieve:
                 "Output" --> bool
         :param channel：通道号
         """
+        if isinstance(value, np.ndarray):
+            value = [value.tobytes(), str(value.dtype), value.shape]
         self.rfs_kit.rpc_set(name, value, channel)
 
     def setValue(self, name, value=0, channel=1):

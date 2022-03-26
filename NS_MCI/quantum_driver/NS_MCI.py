@@ -1,4 +1,5 @@
 from NS_MCI.quantum_driver.MCIbase import DriverAchieve, Quantity
+import numpy as np
 
 
 class Driver(DriverAchieve):
@@ -25,10 +26,10 @@ class Driver(DriverAchieve):
                                # 实数返回：array(IQ,shot,frequency)
 
         # 任意波形发生器
-        Quantity('Waveform', value=[], ch=1),  # set/get,下发原始波形数据
+        Quantity('Waveform', value=np.array([]), ch=1),  # set/get,下发原始波形数据
         Quantity('Delay', value=0, ch=1),  # set/get,播放延时
         Quantity('Output', value=True, ch=1),  # set/get,播放通道开关设置
-        Quantity('GenWave', value=[]),
+        # Quantity('GenWave', value=[]),
 
         # 内触发
         Quantity('GenerateTrig', value=1e7, unit='ns'),  # set/get,触发周期单位ns，触发数量=shot

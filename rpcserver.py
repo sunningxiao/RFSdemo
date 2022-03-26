@@ -139,7 +139,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param solve:
         :return:
         """
-        self.__cache_dma_data()
+        self._cache_dma_data()
         print('缓存数据更新完成')
         _data = self.ad_data
         data = UnPackage.channel_data_filter(_data, [], [channel])

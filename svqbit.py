@@ -42,7 +42,7 @@ class SolveQubit:
             self.cofflist[chnl][i] = coff_para(self.tm, freqlist[i])
         print("generate freq list " + str(time() - start))
 
-    def calculateCPU(self, data, chnl, return_complex):
+    def calculateCPU(self, data, chnl, return_complex=True):
         result = np.empty((len(data), len(self.freqlist[chnl]))).astype(complex)
         start = time()
         for i in range(self.shots):

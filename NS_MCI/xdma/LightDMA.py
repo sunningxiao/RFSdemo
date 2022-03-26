@@ -75,7 +75,7 @@ class LightDMAMixin:
         self.ad_data = np.array([], dtype='u4')
         print('缓存清空')
 
-    def __cache_dma_data(self):
+    def _cache_dma_data(self):
         """
         取空xdma
 

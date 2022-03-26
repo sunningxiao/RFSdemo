@@ -81,6 +81,7 @@ class LightDMAMixin:
 
         :return:
         """
+        print(self.fd_index)
         while self.__fpga_recv_count > self.__agx_recv_count:
             fd = self.fd_list[self.fd_index]
             pointer = self.buffer_pointer_list[self.fd_index]

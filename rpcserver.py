@@ -35,7 +35,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         """
         if isinstance(value, list) and len(value)==3 and isinstance(value[0], bytes) and isinstance(value[1], str) and isinstance(value[2], list):
             data = np.frombuffer(value[0], dtype=value[1])
-            value = data.reshape(data)
+            value = data.reshape(value[2])
         return value
 
     def rpc_set(self, name, value=0, channel=1, execute=True):

@@ -45,7 +45,7 @@ class SolveQubit:
     def calculateCPU(self, data, chnl, no_complex=False):
         result = np.empty((len(data), len(self.freqlist[chnl]))).astype(complex)
         start = time()
-        for i in range(self.shots):
+        for i in range(len(data)):
             for j in range(len(self.freqlist[chnl])):
                 result[i][j] = demodCPU(data[i], self.cofflist[chnl][j])
         print("Calculate by CPU " + str(time() - start))

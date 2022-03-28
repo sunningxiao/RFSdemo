@@ -1,6 +1,7 @@
 from xmlrpc.server import SimpleXMLRPCServer
 import numpy as np
-from typing import Tuple
+from typing import List, Tuple
+import waveforms
 
 from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
 from NS_MCI import RFSKit
@@ -8,6 +9,7 @@ from NS_MCI.tools.data_unpacking import UnPackage
 from NS_MCI.xdma import LightDMAMixin
 from NS_MCI.config import param_cmd_map
 from svqbit import SolveQubit
+from quantum_driver.MCIbase import RPCValueParser
 
 
 class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
@@ -24,19 +26,6 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self.qubit_solver = SolveQubit()
         self._setup_dma()
 
-    @staticmethod
-    def _transform_value(value):
-        """
-        支撑numpy.ndarray rpc
-
-        :param value:
-        :return:
-        """
-        if isinstance(value, list) and len(value)==3 and isinstance(value[0], bytes) and isinstance(value[1], str) and isinstance(value[2], list):
-            data = np.frombuffer(value[0], dtype=value[1])
-            value = data.reshape(value[2])
-        return value
-
     def rpc_set(self, name, value=0, channel=1, execute=True):
         """
         设置设备属性
@@ -52,13 +41,54 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param execute: 是否立即生效
         """
         channel = channel - 1
-        value = self._transform_value(value)
+        value = RPCValueParser.load(value)
 
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
+            bit = 16
+            value = (2 ** (bit - 1) - 1) * value
+            value = value.astype('int16')
             self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
         elif name == 'GenWave':
-            pass
+            if not isinstance(value, waveforms.Waveform):
+                raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
+            bit = 16
+            rate = self.qubit_solver.DArate
+            if channel == 8:
+                for i in range(8):
+                    points = self.rfs_kit.get_param_value(f'DAC{i}门宽')
+                    time_line = np.linspace(0, points/rate, points)
+                    value = (2 ** (bit - 1) - 1) * value(time_line)
+                    value = value.astype('int16')
+                    self.rfs_kit.set_param_value('DAC通道选择', i)
+                    self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+            else:
+                points = self.rfs_kit.get_param_value(f'DAC{channel}门宽')
+                time_line = np.linspace(0, points / rate, points)
+                value = (2 ** (bit - 1) - 1) * value(time_line)
+                value = value.astype('int16')
+                self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+        elif name == 'GenWaveIQ':
+            if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
+                raise ValueError(f'value类型应为{[waveforms.Waveform]}, 而不是{type(value)}')
+            bit = 16
+            rate = self.qubit_solver.DArate
+            if channel == 8:
+                for i in range(8):
+                    points = self.rfs_kit.get_param_value(f'DAC{i}门宽')
+                    time_line = np.linspace(0, points / rate, points)
+                    data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(179 * 2)
+                    value = (2 ** (bit - 1) - 1) * data.copy()
+                    value = value.astype('int16')
+                    self.rfs_kit.set_param_value('DAC通道选择', i)
+                    self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+            else:
+                points = self.rfs_kit.get_param_value(f'DAC{channel}门宽')
+                time_line = np.linspace(0, points / rate, points)
+                data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(179 * 2)
+                value = (2 ** (bit - 1) - 1) * data.copy()
+                value = value.astype('int16')
+                self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
         elif name == 'Delay':
             param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
@@ -70,6 +100,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             tmp = 1 if value else 0
             self.rfs_kit.set_param_value(param_name, tmp)
 
+        elif name == 'ADrate':
+            self.qubit_solver.ADrate = value
+        elif name == 'DArate':
+            self.qubit_solver.DArate = value
         elif name == 'Shot':
             self.rfs_kit.set_param_value('基准PRF数量', value)
             self.qubit_solver.setshots(value)
@@ -119,7 +153,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
         return True
 
-    def rpc_get(self, name, value=0, channel=1):
+    def rpc_get(self, name, channel=1, value=0):
         """
         查询设备属性，获取数据
 
@@ -166,7 +200,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
         if solve:
             data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
-        return data.tobytes(), str(data.dtype), data.shape
+        return RPCValueParser.dump(data)
 
     def execute_command(self, button_name: str,
                         need_feedback=True, file_name=None, check_feedback=True,

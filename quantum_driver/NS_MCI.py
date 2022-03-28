@@ -1,17 +1,11 @@
-from MCIbase import DriverAchieve, Quantity
+import waveforms
 import numpy as np
+
+from MCIbase import DriverAchieve, Quantity
 
 
 class Driver(DriverAchieve):
     quants = [
-        # 系统参数，宏定义修改，open时下发
-        Quantity('MixMode', value=1),  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
-        Quantity('RefClock', value='out'),  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
-        Quantity('ADrate', value=4e9, unit='Hz'),  # AD采样率
-        Quantity('DArate', value=6e9, unit='Hz'),  # DA采样率
-        Quantity('DAC抽取倍数', value=1),  # DAC内插比例，1，2,4，8
-        Quantity('DAC NCO频率', value=0),  # NCO本振频率
-
         # 采集运行参数
         Quantity('Shot', value=1024, ch=1),  # set/get,运行次数
         Quantity('PointNumber', value=16384, unit='point'),  # set/get,AD采样点数
@@ -29,11 +23,23 @@ class Driver(DriverAchieve):
         Quantity('Waveform', value=np.array([]), ch=1),  # set/get,下发原始波形数据
         Quantity('Delay', value=0, ch=1),  # set/get,播放延时
         Quantity('Output', value=True, ch=1),  # set/get,播放通道开关设置
-        # Quantity('GenWave', value=[]),
+        Quantity('GenWave', value=waveforms.Waveform(), ch=1),  # set/get, 设备接收waveform对象，根据waveform对象直接生成波形
+        # set/get, 设备接收IQ分离的waveform对象列表，根据waveform对象列表直接生成波形
+        Quantity('GenWaveIQ', value=[waveforms.Waveform(), waveforms.Waveform()], ch=1),
 
         # 内触发
         Quantity('GenerateTrig', value=1e7, unit='ns'),  # set/get,触发周期单位ns，触发数量=shot
     ]
+
+    SystemParameter = {'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
+                       'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
+                       'ADrate': 4e9,  # AD采样率，单位Hz
+                       'DArate': 6e9,  # DA采样率，单位Hz
+                       'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
+                       'DAC本振频率': 0,  # DUC本振频率，单位MHz
+                       'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
+                       'ADC本振频率': 0  # DDC本振频率，单位MHz
+                       }
 
     def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
         super(Driver, self).__init__(addr, timeout, **kw)

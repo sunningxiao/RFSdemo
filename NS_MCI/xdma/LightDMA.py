@@ -81,7 +81,9 @@ class LightDMAMixin:
 
         :return:
         """
+        print(self.fd_index)
         while self.__fpga_recv_count > self.__agx_recv_count:
+            print('取数循环体开始')
             fd = self.fd_list[self.fd_index]
             pointer = self.buffer_pointer_list[self.fd_index]
             current_deep = self.__fpga_recv_count - self.init_ddr_deep - pointer
@@ -106,9 +108,9 @@ class LightDMAMixin:
             self.ad_data = self.buffer_list[self.fd_index][:pointer]
             self.buffer_pointer_list[self.fd_index] = pointer
 
-            self.fd_index += 1
-            if self.fd_index >= self.fd_count:
-                self.fd_index = 0
+            # self.fd_index += 1
+            # if self.fd_index >= self.fd_count:
+            #     self.fd_index = 0
 
             if self.ad_data.size >= 1024 ** 3:
                 # 总长度大于4G直接退出

@@ -1,6 +1,9 @@
-import numpy as np
-from typing import List
+from typing import List, Tuple
 import xmlrpc.client
+import pickle
+
+import numpy as np
+import waveforms
 
 
 class Quantity(object):
@@ -10,12 +13,18 @@ class Quantity(object):
 
 
 class DriverAchieve:
-    wave_file_name = 'wave_cache_file.dat'
-    recv_block_size = 1024
-
     quants: List[Quantity] = []
+    SystemParameter = {'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
+                       'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
+                       'ADrate': 4e9,  # AD采样率，单位Hz
+                       'DArate': 6e9,  # DA采样率，单位Hz
+                       'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
+                       'DAC本振频率': 0,  # DUC本振频率，单位MHz
+                       'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
+                       'ADC本振频率': 0  # DDC本振频率，单位MHz
+                       }
 
-    def __init__(self, addr: str = '', timeout: float = 3.0, default_length=6, **kw):
+    def __init__(self, addr: str = '', timeout: float = 3.0, **kw):
         self.model = 'NS_MCI'  # 默认为设备名字
         # self.rfs_kit = RFSKit(auto_load_icd=True,
         #                       auto_write_file=False,
@@ -24,7 +33,6 @@ class DriverAchieve:
         # self.handle = self.rfs_kit
         self.addr = addr
         self.timeout = timeout
-        self.default_length = default_length
 
     def _close(self, **kw):
         """
@@ -35,24 +43,25 @@ class DriverAchieve:
 
     # -----------------------------------------------------------------
 
-    def _open(self):
+    def _open(self, system_parameter=None):
         """
         输入IP打开设备，配置默认超时时间为5秒
         打开设备时配置RFSoC采样时钟，采样时钟以参数定义
 
-        :param ipaddr: RFS的ip地址
-        :param timeout: 指令发送超时时间
+        :param system_parameter: 系统参数
         """
+        if system_parameter is None:
+            system_parameter = {}
         self.rfs_kit = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', allow_none=True, use_builtin_types=True)
         # 此时会连接rfsoc的指令接收tcp server
         self.rfs_kit.start_command()
 
         # 配置系统初始值
-        for param in self.quants[:self.default_length]:
-            value = param.default.get('value', None)
+        values = self.SystemParameter.copy()
+        values.update(system_parameter)
+        for name, value in values.items():
             if value is not None:
-                channel = param.default['ch'] if param.default['ch'] else 1
-                self.rfs_kit.rpc_set(param.name, value, channel, False)
+                self.rfs_kit.rpc_set(name, value, 1, False)
 
         # 系统开启前必须进行过一次初始化
         self.__exec_command('初始化')
@@ -73,12 +82,7 @@ class DriverAchieve:
                 "Output" --> bool
         :param channel：通道号
         """
-        if name == 'Waveform':
-            bit = 16
-            value = (2 ** (bit - 1) - 1) * value
-            value = value.astype('int16')
-        if isinstance(value, np.ndarray):
-            value = [value.tobytes(), str(value.dtype), value.shape]
+        value = RPCValueParser.dump(value)
         if self.rfs_kit.rpc_set(name, value, channel):
             print(f'{name} 配置成功')
 
@@ -90,10 +94,11 @@ class DriverAchieve:
         查询设备属性，获取数据
 
         """
-        tmp = self.rfs_kit.rpc_get(name, value, channel)
-        if name in {'TraceIQ', 'IQ'}:
-            data = np.frombuffer(tmp[0], dtype=tmp[1])
-            tmp = data.reshape(tmp[2])
+        tmp = self.rfs_kit.rpc_get(name, channel, value)
+        # if name in {'TraceIQ', 'IQ', 'SIQ'}:
+        #     data = np.frombuffer(tmp[0], dtype=tmp[1])
+        #     tmp = data.reshape(tmp[2])
+        tmp = RPCValueParser.load(tmp)
 
         return tmp
 
@@ -111,3 +116,32 @@ class DriverAchieve:
 
     def __del__(self):
         self._close()
+
+
+class RPCValueParser:
+    """
+    rpc调用格式化工具集
+
+    """
+    @staticmethod
+    def dump(value):
+        if isinstance(value, np.ndarray):
+            value = [str(type(value)), value.tobytes(), str(value.dtype), value.shape]
+        elif isinstance(value, waveforms.Waveform):
+            value = [str(type(value)), pickle.dumps(value)]
+        elif isinstance(value, (list, tuple)):
+            value = [RPCValueParser.dump(_v) for _v in value]
+
+        return value
+
+    @staticmethod
+    def load(value):
+        if isinstance(value, list) and len(value)>=2:
+            if value[0] == str(type(np.ndarray)):
+                data = np.frombuffer(value[1], dtype=value[2])
+                value = data.reshape(value[3])
+            elif value[0] == str(type(waveforms.Waveform)):
+                value = pickle.loads(value[1])
+        elif isinstance(value, (list, tuple)):
+            value = [RPCValueParser.load(_v) for _v in value]
+        return value

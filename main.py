@@ -19,3 +19,6 @@ a.execute_command('内部PRF产生')
 b = a.get_adc_data(0, False)
 c = np.frombuffer(b[0], dtype=b[1])
 c = c.reshape(b[2])
+
+
+from waveforms import mixing

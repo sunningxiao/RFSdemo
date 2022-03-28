@@ -3,6 +3,7 @@ import xmlrpc.client
 import pickle
 
 import numpy as np
+
 import waveforms
 
 
@@ -14,15 +15,16 @@ class Quantity(object):
 
 class DriverAchieve:
     quants: List[Quantity] = []
-    SystemParameter = {'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
-                       'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
-                       'ADrate': 4e9,  # AD采样率，单位Hz
-                       'DArate': 6e9,  # DA采样率，单位Hz
-                       'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
-                       'DAC本振频率': 0,  # DUC本振频率，单位MHz
-                       'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
-                       'ADC本振频率': 0  # DDC本振频率，单位MHz
-                       }
+    SystemParameter = {
+        'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
+        'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
+        'ADrate': 4e9,  # AD采样率，单位Hz
+        'DArate': 6e9,  # DA采样率，单位Hz
+        'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
+        'DAC本振频率': 0,  # DUC本振频率，单位MHz
+        'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
+        'ADC本振频率': 0  # DDC本振频率，单位MHz
+    }
 
     def __init__(self, addr: str = '', timeout: float = 3.0, **kw):
         self.model = 'NS_MCI'  # 默认为设备名字
@@ -123,12 +125,13 @@ class RPCValueParser:
     rpc调用格式化工具集
 
     """
+
     @staticmethod
     def dump(value):
         if isinstance(value, np.ndarray):
-            value = [str(type(value)), value.tobytes(), str(value.dtype), value.shape]
+            value = ['numpy.ndarray', value.tobytes(), str(value.dtype), value.shape]
         elif isinstance(value, waveforms.Waveform):
-            value = [str(type(value)), pickle.dumps(value)]
+            value = ['waveform.Waveforms', pickle.dumps(value)]
         elif isinstance(value, (list, tuple)):
             value = [RPCValueParser.dump(_v) for _v in value]
 
@@ -136,12 +139,14 @@ class RPCValueParser:
 
     @staticmethod
     def load(value):
-        if isinstance(value, list) and len(value)>=2:
-            if value[0] == str(type(np.ndarray)):
+        if isinstance(value, list) and len(value) >= 2:
+            if value[0] == 'numpy.ndarray':
                 data = np.frombuffer(value[1], dtype=value[2])
                 value = data.reshape(value[3])
-            elif value[0] == str(type(waveforms.Waveform)):
+            elif value[0] == 'waveform.Waveforms':
                 value = pickle.loads(value[1])
+            else:
+                value = [RPCValueParser.load(_v) for _v in value]
         elif isinstance(value, (list, tuple)):
             value = [RPCValueParser.load(_v) for _v in value]
         return value

@@ -22,6 +22,7 @@ class Driver(DriverAchieve):
         # 任意波形发生器
         Quantity('Waveform', value=np.array([]), ch=1),  # set/get,下发原始波形数据
         Quantity('Delay', value=0, ch=1),  # set/get,播放延时
+        Quantity('TimeLength', value=192000, ch=1),  # set/get, 播放点数，96的整数倍
         Quantity('Output', value=True, ch=1),  # set/get,播放通道开关设置
         Quantity('GenWave', value=waveforms.Waveform(), ch=1),  # set/get, 设备接收waveform对象，根据waveform对象直接生成波形
         # set/get, 设备接收IQ分离的waveform对象列表，根据waveform对象列表直接生成波形
@@ -31,15 +32,16 @@ class Driver(DriverAchieve):
         Quantity('GenerateTrig', value=1e7, unit='ns'),  # set/get,触发周期单位ns，触发数量=shot
     ]
 
-    SystemParameter = {'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
-                       'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
-                       'ADrate': 4e9,  # AD采样率，单位Hz
-                       'DArate': 6e9,  # DA采样率，单位Hz
-                       'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
-                       'DAC本振频率': 0,  # DUC本振频率，单位MHz
-                       'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
-                       'ADC本振频率': 0  # DDC本振频率，单位MHz
-                       }
+    SystemParameter = {
+        'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
+        'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
+        'ADrate': 4e9,  # AD采样率，单位Hz
+        'DArate': 6e9,  # DA采样率，单位Hz
+        'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
+        'DAC本振频率': 0,  # DUC本振频率，单位MHz
+        'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
+        'ADC本振频率': 0  # DDC本振频率，单位MHz
+    }
 
     def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
         super(Driver, self).__init__(addr, timeout, **kw)
@@ -49,7 +51,8 @@ class Driver(DriverAchieve):
         输入IP打开设备，配置默认超时时间为5秒
         打开设备时配置RFSoC采样时钟，采样时钟以参数定义
         """
-        self._open()
+        system_parameter = kw.get('system_parameter', {})
+        self._open(system_parameter=system_parameter)
 
     def close(self, **kw):
         """

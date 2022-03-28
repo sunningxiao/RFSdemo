@@ -179,6 +179,7 @@ class ICDParams:
     @staticmethod
     def __fmt_register(register: list, value):
         try:
+            # print(f'{register[0]}->{register[2]}')
             if isinstance(value, str) and value.startswith('0x'):
                 value = int(value, 16)
             if isinstance(value, str) and value.startswith('0b'):

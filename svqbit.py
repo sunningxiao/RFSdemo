@@ -22,6 +22,7 @@ class SolveQubit:
         self.ADrate = ADrate
         self.DArate = DArate
         self.pointnum = pointnum
+        self.dac_points = {i: 179 for i in range(chnl)}
         self.shots = shots
 
     def setshots(self, shots):

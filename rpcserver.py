@@ -65,14 +65,14 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             if channel == 8:
                 for i in range(8):
                     points = self.qubit_solver.dac_points[i]
-                    time_line = np.linspace(0, (points-1)/rate, points)
+                    time_line = np.linspace(*points)
                     data = (2 ** (bit - 1) - 1) * value(time_line)
                     data = data.astype('int16')
                     self.rfs_kit.set_param_value('DAC通道选择', i)
                     self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             else:
                 points = self.qubit_solver.dac_points[channel]
-                time_line = np.linspace(0, (points-1) / rate, points)
+                time_line = np.linspace(*points)
                 data = (2 ** (bit - 1) - 1) * value(time_line)
                 data = data.astype('int16')
                 self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
@@ -85,8 +85,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 for i in range(8):
                     points = self.qubit_solver.dac_points[i]
                     print(points)
-                    time_line = np.linspace(0, (points-1) / rate, points)
-                    data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(points*2)
+                    time_line = np.linspace(*points)
+                    data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(time_line.size*2)
                     data = (2 ** (bit - 1) - 1) * data.copy()
                     data = data.astype('int16')
                     self.rfs_kit.set_param_value('DAC通道选择', i)
@@ -94,8 +94,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             else:
                 points = self.qubit_solver.dac_points[channel]
                 print(points)
-                time_line = np.linspace(0, (points-1) / rate, points)
-                data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(points*2)
+                time_line = np.linspace(*points)
+                data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(time_line.size*2)
                 data = (2 ** (bit - 1) - 1) * data.copy()
                 data = data.astype('int16')
                 self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
@@ -103,7 +103,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
             self.rfs_kit.execute_command('DAC配置')
-        elif name == 'TimeLength':
+        elif name == 'LinSpace':
             if channel == 8:
                 for i in range(8):
                     self.qubit_solver.dac_points[i] = value
@@ -151,8 +151,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 self.rfs_kit.set_param_value(param_name, value)
                 self.rfs_kit.execute_command('ADC配置')
             # 转为16ns倍数对应的点数
-            tmp = self.qubit_solver.ADrate * 1e-9 * value
-            self.qubit_solver.setpointnum(int(tmp//16*16))
+            self.qubit_solver.setpointnum(value)
 
         elif name == 'Reset':
             self.rfs_kit.execute_command('复位')
@@ -225,7 +224,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
         :param channel:
         :param solve:
-        :param is_complex
+        :param no_complex
         :return:
         """
         try:
@@ -235,6 +234,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             print(e)
         print('缓存数据更新完成')
         _data = self.ad_data
+        np.save('adc.npy', _data)
         data = UnPackage.channel_data_filter(_data, [], [channel])
         # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
         data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])

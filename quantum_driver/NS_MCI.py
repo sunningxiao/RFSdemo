@@ -22,7 +22,7 @@ class Driver(DriverAchieve):
         # 任意波形发生器
         Quantity('Waveform', value=np.array([]), ch=1),  # set/get,下发原始波形数据
         Quantity('Delay', value=0, ch=1),  # set/get,播放延时
-        Quantity('TimeLength', value=192000, ch=1),  # set/get, 播放点数，96的整数倍
+        Quantity('LinSpace', value=[0, 30e-6, 1000], ch=1),  # set/get, np.linspace函数，用于生成timeline
         Quantity('Output', value=True, ch=1),  # set/get,播放通道开关设置
         Quantity('GenWave', value=waveforms.Waveform(), ch=1),  # set/get, 设备接收waveform对象，根据waveform对象直接生成波形
         # set/get, 设备接收IQ分离的waveform对象列表，根据waveform对象列表直接生成波形

@@ -189,6 +189,7 @@ class ICDParams:
                 x = value
                 value = eval(register[-1])
             fmt_str = value_type[register[1]]
+            # print(f'{register[0]}->{value_python[register[1]](value)}')
             return value_python[register[1]](value), fmt_str
         except Exception as e:
             print(e, f'寄存器({register[0]})有误')

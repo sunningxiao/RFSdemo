@@ -36,20 +36,24 @@ class SolveQubit:
             print('输入非频率列表，请检查格式')
             return
         start = time()
-        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int(self.pointnum))
-        self.cofflist[chnl] = np.empty((len(freqlist), int(self.pointnum))).astype(complex)
+        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int((self.pointnum+15)//16*16))
+        self.cofflist[chnl] = np.empty((len(freqlist), int((self.pointnum+15)//16*16))).astype(complex)
         self.freqlist[chnl] = freqlist
         for i in range(len(freqlist)):
             self.cofflist[chnl][i] = coff_para(self.tm, freqlist[i])
         print("generate freq list " + str(time() - start))
 
     def calculateCPU(self, data, chnl, no_complex=False):
+        # print(f'进入{data}')
         result = np.empty((len(data), len(self.freqlist[chnl]))).astype(complex)
+        # print(f'第一步{result}')
         start = time()
         for i in range(len(data)):
             for j in range(len(self.freqlist[chnl])):
+                # print(f'第二步{result}')
                 result[i][j] = demodCPU(data[i], self.cofflist[chnl][j])
         print("Calculate by CPU " + str(time() - start))
         if no_complex:
+            # print(f'第三步{result}')
             result = np.array([np.real(result), np.imag(result)])
         return result

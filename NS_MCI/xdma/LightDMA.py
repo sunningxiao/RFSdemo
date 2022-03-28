@@ -143,4 +143,6 @@ class LightDMAMixin:
 
     @property
     def __agx_recv_count(self):
+        # print(f'初始{self.init_ddr_deep}')
+        # print(f'初始list{self.buffer_pointer_list}')
         return self.init_ddr_deep + self.buffer_pointer_list[self.fd_index]

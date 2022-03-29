@@ -1,23 +1,43 @@
-import waveforms
+import pickle
+import xmlrpc.client
+from functools import wraps
+import traceback
+
 import numpy as np
+import waveforms
 
-from MCIbase import DriverAchieve, Quantity
+from .common import BaseDriver, Quantity, get_coef
 
 
-class Driver(DriverAchieve):
+def solve_rpc_exception(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except xmlrpc.client.Fault as e:
+            print('远程函数报错: ')
+            print(e.faultString)
+    return wrapper
+
+
+class Driver(BaseDriver):
+    CHs = list(range(1, 17))
+
     quants = [
         # 采集运行参数
         Quantity('Shot', value=1024, ch=1),  # set/get,运行次数
         Quantity('PointNumber', value=16384, unit='point'),  # set/get,AD采样点数
         Quantity('TriggerDelay', value=0, ch=1, unit='point'),  # set/get,AD采样延时
         Quantity('FrequencyList', value=[], ch=1, unit='Hz'),  # set/get,解调频率列表，list，单位Hz
+        Quantity('Coefficient', value=None, ch=1),
+        Quantity('CaptureMode'),
         Quantity('StartCapture'),  # set,开启采集（执行前复位）
         Quantity('TraceIQ', ch=1),  # get,获取原始时域数据
-                                    # 返回：array(shot, point)
+        # 返回：array(shot, point)
         Quantity('IQ', ch=1),  # get,获取解调后数据,默认复数返回
-                               # 系统参数，宏定义修改，open时下发
-                               # 复数返回：array(shot,frequency)
-                               # 实数返回：array(IQ,shot,frequency)
+        # 系统参数，宏定义修改，open时下发
+        # 复数返回：array(shot,frequency)
+        # 实数返回：array(IQ,shot,frequency)
 
         # 任意波形发生器
         Quantity('Waveform', value=np.array([]), ch=1),  # set/get,下发原始波形数据
@@ -44,40 +64,140 @@ class Driver(DriverAchieve):
     }
 
     def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
-        super(Driver, self).__init__(addr, timeout, **kw)
+        super().__init__(addr, timeout, **kw)
+        self.model = 'NS_MCI'  # 默认为设备名字
+        self.srate = 6e9
 
+    @solve_rpc_exception
     def open(self, **kw):
         """
         输入IP打开设备，配置默认超时时间为5秒
         打开设备时配置RFSoC采样时钟，采样时钟以参数定义
         """
-        system_parameter = kw.get('system_parameter', {})
-        self._open(system_parameter=system_parameter)
+        self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', allow_none=True, use_builtin_types=True)
+        # 此时会连接rfsoc的指令接收tcp server
+        self.handle.start_command()
 
+        # 配置系统初始值
+        system_parameter = kw.get('system_parameter', {})
+        values = self.SystemParameter.copy()
+        values.update(system_parameter)
+        for name, value in values.items():
+            if value is not None:
+                self.handle.rpc_set(name, value, 1, False)
+
+        # 系统开启前必须进行过一次初始化
+        self.__exec_command('初始化')
+        self.__exec_command('DAC配置')
+        self.__exec_command('ADC配置')
+        self.handle.init_dma()
+
+    @solve_rpc_exception
     def close(self, **kw):
         """
         关闭设备
         """
-        self._close(**kw)
+        self.handle.release_dma()
+        self.handle.close()
 
     def write(self, name: str, value, **kw):
         channel = kw.get('channel', 1)
-        return self.set(name, value, channel)
+        if name in ['Coefficient']:
+            data, f_list, numberOfPoints = get_coef(value, 4e9)
+            self.set('FrequencyList', f_list, 9)
+            self.set('PointNumber', int(numberOfPoints), 9)
+        elif name in ['CaptureMode']:
+            pass
+        else:
+            return self.set(name, value, channel)
 
     def read(self, name: str, **kw):
         channel = kw.get('channel', 1)
-        return self.get(name, channel)
+        result = self.get(name, channel)
+        print(name, result.shape)
+        return result
+
+    @solve_rpc_exception
+    def set(self, name, value=0, channel=1):
+        """
+        设置设备属性
+
+        :param name: 属性名
+                "Waveform"| "Amplitude" | "Offset"| "Output"
+        :param value: 属性值
+                "Waveform" --> 1d np.ndarray & -1 <= value <= 1
+                "Amplitude"| "Offset"| "Phase" --> float    dB | dB | °
+                “PRFNum”   采用内部PRF时，可以通过这个参数控制开启后prf的数量
+                "Output" --> bool
+        :param channel：通道号
+        """
+        value = RPCValueParser.dump(value)
+
+        if self.handle.rpc_set(name, value, channel):
+            print(f'{name} 配置成功')
+
+    @solve_rpc_exception
+    def get(self, name, channel=1, value=0):
+        """
+        查询设备属性，获取数据
+
+        """
+        tmp = self.handle.rpc_get(name, channel, value)
+        # if name in {'TraceIQ', 'IQ', 'SIQ'}:
+        #     data = np.frombuffer(tmp[0], dtype=tmp[1])
+        #     tmp = data.reshape(tmp[2])
+        tmp = RPCValueParser.load(tmp)
+
+        return tmp
+
+    def __exec_command(self, button_name: str,
+                       need_feedback=True, file_name=None, check_feedback=True,
+                       callback=lambda *args: True, wait: int = 0):
+        flag = self.handle.execute_command(button_name, need_feedback, file_name, check_feedback)
+        if flag:
+            print(f'指令{button_name}执行成功')
+        else:
+            print(f'指令{button_name}执行失败')
 
 
-if __name__ == '__main__':
-    # 导入一个生成随机数字信号的函数
-    from NS_MCI.example_codes.random_digital_signal import random_gen
+class RPCValueParser:
+    """
+    rpc调用格式化工具集
 
-    driver = Driver('127.0.0.1', 3)
+    """
 
-    for i in range(8):
-        driver.set('Waveform', random_gen(40, '16', 40), channel=i)
-        driver.set('Amplitude', 3, channel=i)
-        driver.set('Offset', 3, channel=i)
+    @staticmethod
+    def dump(value):
+        if isinstance(value, np.ndarray):
+            value = ['numpy.ndarray', value.tobytes(), str(value.dtype), value.shape]
+        elif isinstance(value, float):
+            value = float(value)
+        elif isinstance(value, int):
+            value = int(value)
+        elif isinstance(value, np.uint):
+            value = int(value)
+        elif isinstance(value, (np.complex, complex)):
+            value = 'complex', value.real, value.imag
+        elif isinstance(value, waveforms.Waveform):
+            value = ['waveform.Waveforms', pickle.dumps(value)]
+        elif isinstance(value, (list, tuple)):
+            value = [RPCValueParser.dump(_v) for _v in value]
 
-    driver.set('Output', True)
+        return value
+
+    @staticmethod
+    def load(value):
+        if isinstance(value, list) and len(value) >= 2:
+            if value[0] == 'numpy.ndarray':
+                data = np.frombuffer(value[1], dtype=value[2])
+                value = data.reshape(value[3])
+            # elif: value[0] == 'numpy.float'
+            elif value[0] == 'waveform.Waveforms':
+                value = pickle.loads(value[1])
+            elif value[0] == 'complex':
+                value = complex(value[1], value[2])
+            else:
+                value = [RPCValueParser.load(_v) for _v in value]
+        elif isinstance(value, (list, tuple)):
+            value = [RPCValueParser.load(_v) for _v in value]
+        return value

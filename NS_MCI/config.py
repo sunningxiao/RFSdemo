@@ -1,3 +1,11 @@
+import functools
+import traceback
+from traceback_with_variables import format_exc
+# from traceback_with_variables import activate_by_import
+
+from NS_MCI.tools.printLog import *
+
+
 param_cmd_map = {
     ("系统参考时钟选择",
      "ADC采样率",
@@ -95,3 +103,21 @@ param_cmd_map = {
     ("基准PRF周期",
      "基准PRF数量"): '内部PRF产生',
 }
+
+
+class RPCMethodExecuteError(RuntimeError):
+    pass
+
+
+def solve_exception(func):
+    @functools.wraps(func)
+    def wrap(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            error_message = format_exc()
+            printWarning(error_message)
+            printException(e)
+            printWarning('请求报错')
+            raise RPCMethodExecuteError(error_message)
+    return wrap

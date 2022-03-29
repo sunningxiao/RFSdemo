@@ -217,14 +217,20 @@ class UnPackage:
         if len(frame_idx) == 0:
             frame_num = _data.shape[1] // frame_length
             frame_idx = list(range(frame_num))
+        if len(chnl_idx) == 0:
+            chnl_idx = list(range(chnl_count))
 
         frames = {index: {idx: data[idx*frame_length: (idx+1)*frame_length] for idx in frame_idx}
                   for index, data in enumerate(_data)}
 
         for (index, data), idx in product(enumerate(_data), frame_idx):
             chnl_data = frames[index][idx]
-            _, (__, chnl_data) = cls.common_solve_data(chnl_data, qv_length=pack_length, head_tag=0x18EFDC01)
-            frames[index][idx] = {chnl_id: chnl_data[chnl_id] for chnl_id in chnl_idx}
+            res = cls.common_solve_data(chnl_data, qv_length=pack_length, head_tag=0x18EFDC01)
+            if res:
+                _, (__, chnl_data) = res
+                frames[index][idx] = {chnl_id: chnl_data[chnl_id] for chnl_id in chnl_idx}
+            else:
+                printWarning(f'{index}_{idx}_解包失败')
 
         return frames
 
@@ -467,6 +473,32 @@ class UnPackage:
     # def unpack_complex(cls, data):
     #     data = np.array(Custom.unpack_complex(data))
     #     return np.einsum("abc->bac", data)
+
+    def unpack_data_multi(self, _data, head_tag=0x18EFDC01):
+        _head = _data[:64]
+        (pack_length, mode, data_length, head_length, data_dtype, width,
+         bit_con_byte, chnl_count, include_tail, is_complex) = UnPackage.get_pack_info(False, _head, None)
+
+        frame_length = (pack_length * chnl_count)//4
+        if len(frame_idx) == 0:
+            frame_num = _data.shape[1] // frame_length
+            frame_idx = list(range(frame_num))
+        if len(chnl_idx) == 0:
+            chnl_idx = list(range(chnl_count))
+
+        frames = {index: {idx: data[idx*frame_length: (idx+1)*frame_length] for idx in frame_idx}
+                  for index, data in enumerate(_data)}
+
+        for (index, data), idx in product(enumerate(_data), frame_idx):
+            chnl_data = frames[index][idx]
+            res = cls.common_solve_data(chnl_data, qv_length=pack_length, head_tag=0x18EFDC01)
+            if res:
+                _, (__, chnl_data) = res
+                frames[index][idx] = {chnl_id: chnl_data[chnl_id] for chnl_id in chnl_idx}
+            else:
+                printWarning(f'{index}_{idx}_解包失败')
+
+        return frames
 
 
 if __name__ == '__main__':

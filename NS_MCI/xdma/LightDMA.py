@@ -71,7 +71,7 @@ class LightDMAMixin:
 
     def clear_ad_cache(self):
         self.init_ddr_deep = self.__fpga_recv_count
-        self.buffer_pointer_list = [0 for _ in self.buffer_pointer_list]
+        self.buffer_pointer_list = [0 for _ in range(self.fd_count)]
         self.ad_data = np.array([], dtype='u4')
         print('缓存清空')
 
@@ -82,11 +82,13 @@ class LightDMAMixin:
         :return:
         """
         print(self.fd_index)
-        while self.__fpga_recv_count > self.__agx_recv_count:
+        stop_flag = 1
+        while stop_flag and self.__fpga_recv_count > self.__agx_recv_count:
             print('取数循环体开始')
             fd = self.fd_list[self.fd_index]
             pointer = self.buffer_pointer_list[self.fd_index]
             current_deep = self.__fpga_recv_count - self.init_ddr_deep - pointer
+            print(f'current_deep: {current_deep}')
             dma_size = current_deep - current_deep % 64
             if dma_size == 0:
                 break
@@ -115,6 +117,7 @@ class LightDMAMixin:
             if self.ad_data.size >= 1024 ** 3:
                 # 总长度大于4G直接退出
                 break
+            # stop_flag -= 1
         self.has_data_flag -= 1
 
     @property

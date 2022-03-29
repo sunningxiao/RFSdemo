@@ -154,7 +154,7 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
             except Exception as e:
                 printException(e, f'指令({_command_name})发送失败')
                 return False
-            printInfo(f'指令({_command_name})已发送')
+            # printInfo(f'指令({_command_name})已发送')
             try:
                 if need_feedback:
                     time.sleep(wait)
@@ -173,7 +173,7 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
             except Exception as e:
                 printException(e, f'指令({_command_name})无应答')
                 return False
-        printColor(f'成功执行指令{_commands}', 'green')
+        # printColor(f'成功执行指令{_commands}', 'green')
         # # 优化回调机制，防止出现在其他线程操作qtimer的情况
         callback()
         return True

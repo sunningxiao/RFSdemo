@@ -1,15 +1,18 @@
+import time
 from xmlrpc.server import SimpleXMLRPCServer
 import numpy as np
 from typing import List, Tuple
 import waveforms
 
+from NS_MCI.tools.printLog import *
+from NS_MCI.config import solve_exception
 from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
 from NS_MCI import RFSKit
 from NS_MCI.tools.data_unpacking import UnPackage
 from NS_MCI.xdma import LightDMAMixin
 from NS_MCI.config import param_cmd_map
 from svqbit import SolveQubit
-from quantum_driver.MCIbase import RPCValueParser
+from quantum_driver.NS_MCI import RPCValueParser
 
 
 class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
@@ -26,6 +29,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self.qubit_solver = SolveQubit()
         self._setup_dma()
 
+    @solve_exception
     def rpc_set(self, name, value=0, channel=1, execute=True):
         """
         设置设备属性
@@ -41,7 +45,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param execute: 是否立即生效
         """
         channel = channel - 1
+        # print(f'转换前 {name} -> {type(value)} -> {value}')
         value = RPCValueParser.load(value)
+        # print(f'转换后 {name} -> {type(value)} -> {value}')
 
         self.rfs_kit.set_param_value('DAC通道选择', channel)
         if name == 'Waveform':
@@ -65,15 +71,21 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             if channel == 8:
                 for i in range(8):
                     points = self.qubit_solver.dac_points[i]
+                    # print(points)
                     time_line = np.linspace(*points)
                     data = (2 ** (bit - 1) - 1) * value(time_line)
+                    # if data.size >= 32e-6*self.qubit_solver.DArate:
+                    #     raise ValueError(f'波形长度{data.size}超界')
                     data = data.astype('int16')
                     self.rfs_kit.set_param_value('DAC通道选择', i)
                     self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             else:
                 points = self.qubit_solver.dac_points[channel]
+                # print(points)
                 time_line = np.linspace(*points)
                 data = (2 ** (bit - 1) - 1) * value(time_line)
+                # if data.size >= 32e-6 * self.qubit_solver.DArate:
+                #     raise ValueError(f'波形长度{data.size}超界，当前最大长度')
                 data = data.astype('int16')
                 self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
         elif name == 'GenWaveIQ':
@@ -86,7 +98,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     points = self.qubit_solver.dac_points[i]
                     print(points)
                     time_line = np.linspace(*points)
-                    data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(time_line.size*2)
+                    I = value[0](time_line)
+                    # Q = value[1].sample(self.qubit_solver.DArate)
+                    Q = value[1](time_line)
+                    data = np.vstack((I, Q)).transpose((1, 0)).reshape(time_line.size*2)
                     data = (2 ** (bit - 1) - 1) * data.copy()
                     data = data.astype('int16')
                     self.rfs_kit.set_param_value('DAC通道选择', i)
@@ -95,7 +110,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 points = self.qubit_solver.dac_points[channel]
                 print(points)
                 time_line = np.linspace(*points)
-                data = np.vstack((value[0](time_line), value[1](time_line))).transpose((1, 0)).reshape(time_line.size*2)
+                I = value[0](time_line)
+                Q = value[1](time_line)
+                data = np.vstack((I, Q)).transpose((1, 0)).reshape(time_line.size*2)
                 data = (2 ** (bit - 1) - 1) * data.copy()
                 data = data.astype('int16')
                 self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
@@ -132,8 +149,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             self.rfs_kit.set_param_value('基准PRF数量', value)
             self.qubit_solver.setshots(value)
         elif name == 'StartCapture':
-            self.clear_ad_cache()
             self.rfs_kit.execute_command('复位')
+            self.clear_ad_cache()
         elif name == 'FrequencyList':
             if channel == 8:
                 for i in range(8):
@@ -141,6 +158,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             else:
                 self.qubit_solver.setfreqlist(value, channel)
         elif name == 'PointNumber':
+            # print(f'PointNumber:{value}')
             if channel == 8:
                 for i in range(8):
                     param_name = f'ADC{i}门宽'
@@ -161,8 +179,11 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 self.rfs_kit.execute_command('初始化')
         elif name == 'RefClock':
             tmp = 4
+            pll_frq = 250
             if value == 'out':
                 tmp = 3
+                pll_frq = 125
+            self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
             self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
             if execute:
                 self.rfs_kit.execute_command('初始化')
@@ -192,6 +213,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
         return True
 
+    @solve_exception
     def rpc_get(self, name, channel=1, value=0):
         """
         查询设备属性，获取数据
@@ -218,6 +240,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         else:
             return self.rfs_kit.get_param_value(name)
 
+    @solve_exception
     def get_adc_data(self, channel=0, solve=True, no_complex=0) -> Tuple[bytes, str, Tuple]:
         """
         通过pcie获取数据
@@ -227,19 +250,37 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param no_complex
         :return:
         """
-        try:
-            self._cache_dma_data()
-        except Exception as e:
-            print('取数失败')
-            print(e)
-        print('缓存数据更新完成')
+        # if self.ad_data.size < self.qubit_solver.shots*(self.qubit_solver.pointnum*2+256)*8:
+        while self.ad_data.size*2 < self.qubit_solver.pointnum*8*self.qubit_solver.shots:
+            if True:
+                try:
+                    self._cache_dma_data()
+                except Exception as e:
+                    print('取数失败')
+                    print(e)
+                print('缓存数据更新完成')
+            else:
+                print('取数完成')
+            time.sleep(1)
         _data = self.ad_data
         np.save('adc.npy', _data)
-        data = UnPackage.channel_data_filter(_data, [], [channel])
+        if _data.size*2 < self.qubit_solver.pointnum*8:
+        # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
+            printWarning('数据不足一包')
+            return RPCValueParser.dump(np.array([]))
+        # data = UnPackage.channel_data_filter(_data, [], [channel])
         # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
-        data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
+        # data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
+        data: np.ndarray = np.frombuffer(_data, dtype='int16')
+        assert data.size == self.qubit_solver.pointnum*8*self.qubit_solver.shots
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
+        data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
         if solve:
-            data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
+            try:
+                data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
+            except Exception as e:
+                printException(e)
+                printWarning('硬解失败')
         return RPCValueParser.dump(data)
 
     def execute_command(self, button_name: str,
@@ -256,7 +297,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
 if __name__ == '__main__':
     import sys
-    with RFSKitRPCServer(rfs_addr='192.168.1.175', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.176', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
 
         server.register_function(server.get_adc_data)

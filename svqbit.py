@@ -36,8 +36,8 @@ class SolveQubit:
             print('输入非频率列表，请检查格式')
             return
         start = time()
-        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int((self.pointnum+15)//16*16))
-        self.cofflist[chnl] = np.empty((len(freqlist), int((self.pointnum+15)//16*16))).astype(complex)
+        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int((self.pointnum+63)//64*64))
+        self.cofflist[chnl] = np.empty((len(freqlist), int((self.pointnum+63)//64*64))).astype(complex)
         self.freqlist[chnl] = freqlist
         for i in range(len(freqlist)):
             self.cofflist[chnl][i] = coff_para(self.tm, freqlist[i])

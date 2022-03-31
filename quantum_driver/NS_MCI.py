@@ -1,5 +1,6 @@
 import pickle
 import xmlrpc.client
+from xmlrpc.client import Transport
 from functools import wraps
 import traceback
 
@@ -74,7 +75,9 @@ class Driver(BaseDriver):
         输入IP打开设备，配置默认超时时间为5秒
         打开设备时配置RFSoC采样时钟，采样时钟以参数定义
         """
-        self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', allow_none=True, use_builtin_types=True)
+        tran = Transport(use_builtin_types=True)
+        tran.accept_gzip_encoding = False
+        self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', transport=tran, allow_none=True, use_builtin_types=True)
         # 此时会连接rfsoc的指令接收tcp server
         self.handle.start_command()
 

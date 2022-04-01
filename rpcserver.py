@@ -30,7 +30,14 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                               auto_write_file=False,
                               cmd_interface=CommandTCPInterface,
                               data_interface=DataNoneInterface)
-        # self.cmd_server = socketserver.TCPServer(('0.0.0.0', 10800), socketserver.StreamRequestHandler)
+        handle = LightTCPHandler
+        handle.rpc_server = self
+        self.cmd_server = socketserver.TCPServer(('0.0.0.0', 10800), handle)
+        # self.cmd_server.server_bind()
+        # self.cmd_server.server_activate()
+        self.cmd_thread = Thread(target=self.cmd_server.serve_forever, daemon=True)
+        self.cmd_thread.start()
+        # self.cmd_server.serve_forever()
         self.qubit_solver = SolveQubit()
         self._setup_dma()
 
@@ -58,6 +65,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         if name == 'Waveform':
             if not isinstance(value, np.ndarray):
                 raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
+            printInfo('Waveform配置')
             bit = 16
             value = (2 ** (bit - 1) - 1) * value
             value = value.astype('int16')
@@ -272,6 +280,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param no_complex
         :return:
         """
+        printInfo('获取数据')
         if self.recv_lock.acquire(timeout=3):
             self.recv_lock.release()
         else:
@@ -312,6 +321,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             self.has_data_flag += 1
         return self.rfs_kit.execute_command(button_name, need_feedback, file_name, check_feedback, callback, wait)
 
+    def __del__(self):
+        self.cmd_server.shutdown()
+
 
 class LightTCPHandler(socketserver.StreamRequestHandler):
     rpc_server: RFSKitRPCServer = None
@@ -321,9 +333,33 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
         head = struct.unpack('=IIII', head)
         if head[0] == 0x5F5F5F5F:
             if head[1] == 0x32000001:
+                printInfo('接收指令rpc_set')
                 param = pickle.loads(self.rfile.read(head[3]-16))
-                data = self.rpc_server.rpc_set(*param)
-
+                try:
+                    data = self.rpc_server.rpc_set(*param)
+                    error = 0
+                except Exception as e:
+                    data = str(e)
+                    error = 1
+                data = pickle.dumps(data)
+                head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000001, 0, 20 + len(data), error])
+                self.wfile.write(head)
+                self.wfile.write(data)
+                printInfo('rpc_set反馈完成')
+            elif head[1] == 0x32000002:
+                printInfo('接收指令rpc_get')
+                param = pickle.loads(self.rfile.read(head[3] - 16))
+                try:
+                    data = self.rpc_server.rpc_get(*param)
+                    error = 0
+                except Exception as e:
+                    data = str(e)
+                    error = 1
+                data = pickle.dumps(data)
+                head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000002, 0, 20 + len(data), error])
+                self.wfile.write(head)
+                self.wfile.write(data)
+                printInfo('rpc_get反馈完成')
 
 
 if __name__ == '__main__':

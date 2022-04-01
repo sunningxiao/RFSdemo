@@ -1,4 +1,6 @@
 import pickle
+import socket
+import struct
 import xmlrpc.client
 from xmlrpc.client import Transport
 from functools import wraps
@@ -78,6 +80,8 @@ class Driver(BaseDriver):
         tran = Transport(use_builtin_types=True)
         tran.accept_gzip_encoding = False
         self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', transport=tran, allow_none=True, use_builtin_types=True)
+
+        self.fast_rpc = FastRPC(self.addr)
         # 此时会连接rfsoc的指令接收tcp server
         self.handle.start_command()
 
@@ -135,7 +139,13 @@ class Driver(BaseDriver):
         :param channel：通道号
         """
         value = RPCValueParser.dump(value)
-
+        # if name in ['Waveform']:
+        #     func = self.fast_rpc.rpc_set
+        # else:
+        #     func = self.handle.rpc_set
+        #
+        # if func(name, value, channel):
+        #     print(f'{name} 配置成功')
         if self.handle.rpc_set(name, value, channel):
             print(f'{name} 配置成功')
 
@@ -145,10 +155,13 @@ class Driver(BaseDriver):
         查询设备属性，获取数据
 
         """
+        # if name in ['TraceIQ', 'IQ']:
+        #     func = self.fast_rpc.rpc_get
+        # else:
+        #     func = self.handle.rpc_get
+        #
+        # tmp = func(name, channel, value)
         tmp = self.handle.rpc_get(name, channel, value)
-        # if name in {'TraceIQ', 'IQ', 'SIQ'}:
-        #     data = np.frombuffer(tmp[0], dtype=tmp[1])
-        #     tmp = data.reshape(tmp[2])
         tmp = RPCValueParser.load(tmp)
 
         return tmp
@@ -161,6 +174,48 @@ class Driver(BaseDriver):
             print(f'指令{button_name}执行成功')
         else:
             print(f'指令{button_name}执行失败')
+
+
+class FastRPC:
+    def __init__(self, address):
+        self.addr = address
+
+    def connect(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.addr, 10800))
+        sock.settimeout(10)
+        # sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
+        # sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 30 * 1000))
+        # sock.close()
+        return sock
+
+    def rpc_set(self, *param):
+        sock = self.connect()
+        a = pickle.dumps(param)
+        head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000001, 0, 16 + len(a)])
+        sock.sendall(head)
+        sock.sendall(a)
+        head = struct.unpack("=IIIII", sock.recv(20))
+        data = pickle.loads(sock.recv(head[3] - 20))
+        if head[4]:
+            print(data)
+            return False
+        sock.close()
+        return data
+
+    def rpc_get(self, *param):
+        sock = self.connect()
+        a = pickle.dumps(param)
+        head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000002, 0, 16 + len(a)])
+        sock.sendall(head)
+        sock.sendall(a)
+        head = struct.unpack("=IIIII", sock.recv(20))
+        data = pickle.loads(sock.recv(head[3] - 20))
+        if head[4]:
+            print(data)
+            return False
+        sock.close()
+        return data
 
 
 class RPCValueParser:

@@ -166,8 +166,8 @@ class LightDMAMixin:
                 self.ad_data = self.buffer_list[self.fd_index][:pointer]
                 self.buffer_pointer_list[self.fd_index] = pointer
 
-                if callable(callback):
-                    callback()
+            if callable(callback):
+                callback()
         # self.recv_event.clear()
 
     @property

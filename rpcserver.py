@@ -41,6 +41,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self.qubit_solver = SolveQubit()
         self._setup_dma()
 
+        self.compute_cache = {}
+        self.start_mode = False
+
     @solve_exception
     def rpc_set(self, name, value=0, channel=1, execute=True):
         """
@@ -140,6 +143,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 data = data.astype('int16')
                 self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
         elif name == 'Delay':
+            value = int(self.qubit_solver.DArate * value)
             param_name = f'DAC{channel}延迟'
             self.rfs_kit.set_param_value(param_name, value)
             self.rfs_kit.execute_command('DAC配置')
@@ -178,8 +182,16 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             if self.recv_lock.locked():
                 raise RuntimeError('上次dma未结束')
             # points = int((self.qubit_solver.pointnum+15)//16*16)
-            thread = Thread(target=self._cache_dma_size, args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, ), daemon=True)
+            thread = Thread(target=self._cache_dma_size,
+                            args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, ),
+                            daemon=True)
             thread.start()
+
+            # if self.start_mode:
+            #     self.rfs_kit.set_param_value('基准PRF周期', 200e3)
+            #     self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
+            #     if execute:
+            #         self.rfs_kit.execute_command('内部PRF产生')
             # self._cache_dma_size(self.qubit_solver.pointnum*self.qubit_solver.shots*4)
         elif name == 'FrequencyList':
             if channel == 8:
@@ -187,6 +199,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.qubit_solver.setfreqlist(value, i)
             else:
                 self.qubit_solver.setfreqlist(value, channel)
+            # printInfo(f'frq_list: {self.qubit_solver.freqlist}\n'
+            #           f'coff_list: {self.qubit_solver.cofflist}\n')
         elif name == 'PointNumber':
             # print(f'PointNumber:{value}')
             if channel == 8:
@@ -210,14 +224,17 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         elif name == 'RefClock':
             tmp = 4
             pll_frq = 125
+            self.start_mode = True
             if value == 'out':
                 tmp = 3
                 pll_frq = 250
+                self.start_mode = False
             self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
             self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
             if execute:
                 self.rfs_kit.execute_command('初始化')
         elif name == 'TriggerDelay':
+            value = int(self.qubit_solver.ADrate*value)
             if channel == 8:
                 for i in range(8):
                     param_name = f'ADC{i}延迟'
@@ -287,14 +304,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             printWarning('未获取完成')
             return RPCValueParser.dump(np.array([]))
         _data = self.ad_data
-        # np.save('adc.npy', _data)
         if _data.size*2 < self.qubit_solver.pointnum*8:
-        # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
-        # data = UnPackage.channel_data_filter(_data, [], [channel])
-        # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
-        # data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
         assert data.size == self.qubit_solver.pointnum*8*self.qubit_solver.shots, '数据长度不足'
         data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
@@ -308,7 +320,23 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         return RPCValueParser.dump(data)
 
     def _compute_data(self):
-        pass
+        _data = self.ad_data
+        # np.save('adc.npy', _data)
+        if _data.size * 2 < self.qubit_solver.pointnum * 8:
+            # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
+            printWarning('数据不足一包')
+            return RPCValueParser.dump(np.array([]))
+        # data = UnPackage.channel_data_filter(_data, [], [channel])
+        # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
+        # data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
+        data: np.ndarray = np.frombuffer(_data, dtype='int16')
+        assert data.size == self.qubit_solver.pointnum * 8 * self.qubit_solver.shots, '数据长度不足'
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
+        for i in range(8):
+            channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
+            channel_solve = self.qubit_solver.calculateCPU(channel_data, i, False)
+            self.compute_cache[i] = [channel_data, channel_solve]
+            print(self.compute_cache[i])
 
     def execute_command(self, button_name: str,
                         need_feedback=True, file_name=None, check_feedback=True,

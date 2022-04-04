@@ -139,15 +139,15 @@ class Driver(BaseDriver):
         :param channel：通道号
         """
         value = RPCValueParser.dump(value)
-        # if name in ['Waveform']:
-        #     func = self.fast_rpc.rpc_set
-        # else:
-        #     func = self.handle.rpc_set
-        #
-        # if func(name, value, channel):
-        #     print(f'{name} 配置成功')
-        if self.handle.rpc_set(name, value, channel):
+        if name in ['Waveform']:
+            func = self.fast_rpc.rpc_set
+        else:
+            func = self.handle.rpc_set
+
+        if func(name, value, channel):
             print(f'{name} 配置成功')
+        # if self.handle.rpc_set(name, value, channel):
+        #     print(f'{name} 配置成功')
 
     @solve_rpc_exception
     def get(self, name, channel=1, value=0):
@@ -155,15 +155,14 @@ class Driver(BaseDriver):
         查询设备属性，获取数据
 
         """
-        # if name in ['TraceIQ', 'IQ']:
-        #     func = self.fast_rpc.rpc_get
-        # else:
-        #     func = self.handle.rpc_get
-        #
-        # tmp = func(name, channel, value)
-        tmp = self.handle.rpc_get(name, channel, value)
-        tmp = RPCValueParser.load(tmp)
+        if name in ['TraceIQ']:
+            func = self.fast_rpc.rpc_get
+        else:
+            func = self.handle.rpc_get
 
+        tmp = func(name, channel, value)
+        # tmp = self.handle.rpc_get(name, channel, value)
+        tmp = RPCValueParser.load(tmp)
         return tmp
 
     def __exec_command(self, button_name: str,
@@ -196,7 +195,9 @@ class FastRPC:
         sock.sendall(head)
         sock.sendall(a)
         head = struct.unpack("=IIIII", sock.recv(20))
-        data = pickle.loads(sock.recv(head[3] - 20))
+        # print(head)
+        data = sock.recv(head[3] - 20)
+        data = pickle.loads(data)
         if head[4]:
             print(data)
             return False
@@ -210,7 +211,13 @@ class FastRPC:
         sock.sendall(head)
         sock.sendall(a)
         head = struct.unpack("=IIIII", sock.recv(20))
-        data = pickle.loads(sock.recv(head[3] - 20))
+        length = head[3] - 20
+        data = b''
+        while length > 0:
+            _data = sock.recv(length)
+            length -= len(_data)
+            data += _data
+        data = pickle.loads(data)
         if head[4]:
             print(data)
             return False

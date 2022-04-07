@@ -4,7 +4,6 @@ import struct
 import xmlrpc.client
 from xmlrpc.client import Transport
 from functools import wraps
-import traceback
 
 import numpy as np
 import waveforms
@@ -155,7 +154,7 @@ class Driver(BaseDriver):
         查询设备属性，获取数据
 
         """
-        if name in ['TraceIQ']:
+        if name in {'IQ', 'TraceIQ'}:
             func = self.fast_rpc.rpc_get
         else:
             func = self.handle.rpc_get
@@ -212,12 +211,12 @@ class FastRPC:
         sock.sendall(a)
         head = struct.unpack("=IIIII", sock.recv(20))
         length = head[3] - 20
-        data = b''
+        data = []
         while length > 0:
             _data = sock.recv(length)
             length -= len(_data)
-            data += _data
-        data = pickle.loads(data)
+            data.append(_data)
+        data = pickle.loads(b''.join(data))
         if head[4]:
             print(data)
             return False

@@ -60,207 +60,222 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param execute: 是否立即生效
         """
         result = True
-
         channel = channel - 1
-        # print(f'转换前 {name} -> {type(value)} -> {value}')
         value = RPCValueParser.load(value)
-        # print(f'转换后 {name} -> {type(value)} -> {value}')
-
         self.rfs_kit.set_param_value('DAC通道选择', channel)
-        if name == 'Waveform':
-            if not isinstance(value, np.ndarray):
-                raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
-            printInfo('Waveform配置')
-            bit = 16
-            value = (2 ** (bit - 1) - 1) * value
-            value = value.astype('int16')
-            if channel == 8:
-                for i in range(8):
-                    self.rfs_kit.set_param_value('DAC通道选择', i)
-                    self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
-            else:
-                self.rfs_kit.set_param_value('DAC通道选择', channel)
-                result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
-        elif name == 'GenWave':
-            if not isinstance(value, waveforms.Waveform):
-                raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
-            bit = 16
-            rate = self.qubit_solver.DArate
-            if channel == 8:
-                for i in range(8):
+
+        if channel < 0:
+            raise ValueError('channel超界')
+
+        match name:
+            case 'Waveform':
+                if not isinstance(value, np.ndarray):
+                    raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
+                printInfo('Waveform配置')
+                bit = 16
+                value = (2 ** (bit - 1) - 1) * value
+                value = value.astype('int16')
+                if channel == 8:
+                    for i in range(8):
+                        self.rfs_kit.set_param_value('DAC通道选择', i)
+                        self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+                else:
+                    self.rfs_kit.set_param_value('DAC通道选择', channel)
+                    result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+            case 'GenWave':
+                if not isinstance(value, waveforms.Waveform):
+                    raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
+                bit = 16
+                rate = self.qubit_solver.DArate
+                if channel == 8:
+                    for i in range(8):
+                        if value.start is not None and value.stop is not None:
+                            data = (2 ** (bit - 1) - 1) * value.sample(self.qubit_solver.DArate)
+                        else:
+                            points = self.qubit_solver.dac_points[i]
+                            # print(points)
+                            time_line = np.linspace(*points)
+                            data = (2 ** (bit - 1) - 1) * value(time_line)
+                        data = data.astype('int16')
+                        self.rfs_kit.set_param_value('DAC通道选择', i)
+                        result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                else:
                     if value.start is not None and value.stop is not None:
                         data = (2 ** (bit - 1) - 1) * value.sample(self.qubit_solver.DArate)
                     else:
-                        points = self.qubit_solver.dac_points[i]
+                        points = self.qubit_solver.dac_points[channel]
                         # print(points)
                         time_line = np.linspace(*points)
                         data = (2 ** (bit - 1) - 1) * value(time_line)
+                    # if data.size >= 32e-6 * self.qubit_solver.DArate:
+                    #     raise ValueError(f'波形长度{data.size}超界，当前最大长度')
                     data = data.astype('int16')
-                    self.rfs_kit.set_param_value('DAC通道选择', i)
                     result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
-            else:
-                if value.start is not None and value.stop is not None:
-                    data = (2 ** (bit - 1) - 1) * value.sample(self.qubit_solver.DArate)
+            case 'GenWaveIQ':
+                if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
+                    raise ValueError(f'value类型应为{[waveforms.Waveform]}, 而不是{type(value)}')
+                bit = 16
+                rate = self.qubit_solver.DArate
+                if channel == 8:
+                    for i in range(8):
+                        if value[0].start is not None and value[0].stop is not None:
+                            I = value[0].sample(self.qubit_solver.DArate)
+                            Q = value[1].sample(self.qubit_solver.DArate)
+                        else:
+                            points = self.qubit_solver.dac_points[i]
+                            time_line = np.linspace(*points)
+                            I = value[0](time_line)
+                            Q = value[1](time_line)
+    
+                        data = np.vstack((I, Q)).transpose((1, 0)).reshape(I.size*2)
+                        data = (2 ** (bit - 1) - 1) * data.copy()
+                        data = data.astype('int16')
+                        self.rfs_kit.set_param_value('DAC通道选择', i)
+                        result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
                 else:
-                    points = self.qubit_solver.dac_points[channel]
-                    # print(points)
-                    time_line = np.linspace(*points)
-                    data = (2 ** (bit - 1) - 1) * value(time_line)
-                # if data.size >= 32e-6 * self.qubit_solver.DArate:
-                #     raise ValueError(f'波形长度{data.size}超界，当前最大长度')
-                data = data.astype('int16')
-                result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
-        elif name == 'GenWaveIQ':
-            if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
-                raise ValueError(f'value类型应为{[waveforms.Waveform]}, 而不是{type(value)}')
-            bit = 16
-            rate = self.qubit_solver.DArate
-            if channel == 8:
-                for i in range(8):
                     if value[0].start is not None and value[0].stop is not None:
                         I = value[0].sample(self.qubit_solver.DArate)
                         Q = value[1].sample(self.qubit_solver.DArate)
                     else:
-                        points = self.qubit_solver.dac_points[i]
+                        points = self.qubit_solver.dac_points[channel]
                         time_line = np.linspace(*points)
                         I = value[0](time_line)
                         Q = value[1](time_line)
-
                     data = np.vstack((I, Q)).transpose((1, 0)).reshape(I.size*2)
                     data = (2 ** (bit - 1) - 1) * data.copy()
                     data = data.astype('int16')
-                    self.rfs_kit.set_param_value('DAC通道选择', i)
                     result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
-            else:
-                if value[0].start is not None and value[0].stop is not None:
-                    I = value[0].sample(self.qubit_solver.DArate)
-                    Q = value[1].sample(self.qubit_solver.DArate)
+            case 'Delay':
+                value = round(self.qubit_solver.DArate * value)
+                param_name = f'DAC{channel}延迟'
+                self.rfs_kit.set_param_value(param_name, value)
+                result = self.rfs_kit.execute_command('DAC配置')
+            case 'LinSpace':
+                if channel == 8:
+                    for i in range(8):
+                        self.qubit_solver.dac_points[i] = value
                 else:
-                    points = self.qubit_solver.dac_points[channel]
-                    time_line = np.linspace(*points)
-                    I = value[0](time_line)
-                    Q = value[1](time_line)
-                data = np.vstack((I, Q)).transpose((1, 0)).reshape(I.size*2)
-                data = (2 ** (bit - 1) - 1) * data.copy()
-                data = data.astype('int16')
-                result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
-        elif name == 'Delay':
-            value = int(self.qubit_solver.DArate * value)
-            param_name = f'DAC{channel}延迟'
-            self.rfs_kit.set_param_value(param_name, value)
-            result = self.rfs_kit.execute_command('DAC配置')
-        elif name == 'LinSpace':
-            if channel == 8:
-                for i in range(8):
-                    self.qubit_solver.dac_points[i] = value
-            else:
-                self.qubit_solver.dac_points[channel] = value
-        elif name == 'Output':
-            if channel == 8:
-                for i in range(8):
-                    param_name = f'DAC{i}使能'
+                    self.qubit_solver.dac_points[channel] = value
+            case 'Output':
+                if channel == 8:
+                    for i in range(8):
+                        param_name = f'DAC{i}使能'
+                        if value == 'OFF':
+                            value = False
+                        tmp = 1 if value else 0
+                        self.rfs_kit.set_param_value(param_name, tmp)
+                else:
+                    param_name = f'DAC{channel}使能'
                     if value == 'OFF':
                         value = False
                     tmp = 1 if value else 0
                     self.rfs_kit.set_param_value(param_name, tmp)
-            else:
-                param_name = f'DAC{channel}使能'
-                if value == 'OFF':
-                    value = False
-                tmp = 1 if value else 0
-                self.rfs_kit.set_param_value(param_name, tmp)
-
-        elif name == 'ADrate':
-            self.qubit_solver.ADrate = value
-            self.rfs_kit.set_param_value('ADC采样率', value * 1e-6)
-        elif name == 'DArate':
-            self.qubit_solver.DArate = value
-            self.rfs_kit.set_param_value('DAC采样率', value * 1e-6)
-        elif name == 'Shot':
-            self.rfs_kit.set_param_value('基准PRF数量', value)
-            self.qubit_solver.setshots(value)
-        elif name == 'StartCapture':
-            self.stop_event.set()
-            self.rfs_kit.execute_command('复位')
-            self.clear_ad_cache()
-            if self.recv_lock.locked():
-                raise RuntimeError('上次dma未结束')
-            # points = int((self.qubit_solver.pointnum+15)//16*16)
-            thread = Thread(target=self._cache_dma_size,
-                            args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, ),
-                            daemon=True)
-            thread.start()
-
-            # if self.start_mode:
-            #     self.rfs_kit.set_param_value('基准PRF周期', 200e3)
-            #     self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
-            #     if execute:
-            #         self.rfs_kit.execute_command('内部PRF产生')
-            # self._cache_dma_size(self.qubit_solver.pointnum*self.qubit_solver.shots*4)
-        elif name == 'FrequencyList':
-            if channel == 8:
-                for i in range(8):
-                    self.qubit_solver.setfreqlist(value, i)
-            else:
-                self.qubit_solver.setfreqlist(value, channel)
-            # printInfo(f'frq_list: {self.qubit_solver.freqlist}\n'
-            #           f'coff_list: {self.qubit_solver.cofflist}\n')
-        elif name == 'PointNumber':
-            # print(f'PointNumber:{value}')
-            if channel == 8:
-                for i in range(8):
-                    param_name = f'ADC{i}门宽'
+    
+            case 'ADrate':
+                self.qubit_solver.ADrate = value
+                self.rfs_kit.set_param_value('ADC采样率', value * 1e-6)
+            case 'DArate':
+                self.qubit_solver.DArate = value
+                self.rfs_kit.set_param_value('DAC采样率', value * 1e-6)
+            case 'Shot':
+                print(f'shots: {value}')
+                self.rfs_kit.set_param_value('基准PRF数量', value)
+                self.qubit_solver.setshots(value)
+            case 'StartCapture':
+                self.stop_event.set()
+                self.rfs_kit.execute_command('复位')
+                self.clear_ad_cache()
+                if self.recv_lock.locked():
+                    raise RuntimeError('上次dma未结束')
+                # points = int((self.qubit_solver.pointnum+15)//16*16)
+                thread = Thread(target=self._cache_dma_size,
+                                args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, ),
+                                daemon=True)
+                thread.start()
+    
+                # if self.start_mode:
+                #     self.rfs_kit.set_param_value('基准PRF周期', 200e3)
+                #     self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
+                #     if execute:
+                #         self.rfs_kit.execute_command('内部PRF产生')
+                # self._cache_dma_size(self.qubit_solver.pointnum*self.qubit_solver.shots*4)
+            case 'FrequencyList':
+                if channel == 8:
+                    for i in range(8):
+                        self.qubit_solver.setfreqlist(value, i)
+                else:
+                    self.qubit_solver.setfreqlist(value, channel)
+            case 'PhaseList':
+                print(f'PhaseList:{value}')
+                if channel == 8:
+                    for i in range(8):
+                        self.qubit_solver.setphaselist(value, i)
+                else:
+                    self.qubit_solver.setphaselist(value, channel)
+            case 'PointNumber':
+                print(f'PointNumber:{value}')
+                if channel == 8:
+                    for i in range(8):
+                        param_name = f'ADC{i}门宽'
+                        self.rfs_kit.set_param_value(param_name, value)
+                        result = self.rfs_kit.execute_command('ADC配置')
+                else:
+                    param_name = f'ADC{channel}门宽'
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
-            else:
-                param_name = f'ADC{channel}门宽'
-                self.rfs_kit.set_param_value(param_name, value)
-                result = self.rfs_kit.execute_command('ADC配置')
-            # 转为16ns倍数对应的点数
-            self.qubit_solver.setpointnum(int((value + 63) // 64 * 64))
-
-        elif name == 'Reset':
-            result = self.rfs_kit.execute_command('复位')
-        elif name == 'MixMode':
-            self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
-            if execute:
-                result = self.rfs_kit.execute_command('初始化')
-        elif name == 'RefClock':
-            tmp = 4
-            pll_frq = 125
-            self.start_mode = True
-            if value == 'out':
-                tmp = 3
-                pll_frq = 250
-                self.start_mode = False
-            self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
-            self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
-            if execute:
-                result = self.rfs_kit.execute_command('初始化')
-        elif name == 'TriggerDelay':
-            value = int(self.qubit_solver.ADrate*value)
-            if channel == 8:
-                for i in range(8):
-                    param_name = f'ADC{i}延迟'
+                # 转为16ns倍数对应的点数
+                self.qubit_solver.setpointnum(int((value + 63) // 64 * 64))
+            case 'DemodulationParam':
+                print(f'DemodulationParam:{value}')
+                if channel == 8:
+                    for i in range(8):
+                        self.qubit_solver.cofflist[i] = value
+                else:
+                    self.qubit_solver.cofflist[channel] = value
+                result = self.rpc_set('PointNumber', value.shape[1], channel, execute)
+    
+            case 'Reset':
+                result = self.rfs_kit.execute_command('复位')
+            case 'MixMode':
+                self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
+                if execute:
+                    result = self.rfs_kit.execute_command('初始化')
+            case 'RefClock':
+                tmp = 4
+                pll_frq = 125
+                self.start_mode = True
+                if value == 'out':
+                    tmp = 3
+                    pll_frq = 250
+                    self.start_mode = False
+                self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
+                self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
+                if execute:
+                    result = self.rfs_kit.execute_command('初始化')
+            case 'TriggerDelay':
+                value = round(self.qubit_solver.ADrate*value)
+                if channel == 8:
+                    for i in range(8):
+                        param_name = f'ADC{i}延迟'
+                        self.rfs_kit.set_param_value(param_name, value)
+                        result = self.rfs_kit.execute_command('ADC配置')
+                else:
+                    param_name = f'ADC{channel}延迟'
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
-            else:
-                param_name = f'ADC{channel}延迟'
-                self.rfs_kit.set_param_value(param_name, value)
-                result = self.rfs_kit.execute_command('ADC配置')
-
-        elif name == 'GenerateTrig':
-            self.rfs_kit.set_param_value('基准PRF周期', value)
-            self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
-            if execute:
-                result = self.rfs_kit.execute_command('内部PRF产生')
-        else:
-            # 参数名透传，直接根据icd.json中的参数名配置对应值
-            # 如果在param_cmd_map中找到了对应参数配置后要执行的指令，则执行相应指令
-            self.rfs_kit.set_param_value(name, value)
-            for params, cmd in param_cmd_map.items():
-                if name in params and execute:
-                    result = self.rfs_kit.execute_command(cmd)
+    
+            case 'GenerateTrig':
+                self.rfs_kit.set_param_value('基准PRF周期', value)
+                self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
+                if execute:
+                    result = self.rfs_kit.execute_command('内部PRF产生')
+            case _:
+                # 参数名透传，直接根据icd.json中的参数名配置对应值
+                # 如果在param_cmd_map中找到了对应参数配置后要执行的指令，则执行相应指令
+                self.rfs_kit.set_param_value(name, value)
+                for params, cmd in param_cmd_map.items():
+                    if name in params and execute:
+                        result = self.rfs_kit.execute_command(cmd)
 
         return result
 
@@ -278,6 +293,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         elif name == 'IQ':
             self.rfs_kit.set_param_value('获取内容', 1)
             return self.get_adc_data(channel, True, value)
+        elif name == 'FastIQ':
+            return self.fast_adc_data(channel, True, value)
 
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
@@ -290,6 +307,24 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             return self.rfs_kit.get_param_value(param_name)
         else:
             return self.rfs_kit.get_param_value(name)
+
+    @solve_exception
+    def fast_adc_data(self, channel=0, solve=True, no_complex=0):
+        printInfo('获取数据')
+        if self.recv_lock.acquire(timeout=3):
+            self.recv_lock.release()
+        else:
+            printWarning('未获取完成')
+            return RPCValueParser.dump(np.array([]))
+        # if channel == 8 and solve:
+        #     data = np.fromiter((chnl[1] for chnl in self.compute_cache), dtype=self.compute_cache[0][1].dtype)
+        # elif channel == 8 and not solve:
+        #     data = np.fromiter((chnl[0] for chnl in self.compute_cache), dtype=self.compute_cache[0][0].dtype)
+        if solve:
+            data = self.compute_cache[channel][1]
+        else:
+            data = self.compute_cache[channel][0]
+        return RPCValueParser.dump(data)
 
     @solve_exception
     def get_adc_data(self, channel=0, solve=True, no_complex=0) -> Tuple[bytes, str, Tuple]:
@@ -317,7 +352,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
         if solve:
             try:
-                data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
+                data = self.qubit_solver.calculate_matrix(data, channel, bool(no_complex))
             except Exception as e:
                 printException(e)
                 printWarning('硬解失败')

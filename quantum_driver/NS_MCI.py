@@ -19,6 +19,7 @@ def solve_rpc_exception(func):
         except xmlrpc.client.Fault as e:
             print('远程函数报错: ')
             print(e.faultString)
+
     return wrapper
 
 
@@ -31,7 +32,9 @@ class Driver(BaseDriver):
         Quantity('PointNumber', value=16384, unit='point'),  # set/get,AD采样点数
         Quantity('TriggerDelay', value=0, ch=1, unit='point'),  # set/get,AD采样延时
         Quantity('FrequencyList', value=[], ch=1, unit='Hz'),  # set/get,解调频率列表，list，单位Hz
+        Quantity('PhaseList', value=[], ch=1, unit='Hz'),  # set/get,解调频率列表，list，单位Hz
         Quantity('Coefficient', value=None, ch=1),
+        Quantity('DemodulationParam', value=None, ch=1),
         Quantity('CaptureMode'),
         Quantity('StartCapture'),  # set,开启采集（执行前复位）
         Quantity('TraceIQ', ch=1),  # get,获取原始时域数据
@@ -55,7 +58,7 @@ class Driver(BaseDriver):
     ]
 
     SystemParameter = {
-        'MixMode': 1,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
+        'MixMode': 2,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
         'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
         'ADrate': 4e9,  # AD采样率，单位Hz
         'DArate': 6e9,  # DA采样率，单位Hz
@@ -78,7 +81,8 @@ class Driver(BaseDriver):
         """
         tran = Transport(use_builtin_types=True)
         tran.accept_gzip_encoding = False
-        self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', transport=tran, allow_none=True, use_builtin_types=True)
+        self.handle = xmlrpc.client.ServerProxy(f'http://{self.addr}:10801', transport=tran, allow_none=True,
+                                                use_builtin_types=True)
 
         self.fast_rpc = FastRPC(self.addr)
         # 此时会连接rfsoc的指令接收tcp server
@@ -107,18 +111,18 @@ class Driver(BaseDriver):
         self.handle.close()
 
     def write(self, name: str, value, **kw):
-        channel = kw.get('channel', 1)
+        channel = kw.get('ch', 1)
         if name in ['Coefficient']:
             data, f_list, numberOfPoints = get_coef(value, 4e9)
-            self.set('FrequencyList', f_list, 9)
-            self.set('PointNumber', int(numberOfPoints), 9)
+            self.set('FrequencyList', f_list, channel)
+            self.set('PointNumber', int(numberOfPoints), channel)
         elif name in ['CaptureMode']:
             pass
         else:
             return self.set(name, value, channel)
 
     def read(self, name: str, **kw):
-        channel = kw.get('channel', 1)
+        channel = kw.get('ch', 1)
         result = self.get(name, channel)
         print(name, result.shape)
         return result
@@ -144,9 +148,8 @@ class Driver(BaseDriver):
             func = self.handle.rpc_set
 
         if func(name, value, channel):
-            print(f'{name} 配置成功')
-        # if self.handle.rpc_set(name, value, channel):
-        #     print(f'{name} 配置成功')
+            # print(f'{name} 配置成功')
+            pass
 
     @solve_rpc_exception
     def get(self, name, channel=1, value=0):
@@ -154,7 +157,7 @@ class Driver(BaseDriver):
         查询设备属性，获取数据
 
         """
-        if name in {'IQ', 'TraceIQ'}:
+        if name in {'TraceIQ'}:
             func = self.fast_rpc.rpc_get
         else:
             func = self.handle.rpc_get

@@ -75,7 +75,10 @@ class SolveQubit:
 
     def calculate_matrix(self, data, chnl, no_complex=False):
         start = time()
-        result = demodCPU(data, self.cofflist[chnl]).T
+        try:
+            result = demodCPU(data, self.cofflist[chnl])
+        except AttributeError as e:
+            result = np.array([], dtype=np.complex)
         print("Calculate by CPU " + str(time() - start))
         if no_complex:
             # print(f'第三步{result}')

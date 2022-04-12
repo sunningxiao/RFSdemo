@@ -114,8 +114,8 @@ class Driver(BaseDriver):
         channel = kw.get('ch', 1)
         if name in ['Coefficient']:
             data, f_list, numberOfPoints = get_coef(value, 4e9)
-            self.set('FrequencyList', f_list, channel)
             self.set('PointNumber', int(numberOfPoints), channel)
+            self.set('FrequencyList', f_list, channel)
         elif name in ['CaptureMode']:
             pass
         else:

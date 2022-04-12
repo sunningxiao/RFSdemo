@@ -160,6 +160,7 @@ class Xdma(object):
 
     def stream_public(self, board, chnl, prt, dma_num, fd, length, function, offset, stop_event, flag):
         try:
+            length = int(length)
             recv = function(board, chnl, prt, dma_num, length, offset=offset, timeout=0)
             return self.__check_buffer(recv, board, chnl, fd, dma_num, length, stop_event, flag)
         except Exception as e:

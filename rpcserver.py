@@ -61,6 +61,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         """
         result = True
         channel = channel - 1
+        print(f'channel: {channel}')
         value = RPCValueParser.load(value)
         self.rfs_kit.set_param_value('DAC通道选择', channel)
 
@@ -71,7 +72,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             case 'Waveform':
                 if not isinstance(value, np.ndarray):
                     raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
-                printInfo('Waveform配置')
+                printInfo(f'Waveform配置: {value.shape}')
                 bit = 16
                 value = (2 ** (bit - 1) - 1) * value
                 value = value.astype('int16')
@@ -172,9 +173,11 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.rfs_kit.set_param_value(param_name, tmp)
     
             case 'ADrate':
+                print(f'AD采样率: {value}')
                 self.qubit_solver.ADrate = value
                 self.rfs_kit.set_param_value('ADC采样率', value * 1e-6)
             case 'DArate':
+                print(f'DA采样率: {value}')
                 self.qubit_solver.DArate = value
                 self.rfs_kit.set_param_value('DAC采样率', value * 1e-6)
             case 'Shot':
@@ -184,55 +187,50 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             case 'StartCapture':
                 self.stop_event.set()
                 self.rfs_kit.execute_command('复位')
+                self.compute_cache.clear()
                 self.clear_ad_cache()
                 if self.recv_lock.locked():
                     raise RuntimeError('上次dma未结束')
                 # points = int((self.qubit_solver.pointnum+15)//16*16)
                 thread = Thread(target=self._cache_dma_size,
-                                args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, ),
+                                args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, self._compute_data),
                                 daemon=True)
                 thread.start()
-    
-                # if self.start_mode:
-                #     self.rfs_kit.set_param_value('基准PRF周期', 200e3)
-                #     self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
-                #     if execute:
-                #         self.rfs_kit.execute_command('内部PRF产生')
-                # self._cache_dma_size(self.qubit_solver.pointnum*self.qubit_solver.shots*4)
             case 'FrequencyList':
+                print(f'FrequencyList: {value}')
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.setfreqlist(value, i)
                 else:
                     self.qubit_solver.setfreqlist(value, channel)
             case 'PhaseList':
-                print(f'PhaseList:{value}')
+                print(f'PhaseList: {value}')
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.setphaselist(value, i)
                 else:
                     self.qubit_solver.setphaselist(value, channel)
             case 'PointNumber':
-                print(f'PointNumber:{value}')
+                print(f'PointNumber: {value}')
                 if channel == 8:
                     for i in range(8):
                         param_name = f'ADC{i}门宽'
                         self.rfs_kit.set_param_value(param_name, value)
                         result = self.rfs_kit.execute_command('ADC配置')
                 else:
-                    param_name = f'ADC{channel}门宽'
+                    param_name = f'ADC{0}门宽'
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
                 # 转为16ns倍数对应的点数
                 self.qubit_solver.setpointnum(int((value + 63) // 64 * 64))
             case 'DemodulationParam':
-                print(f'DemodulationParam:{value}')
+                print(f'DemodulationParam: {value}')
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.cofflist[i] = value
                 else:
                     self.qubit_solver.cofflist[channel] = value
-                result = self.rpc_set('PointNumber', value.shape[1], channel, execute)
+                result = self.rpc_set('PointNumber', value.shape[1], channel+1, execute)
     
             case 'Reset':
                 result = self.rfs_kit.execute_command('复位')
@@ -253,7 +251,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if execute:
                     result = self.rfs_kit.execute_command('初始化')
             case 'TriggerDelay':
+                print(f'TriggerDelay_time: {value}')
                 value = round(self.qubit_solver.ADrate*value)
+                print(f'TriggerDelay: {value}')
                 if channel == 8:
                     for i in range(8):
                         param_name = f'ADC{i}延迟'
@@ -286,13 +286,14 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
         """
         channel = channel - 1
+        print(f'channel: {channel}')
         if name == 'TraceIQ':
             # 返回快视数据
             self.rfs_kit.set_param_value('获取内容', 0)
             return self.get_adc_data(channel, False)
         elif name == 'IQ':
             self.rfs_kit.set_param_value('获取内容', 1)
-            return self.get_adc_data(channel, True, value)
+            return self.fast_adc_data(channel, True, value)
         elif name == 'FastIQ':
             return self.fast_adc_data(channel, True, value)
 
@@ -373,7 +374,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
         for i in range(8):
             channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
-            channel_solve = self.qubit_solver.calculateCPU(channel_data, i, False)
+            channel_solve = self.qubit_solver.calculate_matrix(channel_data, i, False)
             self.compute_cache[i] = [channel_data, channel_solve]
             # print(self.compute_cache[i])
 
@@ -431,7 +432,7 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
 
 if __name__ == '__main__':
     import sys
-    with RFSKitRPCServer(rfs_addr='192.168.1.176', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.175', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
 
         server.register_function(server.get_adc_data)

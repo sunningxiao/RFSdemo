@@ -91,7 +91,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if channel == 8:
                     for i in range(8):
                         if value.start is not None and value.stop is not None:
-                            data = (2 ** (bit - 1) - 1) * value.sample(self.qubit_solver.DArate)
+                            data = (2 ** (bit - 1) - 1) * value.sample(rate)
                         else:
                             points = self.qubit_solver.dac_points[i]
                             # print(points)
@@ -102,7 +102,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
                 else:
                     if value.start is not None and value.stop is not None:
-                        data = (2 ** (bit - 1) - 1) * value.sample(self.qubit_solver.DArate)
+                        data = (2 ** (bit - 1) - 1) * value.sample(rate)
                     else:
                         points = self.qubit_solver.dac_points[channel]
                         # print(points)
@@ -290,12 +290,12 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         if name == 'TraceIQ':
             # 返回快视数据
             self.rfs_kit.set_param_value('获取内容', 0)
-            return self.get_adc_data(channel, False)
+            return self.fast_adc_data(channel, False)
         elif name == 'IQ':
             self.rfs_kit.set_param_value('获取内容', 1)
             return self.fast_adc_data(channel, True, value)
-        elif name == 'FastIQ':
-            return self.fast_adc_data(channel, True, value)
+        elif name == 'CPUIQ':
+            return self.get_adc_data(channel, True, value)
 
         elif name == 'Amplitude':
             param_name = f'DAC{channel}增益'
@@ -353,7 +353,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
         if solve:
             try:
-                data = self.qubit_solver.calculate_matrix(data, channel, bool(no_complex))
+                data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
             except Exception as e:
                 printException(e)
                 printWarning('硬解失败')
@@ -366,9 +366,6 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
-        # data = UnPackage.channel_data_filter(_data, [], [channel])
-        # 将解包的结果转为一整个np.ndarray shape为 包数*单通道采样点数
-        # data = np.array([data[0][frame_idx][channel] for frame_idx in data[0]])
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
         assert data.size == self.qubit_solver.pointnum * 8 * self.qubit_solver.shots, '数据长度不足'
         data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
@@ -376,7 +373,6 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
             channel_solve = self.qubit_solver.calculate_matrix(channel_data, i, False)
             self.compute_cache[i] = [channel_data, channel_solve]
-            # print(self.compute_cache[i])
 
     def execute_command(self, button_name: str,
                         need_feedback=True, file_name=None, check_feedback=True,
@@ -432,7 +428,7 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
 
 if __name__ == '__main__':
     import sys
-    with RFSKitRPCServer(rfs_addr='192.168.1.175', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.174', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
 
         server.register_function(server.get_adc_data)

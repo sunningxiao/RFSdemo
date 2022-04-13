@@ -1,4 +1,4 @@
-from numba import cuda
+import numba as nb
 import numpy as np
 from waveforms import cos, sin, gaussian
 import math
@@ -15,6 +15,25 @@ def demodCPU(y, coff_para=np.asarray([])):
     return y.dot(coff_para.T) / len(y)
 
 
+def demodMatrix(y, coff_para):
+    return y.dot(coff_para.T) / y.shape[1]
+
+
+# def dot_py(A,B):
+#     m, n = A.shape
+#     p = B.shape[1]
+#
+#     C = np.zeros((m,p))
+#
+#     for i in range(0,m):
+#         for j in range(0,p):
+#             for k in range(0,n):
+#                 C[i,j] += A[i,k]*B[k,j]
+#     return C
+#
+# dot_nb = nb.jit(nb.float64[:,:](nb.float64[:,:], nb.float64[:,:]), nopython = True)(dot_py)
+
+
 class SolveQubit:
     def __init__(self, ADrate=4e9, DArate=6e9, chnl=8, shots=1000, pointnum=16e3):
         self.freqlist = {i: [] for i in range(chnl)}
@@ -22,7 +41,7 @@ class SolveQubit:
         self.cofflist = {i: [] for i in range(chnl)}
         self.ADrate = ADrate
         self.DArate = DArate
-        self.pointnum = pointnum
+        self.pointnum = [pointnum]*chnl
         self.dac_points = {i: 179 for i in range(chnl)}
         self.shots = shots
 
@@ -43,6 +62,7 @@ class SolveQubit:
         for i in range(len(freqlist)):
             phase = self.phaselist[i] if len(self.phaselist) == len(freqlist) else 0
             self.cofflist[chnl][i] = coff_para(self.tm, freqlist[i], phase)
+        # self.cofflist[chnl] = cuda.to_device(self.cofflist[chnl])
         print("generate freq list " + str(time() - start))
 
     def setphaselist(self, phaselist, chnl):
@@ -60,11 +80,11 @@ class SolveQubit:
 
     def calculateCPU(self, data, chnl, no_complex=False):
         # print(f'进入{data}')
-        result = np.empty((len(data), len(self.freqlist[chnl]))).astype(complex)
+        result = np.empty((len(data), len(self.cofflist[chnl]))).astype(complex)
         # print(f'第一步{result}')
         start = time()
         for i in range(len(data)):
-            for j in range(len(self.freqlist[chnl])):
+            for j in range(len(self.cofflist[chnl])):
                 # print(f'第二步{result}')
                 result[i][j] = demodCPU(data[i], self.cofflist[chnl][j])
         print("Calculate by CPU " + str(time() - start))
@@ -76,10 +96,10 @@ class SolveQubit:
     def calculate_matrix(self, data, chnl, no_complex=False):
         start = time()
         try:
-            result = demodCPU(data, self.cofflist[chnl])
+            result = demodMatrix(data, self.cofflist[chnl])
         except AttributeError as e:
             result = np.array([], dtype=np.complex)
-        print("Calculate by CPU " + str(time() - start))
+        print("Calculate by matrix " + str(time() - start))
         if no_complex:
             # print(f'第三步{result}')
             result = np.array([np.real(result), np.imag(result)])

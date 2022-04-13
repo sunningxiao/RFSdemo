@@ -117,7 +117,6 @@ def solve_exception(func):
         except Exception as e:
             error_message = format_exc()
             printWarning(error_message)
-            printException(e)
             printWarning('请求报错')
             raise RPCMethodExecuteError(error_message)
     return wrap

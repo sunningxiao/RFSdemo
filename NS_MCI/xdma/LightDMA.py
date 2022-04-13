@@ -11,16 +11,22 @@ class LightDMAMixin:
     ddr_in_address = 0x0
     ddr_out_address = 0x4
     ddr_deep_address = 0x8
+    da_channel_num = 4
+    da_channel_width = 100e-6
 
     def __init__(self):
         self.fd_index = 0
         self.fd_list = []
+        self.down_fd_list = []
         self.buffer_pointer_list = []
         self.buffer_list = []
+        self.down_buffer_list = []
         self.ad_data = np.array([], dtype='u4')
         self.init_ddr_deep = 0
         self.has_data_flag = 0
         self.xdma_opening = False
+        self.da_cache = np.array([], dtype='int16')
+        self.recv_lock = threading.Lock()
         self.recv_lock = threading.Lock()
         self.stop_event = threading.Event()
         self.xdma_obj = Xdma()
@@ -28,13 +34,17 @@ class LightDMAMixin:
     def _setup_dma(self):
         self.fd_index = 0
         self.fd_list = []
+        self.down_fd_list = []
         self.buffer_pointer_list = []
         self.buffer_list = []
+        self.down_buffer_list = []
         self.ad_data = np.array([], dtype='u4')
         self.init_ddr_deep = 0
         self.has_data_flag = 0
         self.xdma_opening = False
+        self.da_cache = np.array([], dtype='int16')
         self.recv_lock = threading.Lock()
+        self.send_lock = threading.Lock()
         self.stop_event = threading.Event()
         self.xdma_obj = Xdma()
 
@@ -44,6 +54,7 @@ class LightDMAMixin:
 
         :return:
         """
+        # 初始化dma上行内存
         if self.xdma_opening:
             return
         xdma_base.fpga_open(0, poll_interval_ms=0)
@@ -55,6 +66,15 @@ class LightDMAMixin:
 
         self.init_ddr_deep = self.__fpga_recv_count
         self.xdma_opening = True
+
+        # 初始化dma下行内存
+        channel_size = round(self.da_channel_width*self.qubit_solver.DArate)
+        down_size = int(self.da_channel_num*channel_size/2)
+        fd = xdma_base.fpga_alloc_dma(0, down_size)
+        self.down_fd_list.append(fd)
+        buffer = np.frombuffer(xdma_base.fpga_get_dma_buffer(fd, down_size), dtype='int16')
+        buffer = buffer.reshape((self.da_channel_num, channel_size))
+        self.down_buffer_list.append(buffer)
 
         print('xdma初始化成功')
 
@@ -76,6 +96,9 @@ class LightDMAMixin:
         xdma_base.fpga_close(0)
         self.xdma_opening = False
 
+        for i in self.down_fd_list:
+            xdma_base.fpga_free_dma(i)
+
         print('xdma释放成功')
 
     def clear_ad_cache(self):
@@ -85,7 +108,24 @@ class LightDMAMixin:
         self.ad_data = np.array([], dtype='u4')
         print('缓存清空')
 
-    def _cache_dma_data(self):
+    def _download_da_data(self, size=None, callback=None):
+        fd = self.down_fd_list[0]
+        size = self.down_buffer_list[0].size*2 if size is None else size
+        with self.send_lock:
+            if self.stop_event.is_set():
+                print('da下发终止')
+                return
+
+            if not self.xdma_obj.stream_write(0, 0, fd, size, 0, lambda: self.stop_event.is_set(), 0):
+                print('下行失败')
+                return
+
+            if self.stop_event.is_set():
+                print('da下发终止')
+                return
+            print('下行成功')
+
+    def _cache_dma_data(self, size: int, callback=None):
         """
         取空xdma
 

@@ -77,19 +77,25 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 value = (2 ** (bit - 1) - 1) * value
                 value = value.astype('int16')
                 if channel == 8:
-                    for i in range(8):
-                        self.rfs_kit.set_param_value('DAC通道选择', i)
-                        self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+                    self.da_cache[:, :] = 0
+                    for i in range(4):
+                        self.da_cache[i, :value.size] = value
+                        # self.rfs_kit.set_param_value('DAC通道选择', i)
+                        # self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
                 else:
-                    self.rfs_kit.set_param_value('DAC通道选择', channel)
-                    result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+                    channel //= 2
+                    self.da_cache[channel, :] = 0
+                    self.da_cache[channel, :value.size] = value
+                    # self.rfs_kit.set_param_value('DAC通道选择', channel)
+                    # result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
             case 'GenWave':
                 if not isinstance(value, waveforms.Waveform):
                     raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
                 bit = 16
                 rate = self.qubit_solver.DArate
                 if channel == 8:
-                    for i in range(8):
+                    self.da_cache[:, :] = 0
+                    for i in range(4):
                         if value.start is not None and value.stop is not None:
                             data = (2 ** (bit - 1) - 1) * value.sample(rate)
                         else:
@@ -98,8 +104,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                             time_line = np.linspace(*points)
                             data = (2 ** (bit - 1) - 1) * value(time_line)
                         data = data.astype('int16')
-                        self.rfs_kit.set_param_value('DAC通道选择', i)
-                        result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                        self.da_cache[i, :data.size] = data
+                        # self.rfs_kit.set_param_value('DAC通道选择', i)
+                        # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
                 else:
                     if value.start is not None and value.stop is not None:
                         data = (2 ** (bit - 1) - 1) * value.sample(rate)
@@ -111,7 +118,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     # if data.size >= 32e-6 * self.qubit_solver.DArate:
                     #     raise ValueError(f'波形长度{data.size}超界，当前最大长度')
                     data = data.astype('int16')
-                    result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                    channel //= 2
+                    self.da_cache[channel, :] = 0
+                    self.da_cache[channel, :data.size] = data
+                    # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             case 'GenWaveIQ':
                 if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
                     raise ValueError(f'value类型应为{[waveforms.Waveform]}, 而不是{type(value)}')
@@ -189,11 +199,14 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 self.rfs_kit.execute_command('复位')
                 self.compute_cache.clear()
                 self.clear_ad_cache()
+
+                self._download_da_data()
                 if self.recv_lock.locked():
                     raise RuntimeError('上次dma未结束')
                 # points = int((self.qubit_solver.pointnum+15)//16*16)
+                points = int(sum(self.qubit_solver.pointnum)*self.qubit_solver.shots/4)
                 thread = Thread(target=self._cache_dma_size,
-                                args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, self._compute_data),
+                                args=(points, self._compute_data),
                                 daemon=True)
                 thread.start()
             case 'FrequencyList':
@@ -222,7 +235,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
                 # 转为16ns倍数对应的点数
-                self.qubit_solver.setpointnum(int((value + 63) // 64 * 64))
+                self.qubit_solver.setpointnum(int((value + 63) // 64 * 64), channel)
             case 'DemodulationParam':
                 print(f'DemodulationParam: {value}')
                 if channel == 8:
@@ -344,13 +357,13 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             printWarning('未获取完成')
             return RPCValueParser.dump(np.array([]))
         _data = self.ad_data
-        if _data.size*2 < self.qubit_solver.pointnum*8:
+        if _data.size*2 < sum(self.qubit_solver.pointnum):
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
-        assert data.size == self.qubit_solver.pointnum*8*self.qubit_solver.shots, '数据长度不足'
-        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
-        data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
+        assert data.size == self.qubit_solver.pointnum[0]*8*self.qubit_solver.shots, '数据长度不足'
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum[0]))
+        data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum[0]))
         if solve:
             try:
                 data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
@@ -362,15 +375,15 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
     def _compute_data(self):
         _data = self.ad_data
         # np.save('adc.npy', _data)
-        if _data.size * 2 < self.qubit_solver.pointnum * 8:
+        if _data.size * 2 < sum(self.qubit_solver.pointnum):
             # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
-        assert data.size == self.qubit_solver.pointnum * 8 * self.qubit_solver.shots, '数据长度不足'
-        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
+        assert data.size == self.qubit_solver.pointnum[0] * 8 * self.qubit_solver.shots, '数据长度不足'
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum[0]))
         for i in range(8):
-            channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
+            channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum[0]))
             channel_solve = self.qubit_solver.calculate_matrix(channel_data, i, False)
             self.compute_cache[i] = [channel_data, channel_solve]
 

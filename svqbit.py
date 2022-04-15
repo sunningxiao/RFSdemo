@@ -41,7 +41,7 @@ class SolveQubit:
         self.cofflist = {i: [] for i in range(chnl)}
         self.ADrate = ADrate
         self.DArate = DArate
-        self.pointnum = [pointnum]*chnl
+        self.pointnum = pointnum
         self.dac_points = {i: 179 for i in range(chnl)}
         self.shots = shots
 
@@ -49,15 +49,15 @@ class SolveQubit:
         self.shots = shots
 
     def setpointnum(self, pointnum, chnl):
-        self.pointnum[chnl] = pointnum
+        self.pointnum = pointnum
 
     def setfreqlist(self, freqlist, chnl):
         if not isinstance(freqlist, list):
             print('输入非频率列表，请检查格式')
             return
         start = time()
-        self.tm = np.linspace(0, (self.pointnum[chnl] - 1) / self.ADrate, int((self.pointnum[chnl] + 63) // 64 * 64))
-        self.cofflist[chnl] = np.empty((len(freqlist), int((self.pointnum[chnl] + 63) // 64 * 64))).astype(complex)
+        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int((self.pointnum + 63) // 64 * 64))
+        self.cofflist[chnl] = np.empty((len(freqlist), int((self.pointnum + 63) // 64 * 64))).astype(complex)
         self.freqlist[chnl] = freqlist
         for i in range(len(freqlist)):
             phase = self.phaselist[i] if len(self.phaselist) == len(freqlist) else 0
@@ -70,8 +70,8 @@ class SolveQubit:
             print('输入非频率列表，请检查格式')
             return
         start = time()
-        self.tm = np.linspace(0, (self.pointnum[chnl] - 1) / self.ADrate, int((self.pointnum[chnl] + 63) // 64 * 64))
-        self.cofflist[chnl] = np.empty((len(phaselist), int((self.pointnum[chnl] + 63) // 64 * 64))).astype(complex)
+        self.tm = np.linspace(0, (self.pointnum - 1) / self.ADrate, int((self.pointnum + 63) // 64 * 64))
+        self.cofflist[chnl] = np.empty((len(phaselist), int((self.pointnum + 63) // 64 * 64))).astype(complex)
         self.phaselist[chnl] = phaselist
         for i in range(len(phaselist)):
             freq = self.freqlist[i] if len(self.freqlist) == len(phaselist) else 0

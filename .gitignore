@@ -6,3 +6,5 @@ dist/
 *.dat*
 test/
 /VERSION
+.ipynb_checkpoints
+*.ipynb

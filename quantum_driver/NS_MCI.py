@@ -114,8 +114,9 @@ class Driver(BaseDriver):
         channel = kw.get('ch', 1)
         if name in ['Coefficient']:
             data, f_list, numberOfPoints = get_coef(value, 4e9)
-            self.set('PointNumber', int(numberOfPoints), channel)
+            # self.set('PointNumber', int(numberOfPoints), channel)
             self.set('FrequencyList', f_list, channel)
+            self.set('DemodulationParam', data, channel)
         elif name in ['CaptureMode']:
             pass
         else:
@@ -142,7 +143,7 @@ class Driver(BaseDriver):
         :param channel：通道号
         """
         value = RPCValueParser.dump(value)
-        if name in ['Waveform']:
+        if name in {'Waveform', 'GenWave'}:
             func = self.fast_rpc.rpc_set
         else:
             func = self.handle.rpc_set

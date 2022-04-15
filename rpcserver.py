@@ -42,6 +42,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self._setup_dma()
 
         self.compute_cache = {}
+        self.config_params = {}
         self.start_mode = False
 
     @solve_exception
@@ -63,7 +64,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         channel = channel - 1
         print(f'channel: {channel}')
         value = RPCValueParser.load(value)
-        self.rfs_kit.set_param_value('DAC通道选择', channel)
+        # self.rfs_kit.set_param_value('DAC通道选择', channel)
 
         if channel < 0:
             raise ValueError('channel超界')
@@ -204,9 +205,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if self.recv_lock.locked():
                     raise RuntimeError('上次dma未结束')
                 # points = int((self.qubit_solver.pointnum+15)//16*16)
-                points = int(sum(self.qubit_solver.pointnum)*self.qubit_solver.shots/4)
                 thread = Thread(target=self._cache_dma_size,
-                                args=(points, self._compute_data),
+                                args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, self._compute_data),
                                 daemon=True)
                 thread.start()
             case 'FrequencyList':
@@ -357,13 +357,13 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             printWarning('未获取完成')
             return RPCValueParser.dump(np.array([]))
         _data = self.ad_data
-        if _data.size*2 < sum(self.qubit_solver.pointnum):
+        if _data.size*2 < self.qubit_solver.pointnum*8:
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
-        assert data.size == self.qubit_solver.pointnum[0]*8*self.qubit_solver.shots, '数据长度不足'
-        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum[0]))
-        data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum[0]))
+        assert data.size == self.qubit_solver.pointnum*8*self.qubit_solver.shots, '数据长度不足'
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
+        data = data[:, channel, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
         if solve:
             try:
                 data = self.qubit_solver.calculateCPU(data, channel, bool(no_complex))
@@ -375,15 +375,15 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
     def _compute_data(self):
         _data = self.ad_data
         # np.save('adc.npy', _data)
-        if _data.size * 2 < sum(self.qubit_solver.pointnum):
+        if _data.size * 2 < self.qubit_solver.pointnum * 8:
             # if _data.size < (self.qubit_solver.pointnum*2+256)*8:
             printWarning('数据不足一包')
             return RPCValueParser.dump(np.array([]))
         data: np.ndarray = np.frombuffer(_data, dtype='int16')
-        assert data.size == self.qubit_solver.pointnum[0] * 8 * self.qubit_solver.shots, '数据长度不足'
-        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum[0]))
+        assert data.size == self.qubit_solver.pointnum * 8 * self.qubit_solver.shots, '数据长度不足'
+        data = data.reshape((self.qubit_solver.shots, 8, self.qubit_solver.pointnum))
         for i in range(8):
-            channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum[0]))
+            channel_data = data[:, i, :].reshape((self.qubit_solver.shots, self.qubit_solver.pointnum))
             channel_solve = self.qubit_solver.calculate_matrix(channel_data, i, False)
             self.compute_cache[i] = [channel_data, channel_solve]
 

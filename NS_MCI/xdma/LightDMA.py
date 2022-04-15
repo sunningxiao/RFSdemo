@@ -12,7 +12,7 @@ class LightDMAMixin:
     ddr_out_address = 0x4
     ddr_deep_address = 0x8
     da_channel_num = 4
-    da_channel_width = 100e-6
+    da_channel_width = 102.4e-6
 
     def __init__(self):
         self.fd_index = 0
@@ -64,7 +64,7 @@ class LightDMAMixin:
             self.buffer_list.append(xdma_base.fpga_get_dma_buffer(fd, self.dma_size))
             self.buffer_pointer_list.append(0)
 
-        self.init_ddr_deep = self.__fpga_recv_count
+        self.init_ddr_deep = self.sig_fpga_recv_count
         self.xdma_opening = True
 
         # 初始化dma下行内存
@@ -74,7 +74,9 @@ class LightDMAMixin:
         self.down_fd_list.append(fd)
         buffer = np.frombuffer(xdma_base.fpga_get_dma_buffer(fd, down_size), dtype='int16')
         buffer = buffer.reshape((self.da_channel_num, channel_size))
+        self.da_cache = buffer
         self.down_buffer_list.append(buffer)
+        self.buffer_memset()
 
         print('xdma初始化成功')
 
@@ -101,9 +103,14 @@ class LightDMAMixin:
 
         print('xdma释放成功')
 
+    def buffer_memset(self):
+        for i in range(4):
+            self.da_cache[i][0] = (int(f'0x{i}{i}') << 8)+0xFF
+            self.da_cache[i][1:] = np.arange(round(self.da_channel_width*self.qubit_solver.DArate)-1, dtype='int16')
+
     def clear_ad_cache(self):
         self.stop_event.set()
-        self.init_ddr_deep = self.__fpga_recv_count
+        self.init_ddr_deep = self.sig_fpga_recv_count
         self.buffer_pointer_list = [0 for _ in range(self.fd_count)]
         self.ad_data = np.array([], dtype='u4')
         print('缓存清空')
@@ -133,11 +140,11 @@ class LightDMAMixin:
         """
         print(self.fd_index)
         stop_flag = 1
-        while stop_flag and self.__fpga_recv_count > self.__agx_recv_count:
+        while stop_flag and self.sig_fpga_recv_count > self.sig_agx_recv_count:
             print('取数循环体开始')
             fd = self.fd_list[self.fd_index]
             pointer = self.buffer_pointer_list[self.fd_index]
-            current_deep = self.__fpga_recv_count - self.init_ddr_deep - pointer
+            current_deep = self.sig_fpga_recv_count - self.init_ddr_deep - pointer
             print(f'current_deep: {current_deep}')
             dma_size = current_deep - current_deep % 64
             if dma_size == 0:
@@ -179,11 +186,6 @@ class LightDMAMixin:
             for i in range(split):
                 fd = self.fd_list[self.fd_index]
                 pointer = self.buffer_pointer_list[self.fd_index]
-                # recv_length = xdma_base.fpga_recv(0, 0, fd, 0, frame, offset=pointer,
-                #                                   timeout=xdma_base.DMA_WAIT_FOR_EVER)
-                # if recv_length == xdma_base.FAIL:
-                #     print(xdma_base.fpga_err_msg().decode())
-                #     return
                 if self.stop_event.is_set():
                     print('xdma终止')
                     return
@@ -196,10 +198,6 @@ class LightDMAMixin:
                 if self.stop_event.is_set():
                     print('xdma终止')
                     return
-                # if recv_length != self.dma_size:
-                #     xdma_base.fpga_pause_dma(fd)
-                #     recv_length = xdma_base.fpga_poll_dma(fd)
-                #     xdma_base.fpga_break_dma(fd)
 
                 pointer += frame
                 print(f'数据指针位置{pointer}')
@@ -211,7 +209,7 @@ class LightDMAMixin:
         # self.recv_event.clear()
 
     @property
-    def __fpga_recv_count(self):
+    def sig_fpga_recv_count(self):
         """
 
         :return: 进入fpga ddr的数据计数，单位4Byte
@@ -219,7 +217,7 @@ class LightDMAMixin:
         return xdma_base.fpga_rd_lite(0, self.ddr_in_address) * 8
 
     @property
-    def __fpga_send_count(self):
+    def sig_fpga_send_count(self):
         """
 
         :return: 从fpga ddr取出数据计数，单位4Byte
@@ -227,7 +225,7 @@ class LightDMAMixin:
         return xdma_base.fpga_rd_lite(0, self.ddr_out_address) * 8
 
     @property
-    def __fpga_current_deep(self):
+    def sig_fpga_current_deep(self):
         """
 
         :return: fpga ddr的当前深度，单位4Byte  但当前深度为0时会被标成16
@@ -235,7 +233,7 @@ class LightDMAMixin:
         return xdma_base.fpga_rd_lite(0, self.ddr_deep_address) * 8
 
     @property
-    def __agx_recv_count(self):
+    def sig_agx_recv_count(self):
         # print(f'初始{self.init_ddr_deep}')
         # print(f'初始list{self.buffer_pointer_list}')
         return self.init_ddr_deep + self.buffer_pointer_list[self.fd_index]

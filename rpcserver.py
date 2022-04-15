@@ -70,6 +70,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             raise ValueError('channel超界')
 
         match name:
+            case 'DownLoadTest':
+                self._download_da_data()
             case 'Waveform':
                 if not isinstance(value, np.ndarray):
                     raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
@@ -81,14 +83,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.da_cache[:, :] = 0
                     for i in range(4):
                         self.da_cache[i, :value.size] = value
-                        # self.rfs_kit.set_param_value('DAC通道选择', i)
-                        # self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
                 else:
                     channel //= 2
                     self.da_cache[channel, :] = 0
                     self.da_cache[channel, :value.size] = value
-                    # self.rfs_kit.set_param_value('DAC通道选择', channel)
-                    # result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
             case 'GenWave':
                 if not isinstance(value, waveforms.Waveform):
                     raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
@@ -259,6 +257,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     tmp = 3
                     pll_frq = 250
                     self.start_mode = False
+                print(f'pll_frq: {pll_frq}')
+                print(f'RefClock: {value}')
                 self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
                 self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
                 if execute:
@@ -328,8 +328,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         if self.recv_lock.acquire(timeout=3):
             self.recv_lock.release()
         else:
-            printWarning('未获取完成')
-            return RPCValueParser.dump(np.array([]))
+            raise ValueError('异常：无时钟，无触发信号，触发信号数量与配置数量不匹配')
+            # return RPCValueParser.dump(np.array([]))
         # if channel == 8 and solve:
         #     data = np.fromiter((chnl[1] for chnl in self.compute_cache), dtype=self.compute_cache[0][1].dtype)
         # elif channel == 8 and not solve:
@@ -441,7 +441,7 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
 
 if __name__ == '__main__':
     import sys
-    with RFSKitRPCServer(rfs_addr='192.168.1.174', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.176', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
 
         server.register_function(server.get_adc_data)

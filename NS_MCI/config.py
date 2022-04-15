@@ -1,6 +1,6 @@
 import functools
 import traceback
-from traceback_with_variables import format_exc
+from traceback_with_variables import format_exc, format_cur_tb
 # from traceback_with_variables import activate_by_import
 
 from NS_MCI.tools.printLog import *
@@ -118,5 +118,5 @@ def solve_exception(func):
             error_message = format_exc()
             printWarning(error_message)
             printWarning('请求报错')
-            raise RPCMethodExecuteError(error_message)
+            raise RPCMethodExecuteError(e)
     return wrap

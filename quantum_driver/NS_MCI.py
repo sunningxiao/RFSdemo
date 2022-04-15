@@ -70,6 +70,8 @@ class Driver(BaseDriver):
 
     def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
         super().__init__(addr, timeout, **kw)
+        self.fast_rpc = None
+        self.handle = None
         self.model = 'NS_MCI'  # 默认为设备名字
         self.srate = 6e9
 

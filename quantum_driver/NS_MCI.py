@@ -109,8 +109,9 @@ class Driver(BaseDriver):
         """
         关闭设备
         """
-        self.handle.release_dma()
-        self.handle.close()
+        # self.handle.release_dma()
+        # self.handle.close()
+        pass
 
     def write(self, name: str, value, **kw):
         channel = kw.get('ch', 1)

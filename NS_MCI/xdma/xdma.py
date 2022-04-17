@@ -188,9 +188,10 @@ class Xdma(object):
                     diff_time = time.time() - st
                     if flag and cnt and diff_time > TIMEOUT_FLAG:
                         # xdma超时打印
-                        # printError(xdma_base.fpga_err_msg())
-                        # printError(xdma_base.fpga_debug_dma_regs(board, chnl))
-                        # printError(xdma_base.fpga_debug_int_regs(board))
+                        printInfo(f'当前下行数据长度: {recv_total*4} Byte')
+                        printError(xdma_base.fpga_err_msg())
+                        printError(xdma_base.fpga_debug_dma_regs(board, chnl))
+                        printError(xdma_base.fpga_debug_int_regs(board))
                         printError(f'xdma超时: {diff_time}')
                         cnt -= 1
                 return True

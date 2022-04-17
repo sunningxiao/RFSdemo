@@ -6,11 +6,17 @@ import numpy as np
 
 
 class LightDMAMixin:
+    fpga_ddr_in_address = 0x0
+    fpga_ddr_out_address = 0x4
+    fpga_ddr_deep_address = 0x8
+    fpga_clk_from_address = 0x00+4*3
+    fpga_clk_online_address = 0x00+4*4
+    fpga_trig_count_address = 0x00+4*5
+    fpga_frame_version_address = 0x0+4*6
+    fpga_clear_trig_address = 0x0+4*63
+
     fd_count = 1  # 10个颗粒度的缓存
     dma_size = 512 * 1024 ** 2  # 2GB颗粒度
-    ddr_in_address = 0x0
-    ddr_out_address = 0x4
-    ddr_deep_address = 0x8
     da_channel_num = 4
     da_channel_width = 102.4e-6
 
@@ -105,7 +111,7 @@ class LightDMAMixin:
 
     def buffer_memset(self):
         for i in range(4):
-            self.da_cache[i][0] = (int(f'0x{i}{i}') << 8)+0xFF
+            self.da_cache[i][0] = (int(f'0x{i}{i}', 16) << 8)+0xFF
             self.da_cache[i][1:] = np.arange(round(self.da_channel_width*self.qubit_solver.DArate)-1, dtype='int16')
 
     def clear_ad_cache(self):
@@ -117,7 +123,7 @@ class LightDMAMixin:
 
     def _download_da_data(self, size=None, callback=None):
         fd = self.down_fd_list[0]
-        size = self.down_buffer_list[0].size*2 if size is None else size
+        size = self.down_buffer_list[0].size//2 if size is None else size
         with self.send_lock:
             if self.stop_event.is_set():
                 print('da下发终止')
@@ -209,12 +215,50 @@ class LightDMAMixin:
         # self.recv_event.clear()
 
     @property
+    def sig_fpga_clk_from(self):
+        """
+
+        :return: 外参考时钟选择 0: 内参考、 1：外参考
+        """
+        flag = xdma_base.fpga_rd_lite(0, self.fpga_clk_from_address)
+        print(f'***fpga时钟源 {flag}')
+        res = '外参考时钟' if flag else '内参考时钟'
+        return res
+
+    @property
+    def sig_fpga_online(self):
+        """
+
+        :return: 参考时钟锁定 0: 未锁定、 1：锁定
+        """
+        flag = xdma_base.fpga_rd_lite(0, self.fpga_clk_online_address)
+        print(f'***fpga参考时钟 {flag}')
+        res = '锁定' if flag else '未锁定'
+        return res
+
+    @property
+    def sig_fpga_trig_count(self):
+        """
+
+        :return: 触发数量 收到的触发信号数量
+        """
+        return xdma_base.fpga_rd_lite(0, self.fpga_trig_count_address)
+
+    @property
+    def sig_fpga_frame_version(self):
+        """
+
+        :return: 触发数量 收到的触发信号数量
+        """
+        return hex(xdma_base.fpga_rd_lite(0, self.fpga_frame_version_address))[2:]
+
+    @property
     def sig_fpga_recv_count(self):
         """
 
         :return: 进入fpga ddr的数据计数，单位4Byte
         """
-        return xdma_base.fpga_rd_lite(0, self.ddr_in_address) * 8
+        return xdma_base.fpga_rd_lite(0, self.fpga_ddr_in_address) * 8
 
     @property
     def sig_fpga_send_count(self):
@@ -222,7 +266,7 @@ class LightDMAMixin:
 
         :return: 从fpga ddr取出数据计数，单位4Byte
         """
-        return xdma_base.fpga_rd_lite(0, self.ddr_out_address) * 8
+        return xdma_base.fpga_rd_lite(0, self.fpga_ddr_out_address) * 8
 
     @property
     def sig_fpga_current_deep(self):
@@ -230,7 +274,7 @@ class LightDMAMixin:
 
         :return: fpga ddr的当前深度，单位4Byte  但当前深度为0时会被标成16
         """
-        return xdma_base.fpga_rd_lite(0, self.ddr_deep_address) * 8
+        return xdma_base.fpga_rd_lite(0, self.fpga_ddr_deep_address) * 8
 
     @property
     def sig_agx_recv_count(self):

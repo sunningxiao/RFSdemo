@@ -1,4 +1,5 @@
 import threading
+import time
 
 from NS_MCI.xdma import xdma_base
 from NS_MCI.xdma.xdma import Xdma
@@ -124,6 +125,7 @@ class LightDMAMixin:
     def _download_da_data(self, size=None, callback=None):
         fd = self.down_fd_list[0]
         size = self.down_buffer_list[0].size//2 if size is None else size
+        print(f'开始下发da数据 {size*4}Bytes')
         with self.send_lock:
             if self.stop_event.is_set():
                 print('da下发终止')
@@ -184,8 +186,9 @@ class LightDMAMixin:
         self.has_data_flag -= 1
 
     def _cache_dma_size(self, size: int, callback=None):
-        print(f'dma开始: {size}')
-        split = 4
+        st = time.time()
+        print(f'dma开始: {size} ')
+        split = 1
         frame = size // split
         self.stop_event.clear()
         with self.recv_lock:
@@ -210,8 +213,10 @@ class LightDMAMixin:
                 self.ad_data = self.buffer_list[self.fd_index][:pointer]
                 self.buffer_pointer_list[self.fd_index] = pointer
 
+            print(f'dma耗时{time.time()-st}')
             if callable(callback):
                 callback()
+            print(f'总耗时{time.time()-st}')
         # self.recv_event.clear()
 
     @property
@@ -222,11 +227,11 @@ class LightDMAMixin:
         """
         flag = xdma_base.fpga_rd_lite(0, self.fpga_clk_from_address)
         print(f'***fpga时钟源 {flag}')
-        res = '外参考时钟' if flag else '内参考时钟'
+        res = '内参考时钟' if flag else '外参考时钟'
         return res
 
     @property
-    def sig_fpga_online(self):
+    def sig_fpga_clk_online(self):
         """
 
         :return: 参考时钟锁定 0: 未锁定、 1：锁定
@@ -248,9 +253,19 @@ class LightDMAMixin:
     def sig_fpga_frame_version(self):
         """
 
-        :return: 触发数量 收到的触发信号数量
+        :return: FPGA版本
         """
         return hex(xdma_base.fpga_rd_lite(0, self.fpga_frame_version_address))[2:]
+
+    @property
+    def sig_fpga_reset_trig(self):
+        """
+
+        :return: 重置trig计数
+        """
+        xdma_base.fpga_wr_lite(0, self.fpga_clear_trig_address, 1)
+        xdma_base.fpga_wr_lite(0, self.fpga_clear_trig_address, 0)
+        return True
 
     @property
     def sig_fpga_recv_count(self):

@@ -193,7 +193,7 @@ class Xdma(object):
                         printError(xdma_base.fpga_debug_dma_regs(board, chnl))
                         printError(xdma_base.fpga_debug_int_regs(board))
                         printError(f'xdma超时: {diff_time}')
-                        cnt -= 1
+                        # cnt -= 1
                 return True
         except Exception as e:
             printException(e)

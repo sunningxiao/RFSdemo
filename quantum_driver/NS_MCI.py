@@ -17,8 +17,11 @@ def solve_rpc_exception(func):
         try:
             return func(*args, **kwargs)
         except xmlrpc.client.Fault as e:
-            print('远程函数报错: ')
-            print(e.faultString)
+            print(f'************{args[0].__class__}************')
+            print(f'远程函数报错: {e.faultString}')
+            print(args[0].handle.get_all_status())
+            print(f'远程函数报错: {e.faultString}')
+            print('*****************************')
 
     return wrapper
 
@@ -99,10 +102,12 @@ class Driver(BaseDriver):
                 self.handle.rpc_set(name, value, 1, False)
 
         # 系统开启前必须进行过一次初始化
-        self.__exec_command('初始化')
-        self.__exec_command('DAC配置')
-        self.__exec_command('ADC配置')
+        result = self.__exec_command('初始化')
+        result = self.__exec_command('DAC配置')
+        result = self.__exec_command('ADC配置')
         self.handle.init_dma()
+        if not result:
+            print(self.handle.get_all_status())
 
     @solve_rpc_exception
     def close(self, **kw):
@@ -151,9 +156,9 @@ class Driver(BaseDriver):
         else:
             func = self.handle.rpc_set
 
-        if func(name, value, channel):
-            # print(f'{name} 配置成功')
-            pass
+        if not func(name, value, channel):
+            raise xmlrpc.client.Fault(400, '指令执行失败')
+            # pass
 
     @solve_rpc_exception
     def get(self, name, channel=1, value=0):
@@ -161,7 +166,7 @@ class Driver(BaseDriver):
         查询设备属性，获取数据
 
         """
-        if name in {'TraceIQ'}:
+        if name in {'TraceIQ', 'IQ'}:
             func = self.fast_rpc.rpc_get
         else:
             func = self.handle.rpc_get
@@ -179,6 +184,7 @@ class Driver(BaseDriver):
             print(f'指令{button_name}执行成功')
         else:
             print(f'指令{button_name}执行失败')
+        return flag
 
 
 class FastRPC:
@@ -214,6 +220,25 @@ class FastRPC:
         sock = self.connect()
         a = pickle.dumps(param)
         head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000002, 0, 16 + len(a)])
+        sock.sendall(head)
+        sock.sendall(a)
+        head = struct.unpack("=IIIII", sock.recv(20))
+        length = head[3] - 20
+        data = []
+        while length > 0:
+            _data = sock.recv(length)
+            length -= len(_data)
+            data.append(_data)
+        data = pickle.loads(b''.join(data))
+        if head[4]:
+            raise xmlrpc.client.Fault(400, data)
+        sock.close()
+        return data
+
+    def debug_param(self, *param):
+        sock = self.connect()
+        a = pickle.dumps(param)
+        head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000003, 0, 16 + len(a)])
         sock.sendall(head)
         sock.sendall(a)
         head = struct.unpack("=IIIII", sock.recv(20))

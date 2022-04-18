@@ -1,10 +1,12 @@
 import functools
+import json
 import traceback
+
+import numpy as np
 from traceback_with_variables import format_exc, format_cur_tb
 # from traceback_with_variables import activate_by_import
 
 from NS_MCI.tools.printLog import *
-
 
 param_cmd_map = {
     ("系统参考时钟选择",
@@ -119,4 +121,21 @@ def solve_exception(func):
             printWarning(error_message)
             printWarning('请求报错')
             raise RPCMethodExecuteError(e)
+
     return wrap
+
+
+def dumps_dict(mapping):
+    def _dumps(_mapping):
+        if isinstance(_mapping, (tuple, list)):
+            return [_dumps(i) for i in _mapping]
+        elif isinstance(_mapping, dict):
+            return {key: _dumps(values) for key, values in _mapping.items()}
+        elif isinstance(_mapping, np.ndarray):
+            return [repr(_mapping.shape), repr(_mapping)]
+        else:
+            return repr(_mapping)
+
+    return json.dumps(_dumps(mapping), indent=4,
+                      ensure_ascii=False,
+                      sort_keys=True)

@@ -10,7 +10,7 @@ import pickle
 
 
 from NS_MCI.tools.printLog import *
-from NS_MCI.config import solve_exception
+from NS_MCI.config import solve_exception, dumps_dict
 from NS_MCI.interface import DataNoneInterface, CommandTCPInterface
 from NS_MCI import RFSKit
 from NS_MCI.xdma import LightDMAMixin
@@ -75,6 +75,8 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             case 'Waveform':
                 if not isinstance(value, np.ndarray):
                     raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
+                if value.size > self.da_cache[0].size:
+                    raise ValueError(f'waveform的时间长度超过{self.da_channel_width}s')
                 printInfo(f'Waveform配置: {value.shape}')
                 bit = 16
                 value = (2 ** (bit - 1) - 1) * value
@@ -83,10 +85,16 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.da_cache[:, :] = 0
                     for i in range(4):
                         self.da_cache[i, :value.size] = value
+                        self.config_params[f'waveform_{i}'] = value
+                        self.rfs_kit.set_param_value('DAC通道选择', i)
+                        result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
                 else:
                     channel //= 2
                     self.da_cache[channel, :] = 0
                     self.da_cache[channel, :value.size] = value
+                    self.config_params[f'waveform_{channel}'] = value
+                    self.rfs_kit.set_param_value('DAC通道选择', channel)
+                    result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
             case 'GenWave':
                 if not isinstance(value, waveforms.Waveform):
                     raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
@@ -104,6 +112,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                             data = (2 ** (bit - 1) - 1) * value(time_line)
                         data = data.astype('int16')
                         self.da_cache[i, :data.size] = data
+                        self.config_params[f'waveform_{i}'] = data
                         # self.rfs_kit.set_param_value('DAC通道选择', i)
                         # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
                 else:
@@ -114,12 +123,13 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         # print(points)
                         time_line = np.linspace(*points)
                         data = (2 ** (bit - 1) - 1) * value(time_line)
-                    # if data.size >= 32e-6 * self.qubit_solver.DArate:
-                    #     raise ValueError(f'波形长度{data.size}超界，当前最大长度')
+                    if data.size >= self.da_cache[0].size:
+                        raise ValueError(f'waveform的时间长度超过{self.da_channel_width}s')
                     data = data.astype('int16')
                     channel //= 2
                     self.da_cache[channel, :] = 0
                     self.da_cache[channel, :data.size] = data
+                    self.config_params[f'waveform_{channel}'] = data
                     # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             case 'GenWaveIQ':
                 if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
@@ -160,6 +170,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 param_name = f'DAC{channel}延迟'
                 self.rfs_kit.set_param_value(param_name, value)
                 result = self.rfs_kit.execute_command('DAC配置')
+                self.config_params[f'{name}_{channel}'] = value
             case 'LinSpace':
                 if channel == 8:
                     for i in range(8):
@@ -185,23 +196,31 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 print(f'AD采样率: {value}')
                 self.qubit_solver.ADrate = value
                 self.rfs_kit.set_param_value('ADC采样率', value * 1e-6)
+                self.config_params[f'{name}'] = value
             case 'DArate':
                 print(f'DA采样率: {value}')
                 self.qubit_solver.DArate = value
                 self.rfs_kit.set_param_value('DAC采样率', value * 1e-6)
+                self.config_params[f'{name}'] = value
             case 'Shot':
                 print(f'shots: {value}')
                 self.rfs_kit.set_param_value('基准PRF数量', value)
                 self.qubit_solver.setshots(value)
+                self.config_params[f'{name}'] = value
             case 'StartCapture':
                 self.stop_event.set()
                 self.rfs_kit.execute_command('复位')
-                self.compute_cache.clear()
+                if not self.sig_fpga_reset_trig:
+                    raise RuntimeError('清空trig计数出错')
+                # self.compute_cache.clear()
                 self.clear_ad_cache()
 
+                self.stop_event.clear()
                 self._download_da_data()
-                if self.recv_lock.locked():
-                    raise RuntimeError('上次dma未结束')
+                self.stop_event.set()
+                while self.recv_lock.locked():
+                    time.sleep(0.1)
+                    # raise RuntimeError('上次dma未结束')
                 # points = int((self.qubit_solver.pointnum+15)//16*16)
                 thread = Thread(target=self._cache_dma_size,
                                 args=(self.qubit_solver.pointnum*self.qubit_solver.shots*4, self._compute_data),
@@ -212,15 +231,19 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.setfreqlist(value, i)
+                        self.config_params[f'{name}_{i}'] = value
                 else:
                     self.qubit_solver.setfreqlist(value, channel)
+                    self.config_params[f'{name}_{channel}'] = value
             case 'PhaseList':
                 print(f'PhaseList: {value}')
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.setphaselist(value, i)
+                        self.config_params[f'{name}_{i}'] = value
                 else:
                     self.qubit_solver.setphaselist(value, channel)
+                    self.config_params[f'{name}_{channel}'] = value
             case 'PointNumber':
                 print(f'PointNumber: {value}')
                 if channel == 8:
@@ -228,10 +251,12 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         param_name = f'ADC{i}门宽'
                         self.rfs_kit.set_param_value(param_name, value)
                         result = self.rfs_kit.execute_command('ADC配置')
+                        self.config_params[f'{name}_{i}'] = value
                 else:
                     param_name = f'ADC{0}门宽'
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
+                    self.config_params[f'{name}_{channel}'] = value
                 # 转为16ns倍数对应的点数
                 self.qubit_solver.setpointnum(int((value + 63) // 64 * 64), channel)
             case 'DemodulationParam':
@@ -239,14 +264,17 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 if channel == 8:
                     for i in range(8):
                         self.qubit_solver.cofflist[i] = value
+                        self.config_params[f'{name}_{i}'] = value
                 else:
                     self.qubit_solver.cofflist[channel] = value
+                    self.config_params[f'{name}_{channel}'] = value
                 result = self.rpc_set('PointNumber', value.shape[1], channel+1, execute)
     
             case 'Reset':
                 result = self.rfs_kit.execute_command('复位')
             case 'MixMode':
                 self.rfs_kit.set_param_value('DAC 奈奎斯特区', value)
+                self.config_params[f'{name}'] = value
                 if execute:
                     result = self.rfs_kit.execute_command('初始化')
             case 'RefClock':
@@ -261,6 +289,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 print(f'RefClock: {value}')
                 self.rfs_kit.set_param_value('PLL参考时钟频率', pll_frq)
                 self.rfs_kit.set_param_value('系统参考时钟选择', tmp)
+                self.config_params[f'{name}'] = value
                 if execute:
                     result = self.rfs_kit.execute_command('初始化')
             case 'TriggerDelay':
@@ -272,12 +301,15 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         param_name = f'ADC{i}延迟'
                         self.rfs_kit.set_param_value(param_name, value)
                         result = self.rfs_kit.execute_command('ADC配置')
+                        self.config_params[f'{name}_{i}'] = value
                 else:
                     param_name = f'ADC{channel}延迟'
                     self.rfs_kit.set_param_value(param_name, value)
                     result = self.rfs_kit.execute_command('ADC配置')
+                    self.config_params[f'{name}_{channel}'] = value
     
             case 'GenerateTrig':
+                printInfo('内部触发开启')
                 self.rfs_kit.set_param_value('基准PRF周期', value)
                 self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
                 if execute:
@@ -322,20 +354,51 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         else:
             return self.rfs_kit.get_param_value(name)
 
+    def get_all_status(self):
+        """
+        获取后台所有状态信息
+
+        :return:
+        """
+        _string = [f'-------固件版本: {self.sig_fpga_frame_version}-------',
+                   f'RFS在位: {self.rfs_kit._connected}', f'参考时钟来源: {self.sig_fpga_clk_from}',
+                   f'参考时钟锁定: {self.sig_fpga_clk_online}', f'上次开启后接收触发数: {self.sig_fpga_trig_count}']
+        config_params = dumps_dict(self.config_params)
+        _string.append(config_params)
+        return '\n'.join(_string)
+
+    @solve_exception
+    def get_debug_status(self, param):
+        """
+        获取后台参数
+
+        :param param:
+        :return:
+        """
+        return self.config_params.get(param, None)
+
     @solve_exception
     def fast_adc_data(self, channel=0, solve=True, no_complex=0):
         printInfo('获取数据')
         if self.recv_lock.acquire(timeout=3):
             self.recv_lock.release()
         else:
-            raise ValueError('异常：无时钟，无触发信号，触发信号数量与配置数量不匹配')
+            trig_count = self.sig_fpga_trig_count
+            if not self.rfs_kit._connected:
+                raise RuntimeError('异常: 板卡不在位，请重新open设备')
+            elif self.sig_fpga_clk_online == '未锁定':
+                raise RuntimeError(f'异常: 无时钟信号输入, 当前时钟来源 {self.sig_fpga_clk_from}')
+            elif trig_count == 0:
+                raise RuntimeError(f'异常: 无触发信号接入, 当前时钟来源 {self.sig_fpga_clk_from}')
+            elif trig_count != self.qubit_solver.shots:
+                raise RuntimeError(f'异常: 接收shots不全, 当前已接收 {self.sig_fpga_trig_count}')
+            else:
+                raise RuntimeError(f'异常: DA采集数据溢出，请检查触发信号是否过快')
             # return RPCValueParser.dump(np.array([]))
-        # if channel == 8 and solve:
-        #     data = np.fromiter((chnl[1] for chnl in self.compute_cache), dtype=self.compute_cache[0][1].dtype)
-        # elif channel == 8 and not solve:
-        #     data = np.fromiter((chnl[0] for chnl in self.compute_cache), dtype=self.compute_cache[0][0].dtype)
         if solve:
             data = self.compute_cache[channel][1]
+            if data.size == 0:
+                raise RuntimeError(f'异常: 通道{channel} 硬解失败，没有有效的硬解参数或频点列表')
         else:
             data = self.compute_cache[channel][0]
         return RPCValueParser.dump(data)
@@ -408,10 +471,10 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
     def handle(self):
         head = self.rfile.read(16)
         head = struct.unpack('=IIII', head)
-        if head[0] == 0x5F5F5F5F:
-            if head[1] == 0x32000001:
-                printInfo('接收指令rpc_set')
-                param = pickle.loads(self.rfile.read(head[3]-16))
+        match head:
+            case (0x5F5F5F5F, 0x32000001, _id, _length):
+                printInfo('-------接收指令rpc_set--------')
+                param = pickle.loads(self.rfile.read(_length - 16))
                 try:
                     data = self.rpc_server.rpc_set(*param)
                     error = 0
@@ -422,10 +485,10 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
                 head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000001, 0, 20 + len(data), error])
                 self.wfile.write(head)
                 self.wfile.write(data)
-                printInfo('rpc_set反馈完成')
-            elif head[1] == 0x32000002:
-                printInfo('接收指令rpc_get')
-                param = pickle.loads(self.rfile.read(head[3] - 16))
+                printInfo('-------rpc_set反馈完成-------')
+            case (0x5F5F5F5F, 0x32000002, _id, _length):
+                printInfo('-------接收指令rpc_get-------')
+                param = pickle.loads(self.rfile.read(_length - 16))
                 try:
                     data = self.rpc_server.rpc_get(*param)
                     error = 0
@@ -436,7 +499,23 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
                 head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000002, 0, 20 + len(data), error])
                 self.wfile.write(head)
                 self.wfile.write(data)
-                printInfo('rpc_get反馈完成')
+                printInfo('-------rpc_get反馈完成-------')
+            case (0x5F5F5F5F, 0x32000003, _id, _length):
+                printInfo('-------接收指令get_debug_status-------')
+                param = pickle.loads(self.rfile.read(_length - 16))
+                try:
+                    data = self.rpc_server.get_debug_status(*param)
+                    error = 0
+                except Exception as e:
+                    data = str(e)
+                    error = 1
+                data = pickle.dumps(data)
+                head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000003, 0, 20 + len(data), error])
+                self.wfile.write(head)
+                self.wfile.write(data)
+                printInfo('-------get_debug_status反馈完成-------')
+            case _:
+                printWarning('错误的FastRPC指令包头')
 
 
 if __name__ == '__main__':
@@ -451,6 +530,7 @@ if __name__ == '__main__':
 
         server.register_function(server.rpc_set)
         server.register_function(server.rpc_get)
+        server.register_function(server.get_all_status)
         server.register_function(server.execute_command)
         server.register_function(lambda: None, name='close')
 

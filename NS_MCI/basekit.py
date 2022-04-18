@@ -152,6 +152,7 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
                 printColor(e, 'yellow')
                 return False
             except Exception as e:
+                self._connected = False
                 printException(e, f'指令({_command_name})发送失败')
                 return False
             # printInfo(f'指令({_command_name})已发送')

@@ -33,7 +33,7 @@ class Driver(BaseDriver):
         # 采集运行参数
         Quantity('Shot', value=1024, ch=1),  # set/get,运行次数
         Quantity('PointNumber', value=16384, unit='point'),  # set/get,AD采样点数
-        Quantity('TriggerDelay', value=0, ch=1, unit='point'),  # set/get,AD采样延时
+        Quantity('TriggerDelay', value=0, ch=1, unit='s'),  # set/get,AD采样延时
         Quantity('FrequencyList', value=[], ch=1, unit='Hz'),  # set/get,解调频率列表，list，单位Hz
         Quantity('PhaseList', value=[], ch=1, unit='Hz'),  # set/get,解调频率列表，list，单位Hz
         Quantity('Coefficient', value=None, ch=1),
@@ -121,11 +121,12 @@ class Driver(BaseDriver):
     def write(self, name: str, value, **kw):
         channel = kw.get('ch', 1)
         if name in ['Coefficient']:
-            data, f_list, numberOfPoints = get_coef(value, 4e9)
-            # self.set('PointNumber', int(numberOfPoints), channel)
-            self.set('FrequencyList', f_list, channel)
+            data, f_list, numberOfPoints, phases = get_coef(value, 4e9)
+            self.set('PointNumber', int(numberOfPoints), channel)
+            # self.set('FrequencyList', f_list, channel)
             self.set('DemodulationParam', data, channel)
-        elif name in ['CaptureMode']:
+            # self.setValue('PhaseList', phases)
+        elif name in ['CaptureMode', 'PhaseList']:
             pass
         else:
             return self.set(name, value, channel)
@@ -157,7 +158,7 @@ class Driver(BaseDriver):
             func = self.handle.rpc_set
 
         if not func(name, value, channel):
-            raise xmlrpc.client.Fault(400, '指令执行失败')
+            raise xmlrpc.client.Fault(400, '指令执行失败, 请重新open板卡')
             # pass
 
     @solve_rpc_exception

@@ -99,6 +99,8 @@ class SolveQubit:
             result = demodMatrix(data, self.cofflist[chnl])
         except AttributeError as e:
             result = np.array([], dtype=np.complex)
+        except ValueError as e:
+            result = np.array([], dtype=np.complex)
         print("Calculate by matrix " + str(time() - start))
         if no_complex:
             # print(f'第三步{result}')

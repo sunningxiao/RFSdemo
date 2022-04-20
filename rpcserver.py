@@ -75,23 +75,23 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             case 'Waveform':
                 if not isinstance(value, np.ndarray):
                     raise ValueError(f'value类型应为{np.ndarray}, 而不是{type(value)}')
-                if value.size > self.da_cache[0].size:
-                    raise ValueError(f'waveform的时间长度超过{self.da_channel_width}s')
+                # if value.size > self.da_cache[0].size:
+                #     raise ValueError(f'waveform的时间长度超过{self.da_channel_width}s')
                 printInfo(f'Waveform配置: {value.shape}')
                 bit = 16
                 value = (2 ** (bit - 1) - 1) * value
                 value = value.astype('int16')
                 if channel == 8:
                     self.da_cache[:, :] = 0
-                    for i in range(4):
-                        self.da_cache[i, :value.size] = value
+                    for i in range(8):
+                        # self.da_cache[i, :value.size] = value
                         self.config_params[f'waveform_{i}'] = value
                         self.rfs_kit.set_param_value('DAC通道选择', i)
                         result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
                 else:
-                    channel //= 2
-                    self.da_cache[channel, :] = 0
-                    self.da_cache[channel, :value.size] = value
+                    # channel //= 2
+                    # self.da_cache[channel, :] = 0
+                    # self.da_cache[channel, :value.size] = value
                     self.config_params[f'waveform_{channel}'] = value
                     self.rfs_kit.set_param_value('DAC通道选择', channel)
                     result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
@@ -102,7 +102,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 rate = self.qubit_solver.DArate
                 if channel == 8:
                     self.da_cache[:, :] = 0
-                    for i in range(4):
+                    for i in range(8):
                         if value.start is not None and value.stop is not None:
                             data = (2 ** (bit - 1) - 1) * value.sample(rate)
                         else:
@@ -111,10 +111,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                             time_line = np.linspace(*points)
                             data = (2 ** (bit - 1) - 1) * value(time_line)
                         data = data.astype('int16')
-                        self.da_cache[i, :data.size] = data
+                        # self.da_cache[i, :data.size] = data
                         self.config_params[f'waveform_{i}'] = data
-                        # self.rfs_kit.set_param_value('DAC通道选择', i)
-                        # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                        self.rfs_kit.set_param_value('DAC通道选择', i)
+                        result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
                 else:
                     if value.start is not None and value.stop is not None:
                         data = (2 ** (bit - 1) - 1) * value.sample(rate)
@@ -126,11 +126,12 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     if data.size >= self.da_cache[0].size:
                         raise ValueError(f'waveform的时间长度超过{self.da_channel_width}s')
                     data = data.astype('int16')
-                    channel //= 2
-                    self.da_cache[channel, :] = 0
-                    self.da_cache[channel, :data.size] = data
+                    # channel //= 2
+                    # self.da_cache[channel, :] = 0
+                    # self.da_cache[channel, :data.size] = data
                     self.config_params[f'waveform_{channel}'] = data
-                    # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                    self.rfs_kit.set_param_value('DAC通道选择', channel)
+                    result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             case 'GenWaveIQ':
                 if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
                     raise ValueError(f'value类型应为{[waveforms.Waveform]}, 而不是{type(value)}')

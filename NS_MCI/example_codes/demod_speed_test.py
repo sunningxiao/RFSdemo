@@ -1,9 +1,9 @@
 # %matplotlib notebook
 import numpy as np
-import matplotlib.pyplot as plt
+import torch
+# import matplotlib.pyplot as plt
 from waveforms import *
 from time import time, sleep
-import pickle
 
 
 def coff_para(t, freq=200e6, phase=0):
@@ -13,7 +13,16 @@ def coff_para(t, freq=200e6, phase=0):
 
 
 def demodMatrix(y, coff_para):
-    return y.dot(coff_para.T) / y.shape[1]
+    return y.dot(coff_para) / y.shape[1]
+
+
+def demodTensor(y, coff_para):
+    return np.einsum('abc,acd->abd', y, coff_para) / y.shape[2]
+    # return y.dot(coff_para) / y.shape[2]
+
+def demodTorch(y, coff_para):
+    return (torch.bmm(y, coff_para) / y.shape[2]).numpy()
+    # return y.dot(coff_para) / y.shape[2]
 
 
 def test(chnl_num, frq_num, shots):
@@ -34,8 +43,9 @@ def test(chnl_num, frq_num, shots):
         wav_readout[i] = wav_readout[i]/frq_num
         wav_readout[i].start = 0
         wav_readout[i].stop = width
-        wav_readout[i] = wav_readout[i].sample(sample_rate).reshape((1, round(width*sample_rate)))
+        wav_readout[i] = (2**15-1)*wav_readout[i].sample(sample_rate).reshape((1, round(width*sample_rate)))
         wav_readout[i] = np.vstack([wav_readout[i] for _ in range(shots)])
+    wav_readout = torch.tensor(np.array(wav_readout, dtype='int16'), dtype=torch.int16).to(torch.complex64)
 
     tm = np.linspace(0, width, round(width*sample_rate))
     for chnl in range(chnl_num):
@@ -43,12 +53,13 @@ def test(chnl_num, frq_num, shots):
         cofflist[chnl] = np.empty((len(_freqlist), round(width*sample_rate))).astype(complex)
         for i in range(len(_freqlist)):
             cofflist[chnl][i] = coff_para(tm, _freqlist[i], 0)
+        cofflist[chnl] = cofflist[chnl].T
+    cofflist = torch.tensor([i for i in cofflist.values()], dtype=torch.complex64)
 
     st = time()
-    for i in range(5):
-        for chnl in range(chnl_num):
-            a = demodMatrix(wav_readout[chnl], cofflist[chnl])
-    print(f'{chnl_num}通道, {frq_num}频点, {shots}shots, 硬解耗时: {(time()-st)/5}')
+    for i in range(10):
+        _ = demodTorch(wav_readout, cofflist)
+    print(f'{chnl_num}通道, {frq_num}频点, {shots}shots, 硬解耗时: {(time()-st)/10}')
 
 
 if __name__ == '__main__':
@@ -57,3 +68,4 @@ if __name__ == '__main__':
             for shots in [1, 512, 1024]:
                 # print(chnl, frq, shots)
                 test(chnl, frq, shots)
+    # test(1, 1, 1)

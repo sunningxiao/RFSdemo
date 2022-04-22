@@ -1,5 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
+# import numpy as np
+# import matplotlib.pyplot as plt
 from waveforms import *
 from time import time, sleep
 
@@ -19,7 +19,7 @@ for wave in wave_30:
 
 wave_100 = [zero() for i in range(chnl_num)]
 for index, wave in enumerate(wave_100):
-    for i in range(int(width_all//width)):
+    for i in range(int(300)):
         wave += (square(width)>>(width*2*i+width/2))*wave_lo
     wave.start = 0
     wave.stop = width_all

@@ -10,16 +10,17 @@ class LightDMAMixin:
     fpga_ddr_in_address = 0x0
     fpga_ddr_out_address = 0x4
     fpga_ddr_deep_address = 0x8
-    fpga_clk_from_address = 0x00+4*3
-    fpga_clk_online_address = 0x00+4*4
-    fpga_trig_count_address = 0x00+4*5
-    fpga_frame_version_address = 0x0+4*6
-    fpga_clear_trig_address = 0x0+4*63
+    fpga_clk_from_address = 0x00 + 4 * 3
+    fpga_clk_online_address = 0x00 + 4 * 4
+    fpga_trig_count_address = 0x00 + 4 * 5
+    fpga_frame_version_address = 0x0 + 4 * 6
+    fpga_clear_trig_address = 0x0 + 4 * 63
 
     fd_count = 1  # 10个颗粒度的缓存
     dma_size = 512 * 1024 ** 2  # 2GB颗粒度
-    da_channel_num = 4
+    da_channel_num = 8
     da_channel_width = 102.4e-6
+    da_keep_amp = 1
 
     def __init__(self):
         self.fd_index = 0
@@ -75,8 +76,8 @@ class LightDMAMixin:
         self.xdma_opening = True
 
         # 初始化dma下行内存
-        channel_size = round(self.da_channel_width*self.qubit_solver.DArate)
-        down_size = int(self.da_channel_num*channel_size/2)
+        channel_size = round(self.da_channel_width * self.qubit_solver.DArate)
+        down_size = int(self.da_channel_num * channel_size / 2)
         fd = xdma_base.fpga_alloc_dma(0, down_size)
         self.down_fd_list.append(fd)
         buffer = np.frombuffer(xdma_base.fpga_get_dma_buffer(fd, down_size), dtype='int16')
@@ -112,8 +113,8 @@ class LightDMAMixin:
 
     def buffer_memset(self):
         for i in range(4):
-            self.da_cache[i][0] = (int(f'0x{i}{i}', 16) << 8)+0xFF
-            self.da_cache[i][1:] = np.arange(round(self.da_channel_width*self.qubit_solver.DArate)-1, dtype='int16')
+            self.da_cache[i][0] = (int(f'0x{i}{i}', 16) << 8) + 0xFF
+            self.da_cache[i][1:] = np.arange(round(self.da_channel_width * self.qubit_solver.DArate) - 1, dtype='int16')
 
     def clear_ad_cache(self):
         self.stop_event.set()
@@ -124,8 +125,8 @@ class LightDMAMixin:
 
     def _download_da_data(self, size=None, callback=None):
         fd = self.down_fd_list[0]
-        size = self.down_buffer_list[0].size//2 if size is None else size
-        print(f'开始下发da数据 {size*4}Bytes')
+        size = self.down_buffer_list[0].size // 2 if size is None else size
+        print(f'开始下发da数据 {size * 4}Bytes')
         with self.send_lock:
             if self.stop_event.is_set():
                 print('da下发终止')
@@ -213,11 +214,24 @@ class LightDMAMixin:
                 self.ad_data = self.buffer_list[self.fd_index][:pointer]
                 self.buffer_pointer_list[self.fd_index] = pointer
 
-            print(f'dma耗时{time.time()-st}')
+            print(f'dma耗时{time.time() - st}')
             if callable(callback):
                 callback()
-            print(f'总耗时{time.time()-st}')
+            print(f'总耗时{time.time() - st}')
         # self.recv_event.clear()
+
+    def padding_dac(self, channel, began):
+        """
+        对应通道填充满，可选是否保持最后一个值
+
+        :param channel:
+        :param began:
+        :return:
+        """
+        if self.da_keep_amp:
+            self.da_cache[channel, began:] = self.da_cache[channel, began-1]
+        else:
+            self.da_cache[channel, began:] = 0
 
     @property
     def sig_fpga_clk_from(self):

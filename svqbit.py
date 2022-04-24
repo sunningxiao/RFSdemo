@@ -1,4 +1,3 @@
-import numba as nb
 import numpy as np
 from waveforms import cos, sin, gaussian
 import math
@@ -19,22 +18,9 @@ def demodMatrix(y, coff_para):
     return y.dot(coff_para.T) / y.shape[1]
 
 
-# def dot_py(A,B):
-#     m, n = A.shape
-#     p = B.shape[1]
-#
-#     C = np.zeros((m,p))
-#
-#     for i in range(0,m):
-#         for j in range(0,p):
-#             for k in range(0,n):
-#                 C[i,j] += A[i,k]*B[k,j]
-#     return C
-#
-# dot_nb = nb.jit(nb.float64[:,:](nb.float64[:,:], nb.float64[:,:]), nopython = True)(dot_py)
-
-
 class SolveQubit:
+    da_bit_width = 16
+
     def __init__(self, ADrate=4e9, DArate=6e9, chnl=8, shots=1000, pointnum=16e3):
         self.freqlist = {i: [] for i in range(chnl)}
         self.phaselist = {i: [] for i in range(chnl)}
@@ -77,6 +63,21 @@ class SolveQubit:
             freq = self.freqlist[i] if len(self.freqlist) == len(phaselist) else 0
             self.cofflist[chnl][i] = coff_para(self.tm, freq, phaselist[i])
         print("generate freq list " + str(time() - start))
+
+    def get_valid_bit(self, signal: np.ndarray, max_bit=16):
+        """
+        变为正常的信号幅值，计算可压缩的bit数
+
+        :param signal:
+        :param max_bit:
+        :return:
+        """
+        value = (2 ** (max_bit - 1) - 1) * signal
+        value = value.astype('int16')
+        _max = max(value.max(), abs(value.min()))
+        _valid = max_bit-int(np.ceil(np.log2(_max+1)+1))
+        # _valid = 0
+        return value, _valid
 
     def calculateCPU(self, data, chnl, no_complex=False):
         # print(f'进入{data}')

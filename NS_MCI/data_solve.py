@@ -45,7 +45,7 @@ class DataSolve:
         now = time.time()
         upload_data_length = self.__upload_data_length
         data_length = upload_data_length - self.__prev_data_length
-        upload_speed = 0 if not self.__start_upload_time else data_length/(now-self.__start_upload_time)/1024**2
+        upload_speed = 0 if not self.__start_upload_time else data_length / (now - self.__start_upload_time) / 1024 ** 2
         self.__start_upload_time = time.time()
         self.__prev_data_length = upload_data_length
         return [upload_speed, self.__write_speed, upload_data_length]
@@ -89,12 +89,12 @@ class DataSolve:
             info = UnPackage.get_pack_info(0, header)
             self._info = info
             once_package = info[0] * info[7]
-            if once_package > 1024**2*16:
+            if once_package > 1024 ** 2 * 16:
                 printWarning('解析包长过大，按16M接收')
-                once_package = 1024**2*16
+                once_package = 1024 ** 2 * 16
             printInfo(f'包长度{once_package}')
             while not self.upload_stop_event.is_set():
-                if self.server.pre_read(once_package-1024):
+                if self.server.pre_read(once_package - 1024):
                     break
 
             self.__start_upload_time = time.time()
@@ -132,10 +132,10 @@ class DataSolve:
                 _data = self.server.read_data()
                 if write_file and isinstance(_data, np.ndarray):
                     file.write(_data)
-                    data_length += _data.size*4
+                    data_length += _data.size * 4
                     end_time = time.time()
                     if end_time - start_time > 1:
-                        self.__write_speed = data_length/(end_time - start_time)/1024**2
+                        self.__write_speed = data_length / (end_time - start_time) / 1024 ** 2
                         # us_signal.status_trigger.emit((1, 1, data_length/(time.time() - start_time)/1024**2))
                         start_time = time.time()
                         data_length = 0

@@ -65,6 +65,7 @@ class Driver(BaseDriver):
         'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
         'ADrate': 4e9,  # AD采样率，单位Hz
         'DArate': 6e9,  # DA采样率，单位Hz
+        'KeepAmp': 1,  # DA波形发射完毕后，保持最后一个值
         'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
         'DAC本振频率': 0,  # DUC本振频率，单位MHz
         'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8

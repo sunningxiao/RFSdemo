@@ -17,6 +17,8 @@ from libc.math cimport sin, log, fmax, fmin, pow, M_PI
 from libc.math cimport erf as _erf
 from libc.math cimport cos as _cos
 from libc.math cimport exp as _exp
+from libc.string cimport memset
+from libc.stdlib cimport malloc, free
 
 cdef int THREAD_NUM = 6
 DTYPE = np.float64
@@ -129,15 +131,15 @@ cdef inline _exp_type exp(_exp_type t, _exp_type alpha) nogil:
 #     t, np.linspace(start, stop, len(points)), points))
 # TODO: 完成插值算法
 cdef int INTERP = 7
-# cdef double[::1] _interp(double[::1] t, double start, double stop, double[::1] y):
-#     cdef Py_ssize_t ny = y.shape[0]
-#     cdef Py_ssize_t nt = t.shape[0]
-#     cdef double[::1] x = np.linspace(start, stop, ny)
-#     cdef Py_ssize_t i, j
-#     for i in range(ny):
-#         for j in range(nt):
-#             if x[i] > t[j]:
-#                 break
+cdef double[::1] _interp(double[::1] t, double start, double stop, double[::1] y):
+    cdef Py_ssize_t ny = y.shape[0]
+    cdef Py_ssize_t nt = t.shape[0]
+    cdef double[::1] x = np.linspace(start, stop, ny)
+    cdef Py_ssize_t i, j
+    for i in range(ny):
+        for j in range(nt):
+            if x[i] > t[j]:
+                break
 
 
 # linear_chirp运算函数**********************************************************************************
@@ -154,7 +156,8 @@ cdef inline _linear_chirp_type linear_chirp(_linear_chirp_type t,
     """
     可并行的linear_chirp函数
     """
-    return <_linear_chirp_type>sin(phi0 + 2 * M_PI * ((f1 - f0) / (2 * T) * t*t + f0 * t))
+    # phi0 + 2 * np.pi * ((f1 - f0) / (2 * T) * t ** 2 + f0 * t)
+    return <_linear_chirp_type>sin(phi0 + 2 * M_PI * ((f1 - f0) / (2 * T) * pow(t, 2) + f0 * t))
 
 # exponential_chirp运算函数**********************************************************************************
 cdef int EXPONENTIALCHIRP = 9
@@ -285,7 +288,7 @@ cdef double[::1] wave_add(double[::1] _wave, double[::1] _a, double _m) nogil:
     return _wave
 
 
-cdef compute_func(tuple mt, double[::1] array, double[::1] _m, double _p=1):
+cdef double[::1] compute_func(tuple mt, double[::1] array, double[::1] _m, double _p=1):
     cdef int Type
     cdef list args
     cdef double shift
@@ -328,19 +331,19 @@ cdef compute_func(tuple mt, double[::1] array, double[::1] _m, double _p=1):
         # for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
         #     out_view[i] = interp(array[i] - shift, param)
     elif Type == LINEARCHIRP:
-        para_0, para_1, para_2, para_3, para_4 = args[0], args[1], args[2], args[3], args[4]
+        para_0, para_1, para_2, para_3 = args[0], args[1], args[2], args[3]
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
-            out_view[i] = _m[i]*pow(linear_chirp(para_0, para_1, para_2, para_3, para_4), _p)
+            out_view[i] = _m[i]*pow(linear_chirp(array[i], para_0, para_1, para_2, para_3), _p)
     elif Type == EXPONENTIALCHIRP:
-        para_0, para_1, para_2, para_3 = args[0], args[1], args[2], args[3]
+        para_0, para_1, para_2 = args[0], args[1], args[2]
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
-            out_view[i] = _m[i] * pow(exponential_chirp(para_0, para_1, para_2, para_3), _p)
+            out_view[i] = _m[i] * pow(exponential_chirp(array[i], para_0, para_1, para_2), _p)
     elif Type == HYPERBOLICCHIRP:
-        para_0, para_1, para_2, para_3 = args[0], args[1], args[2], args[3]
+        para_0, para_1, para_2 = args[0], args[1], args[2]
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
-            out_view[i] = _m[i] * pow(hyperbolic_chirp(para_0, para_1, para_2, para_3), _p)
+            out_view[i] = _m[i] * pow(hyperbolic_chirp(array[i], para_0, para_1, para_2), _p)
 
-    return out
+    return out_view
 
 
 @cython.boundscheck(False)
@@ -358,26 +361,39 @@ def gen_wave(object wave, double[::1] x):
 
     cdef Py_ssize_t start = 0
     cdef Py_ssize_t stop = 0
-    cdef double[::1] _wave
+    cdef double[::1] _wave, _x
     cdef double[::1] __ret
+
+    # 预先申请好
+    # cdef double *__zero = <double*>malloc(x.shape[0]*sizeof(double))
+    # memset(__zero, 0, x.shape[0]*sizeof(double))
+    # cdef double[::1] zero = <double[:x.shape[0]*sizeof(double)]>__zero
+
+    # cdef double *__ones = <double*>malloc(x.shape[0]*sizeof(double))
+    # memset(__ones, 1, x.shape[0]*sizeof(double))
+    # cdef double[::1] ones = <double[:x.shape[0]*sizeof(double)]>__ones
 
     for i in range(_size):
         stop = <Py_ssize_t>range_list[i]
         if start < stop and seq[i] != _zero:
             _wav = seq[i]
             _x = x[start:stop]
-            _wave = np.zeros((_x.shape[0], ), dtype=DTYPE)
+            # _wave = zero[start:stop]
+            _wave = np.zeros((_x.shape[0],), dtype=DTYPE)
             for t, v in zip(*_wav):
-                __ret = np.ones((_x.shape[0], ), dtype=DTYPE)
+                # __ret = ones[start:stop]
+                __ret = np.ones((_x.shape[0],), dtype=DTYPE)
                 for mt, n in zip(*t):
                     # if mt not in lru_cache:
                     #     # Type, *args, shift = mt
                     #     lru_cache[mt] = compute_func(mt, _x)
                     #     # print(lru_cache)
                     __ret = compute_func(mt, _x, __ret, n)
-                _wave = wave_add(_wave, __ret, v)
+                _wave = wave_add(__ret, _wave, v)
             out_view[start:stop] = array_clip(_wave, wave_min, wave_max)
         start = stop
+    # free(__zero)
+    # free(__ones)
     return out
 #
 #

@@ -31,7 +31,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                               data_interface=DataNoneInterface)
         handle = LightTCPHandler
         handle.rpc_server = self
-        self.cmd_server = socketserver.ThreadingTCPServer(('0.0.0.0', 10800), handle)
+        self.cmd_server = socketserver.TCPServer(('0.0.0.0', 10800), handle)
         # self.cmd_server.server_bind()
         # self.cmd_server.server_activate()
         self.cmd_thread = Thread(target=self.cmd_server.serve_forever, daemon=True)

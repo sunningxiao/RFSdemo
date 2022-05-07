@@ -1,0 +1,105 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'ipload.ui'
+#
+# Created by: PyQt5 UI code generator 5.9.2
+#
+# WARNING! All changes made in this file will be lost!
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_Form(object):
+    def setupUi(self, Form):
+        Form.setObjectName("Form")
+        Form.resize(405, 208)
+        Form.setMaximumSize(QtCore.QSize(405, 16777215))
+        Form.setStyleSheet("border:0.5px solid #626262")
+        self.verticalLayout = QtWidgets.QVBoxLayout(Form)
+        self.verticalLayout.setContentsMargins(9, 9, 9, 9)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.frame = QtWidgets.QFrame(Form)
+        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setObjectName("frame")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.frame)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.frame_2 = QtWidgets.QFrame(self.frame)
+        self.frame_2.setMinimumSize(QtCore.QSize(0, 40))
+        self.frame_2.setMaximumSize(QtCore.QSize(16777215, 40))
+        self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_2.setObjectName("frame_2")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.frame_2)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.label = QtWidgets.QLabel(self.frame_2)
+        self.label.setStyleSheet("font: 11pt \"Arial\";")
+        self.label.setObjectName("label")
+        self.verticalLayout_3.addWidget(self.label, 0, QtCore.Qt.AlignLeft)
+        self.verticalLayout_2.addWidget(self.frame_2)
+        self.frame_3 = QtWidgets.QFrame(self.frame)
+        self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_3.setObjectName("frame_3")
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.frame_3)
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_4.setSpacing(0)
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.frame_4 = QtWidgets.QFrame(self.frame_3)
+        self.frame_4.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_4.setObjectName("frame_4")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.frame_4)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_2.setSpacing(0)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.label_2 = QtWidgets.QLabel(self.frame_4)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
+        self.label_2.setSizePolicy(sizePolicy)
+        self.label_2.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.label_2.setStyleSheet("font: 10pt \"Arial\";\n"
+"border:0px;")
+        self.label_2.setObjectName("label_2")
+        self.horizontalLayout_2.addWidget(self.label_2, 0, QtCore.Qt.AlignHCenter)
+        self.IPlineEdit = QtWidgets.QLineEdit(self.frame_4)
+        self.IPlineEdit.setMinimumSize(QtCore.QSize(160, 0))
+        self.IPlineEdit.setObjectName("IPlineEdit")
+        self.horizontalLayout_2.addWidget(self.IPlineEdit, 0, QtCore.Qt.AlignLeft)
+        self.verticalLayout_4.addWidget(self.frame_4)
+        self.frame_5 = QtWidgets.QFrame(self.frame_3)
+        self.frame_5.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_5.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_5.setObjectName("frame_5")
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame_5)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.Cancel = QtWidgets.QPushButton(self.frame_5)
+        self.Cancel.setMinimumSize(QtCore.QSize(0, 30))
+        self.Cancel.setStyleSheet("margin-right:20px;\n"
+"margin-left:10px;")
+        self.Cancel.setObjectName("Cancel")
+        self.horizontalLayout.addWidget(self.Cancel)
+        self.OK = QtWidgets.QPushButton(self.frame_5)
+        self.OK.setMinimumSize(QtCore.QSize(0, 30))
+        self.OK.setStyleSheet("margin-left:20px;\n"
+"margin-right:10px;")
+        self.OK.setObjectName("OK")
+        self.horizontalLayout.addWidget(self.OK)
+        self.verticalLayout_4.addWidget(self.frame_5)
+        self.verticalLayout_2.addWidget(self.frame_3)
+        self.verticalLayout.addWidget(self.frame)
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Form"))
+        self.label.setText(_translate("Form", "Connect Device"))
+        self.label_2.setText(_translate("Form", "device ip"))
+        self.Cancel.setText(_translate("Form", "Cancel"))
+        self.OK.setText(_translate("Form", "OK"))
+

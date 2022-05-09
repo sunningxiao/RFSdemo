@@ -55,11 +55,3 @@ class SpectrumScreen(QtWidgets.QDialog):
         self.p1.setLabel('top', self.data2)
 
 
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)  # 获取命令行参数
-    # 创建一个窗口
-    w = SpectrumScreen(app)
-
-    # 显示窗口
-    w.show()
-    sys.exit(app.exec_())

@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from ipload import Ui_Form
+from MCIUI.IP_load.ipload import Ui_Form
 
 
 class IPloading(QtWidgets.QDialog, Ui_Form):
@@ -8,8 +8,10 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.Cancel.clicked.connect(self.close)
-        self.OK.click.connect(self.connect)
+       # self.OK.click.connect(self.connect)
+       # self.show()
 
-    def connect(self):
-        pass
+
+
+
 

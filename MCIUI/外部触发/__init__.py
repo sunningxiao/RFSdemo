@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from external import Ui_Form
+from MCIUI.外部触发.external import Ui_Form
 
 
 class ex_trig(QtWidgets.QDialog, Ui_Form):

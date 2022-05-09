@@ -338,7 +338,7 @@ font: 12pt &quot;Arial&quot;;</string>
     </widget>
    </item>
    <item>
-    <widget class="QTabWidget" name="AWG_1">
+    <widget class="QTabWidget" name="tab">
      <property name="styleSheet">
       <string notr="true">QTabBar::tab{width:150px;}
 QTabBar::tab{height:35px;}
@@ -359,7 +359,7 @@ font: 12pt &quot;Arial&quot;;</string>
      </property>
      <widget class="QWidget" name="tab_3">
       <attribute name="title">
-       <string>AWG-1</string>
+       <string>AWG-0</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_8">
        <property name="leftMargin">
@@ -897,16 +897,6 @@ margin-left:5px;</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="3">
-              <widget class="QWidget" name="page3" native="true">
-               <property name="minimumSize">
-                <size>
-                 <width>120</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="0">
               <widget class="QWidget" name="page2_2" native="true"/>
              </item>
@@ -967,16 +957,6 @@ margin-left:5px;</string>
                 <enum>QFrame::Raised</enum>
                </property>
                <layout class="QGridLayout" name="gridLayout_5">
-                <item row="0" column="0" alignment="Qt::AlignHCenter">
-                 <widget class="QLabel" name="label_3">
-                  <property name="text">
-                   <string>shots</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLineEdit" name="shots"/>
-                </item>
                 <item row="1" column="0" alignment="Qt::AlignHCenter">
                  <widget class="QLabel" name="label_4">
                   <property name="text">
@@ -987,17 +967,7 @@ margin-left:5px;</string>
                 <item row="1" column="1">
                  <widget class="QLineEdit" name="PointNumber"/>
                 </item>
-                <item row="2" column="1">
-                 <widget class="QLineEdit" name="teiggerdelay"/>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="label_5">
-                  <property name="text">
-                   <string>DemodParam from</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
+                <item row="4" column="1">
                  <widget class="QComboBox" name="comboBox_3">
                   <item>
                    <property name="text">
@@ -1006,10 +976,40 @@ margin-left:5px;</string>
                   </item>
                  </widget>
                 </item>
-                <item row="2" column="0" alignment="Qt::AlignHCenter">
+                <item row="3" column="1">
+                 <widget class="QLineEdit" name="teiggerdelay"/>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>DemodParam from</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" alignment="Qt::AlignHCenter">
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>shots</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLineEdit" name="shots"/>
+                </item>
+                <item row="3" column="0" alignment="Qt::AlignHCenter">
                  <widget class="QLabel" name="teigger">
                   <property name="text">
                    <string>TriggerDelay</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QWidget" name="page3" native="true">
+                  <property name="minimumSize">
+                   <size>
+                    <width>120</width>
+                    <height>0</height>
+                   </size>
                   </property>
                  </widget>
                 </item>
@@ -1174,7 +1174,7 @@ margin-left:5px;</string>
                   <property name="frameShadow">
                    <enum>QFrame::Raised</enum>
                   </property>
-                  <layout class="QGridLayout" name="gridLayout_7">
+                  <layout class="QGridLayout" name="gridLayout">
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_14">
                      <property name="minimumSize">

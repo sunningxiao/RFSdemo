@@ -14,8 +14,32 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         super(MAIN, self).__init__()
         self.setupUi(self)
         self.ui_parent = ui_parent
+        self.frame_2.hide()
+        self.frame_4.hide()
+        self.comboBox_2.currentIndexChanged.connect(self.trig_mode)
 
+    def trig_mode(self,i):
+            if i == 1:
+                self.internal_trigger()
+            elif i == 2:
+                self.external_trigger()
+            else:
+                self.Manaul_trigger()
 
+    def external_trigger(self):
+        self.frame_2.show()
+        self.frame_4.hide()
+        self.frame_38.hide()
+
+    def internal_trigger(self):
+        self.frame_4.show()
+        self.frame_2.hide()
+        self.frame_38.hide()
+
+    def Manaul_trigger(self):
+        self.frame_38.show()
+        self.frame_2.hide()
+        self.frame_4.hide()
 
 
 if __name__ == '__main__':

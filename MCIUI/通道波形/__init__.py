@@ -4,7 +4,7 @@ import sys
 from PyQt5 import QtWidgets
 
 from PyQt5 import QtWidgets
-from chnlwave import Ui_Form
+from MCIUI.通道波形.chnlwave import Ui_Form
 
 
 class wave(QtWidgets.QDialog, Ui_Form):
@@ -14,8 +14,15 @@ class wave(QtWidgets.QDialog, Ui_Form):
         self.ui_parent = ui_parent
 
 
+    '''
+    def addwave(self, chnl_num):
+        self.chnl_num = chnl_num
+        self.chnl_8.setText("chnlnum".format(chnl_num))
+        self.chnl_wave_6.addWidget(SpectrumScreen())
+
+
 class SpectrumScreen(QtWidgets.QDialog):
-    def __init__(self, ui_parent, p1=None):
+    def __init__(self, ui_parent, data1, data2):
         super(SpectrumScreen, self).__init__()
         self.data1 = None
         self.data2 = None
@@ -51,7 +58,7 @@ class SpectrumScreen(QtWidgets.QDialog):
         self.data1 = data1
 
     def in_data(self, dataz, data0):
-        self.data2 = '参数1：{}，参数2：{}'.format(dataz, data0)
+        self.data2 = 'wavefrom width:{}，Sampling Rate:{}'.format(dataz, data0)
         self.p1.setLabel('top', self.data2)
-
+'''
 

@@ -14,6 +14,15 @@ class wave(QtWidgets.QDialog, Ui_Form):
         self.ui_parent = ui_parent
 
 
+
+    def waves(self, chnl_num):
+        self.chnl_num = chnl_num
+        self.chnl_8.setText("chnlnum".format(chnl_num))
+        self.chnl_wave_6.addWidget(self.wave_form)
+
+    def wave_form(self, plotdate):
+        pass
+
     '''
     def addwave(self, chnl_num):
         self.chnl_num = chnl_num

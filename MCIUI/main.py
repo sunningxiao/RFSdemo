@@ -1,35 +1,23 @@
-import sys
-from PyQt5.QtWidgets import *
-from PyQt5 import QtWidgets, QtCore, QtGui
-import pyqtgraph as pg
-
-from IP_load import IPloading
-from 内部触发 import in_trig
-from 外部触发 import ex_trig
-from main_widget import Ui_Form
-import qdarkstyle
+import numpy as np
+import quantum_driver
 
 
-class MCIcontrol(QtWidgets.QWidget, Ui_Form):
-    def __init__(self, parent):
-        super(MCIcontrol, self).__init__()
-        self.Connect_AWG_2.clicked().connect(self.connect_awg)
-        #self.Connect_Probe_2.clicked().connect(self.connect_probe)
-        app = QtWidgets.QApplication(sys.argv)
-        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-        From = QtWidgets.QWidget()
-        ui = Ui_Form()
-        ui.setupUi(From)
-        From.show()
-        sys.exit(app.exec_())
+
+dtrace = np.empty(shape=[0 ,ADPointNumber])
+dIQ = np.empty(shape = [0 ,cntfreq, shots], dtype= complex)
+time_start = time()
+for i in range(chnls):
+    driver.set('Waveform', wav_readout[i](DAtmspace), i+ 1)
+    driver.set('FrequencyList', freqlist[i], i + 1)
+
+driver.set('StartCapture')  # 启动指令
+driver.set('GenerateTrig', period)
+
+for i in range(chnls):
+    dIQ = np.append(dIQ, [np.swapaxes(driver.get('IQ', channel=(i + 1)), 0, 1)], axis=0)
+print(f'单次配置及硬解耗时：{time() - time_start}')
+
+for i in range(chnls):
+    dtrace = np.append(dtrace, [np.mean(driver.get('TraceIQ', channel=(i + 1)), axis=0)], axis=0)
 
 
-# class control_ip(QtWidgets.QWidget,IPloading):
-#     def connect_awg(self):
-#         app = QtWidgets.QApplication(sys.argv)
-#         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-#         From = QtWidgets.QWidget()
-#         ui = Ui_Form()
-#         ui.setupUi(From)
-#         From.show()
-#         sys.exit(app.exec_())

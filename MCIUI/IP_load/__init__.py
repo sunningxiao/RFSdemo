@@ -1,6 +1,7 @@
-from PyQt5 import QtWidgets
-from ipload import Ui_Form
+from PyQt5 import QtWidgets, Qt, QtCore
 
+import MCIUI
+from MCIUI.IP_load.ipload import Ui_Form
 
 class IPloading(QtWidgets.QDialog, Ui_Form):
     def __init__(self, ui_parent):
@@ -8,8 +9,16 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.Cancel.clicked.connect(self.close)
-        self.OK.click.connect(self.connect)
+        self.OK.clicked.connect(self.close)
+        self.setWindowModality(QtCore.Qt.ApplicationModal)
 
-    def connect(self):
-        pass
 
+    def login(self):
+        self.ui_parent.addawg("second", 1)
+        self.close()
+
+'''
+        if self.ip == "127.0.0.1":
+            open()
+            self.window().close()
+'''

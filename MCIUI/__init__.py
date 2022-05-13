@@ -1,5 +1,3 @@
-from 内部触发 import in_trig
-from 外部触发 import ex_trig
 import qdarkstyle
 from MCIUI.main_widget import *
 from MCIUI.IP_load import *
@@ -7,43 +5,63 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 
+class SpectrumScreen(QtWidgets.QDialog):
+    def __init__(self, ui_parent, p1=None):
+        super(SpectrumScreen, self).__init__()
+        self.data1 = None
+        self.data2 = None
+        self.setWindowTitle('显示')
+        self.resize(600, 150)
+        self.ui_parent = ui_parent
+        self._layout = QtWidgets.QGridLayout(self)
+        self.plot_win = pg.GraphicsLayoutWidget(self)
+        self._layout.addWidget(self.plot_win)
+        self.p1 = self.plot_win.addPlot()
+        self.in_data(66, 65)
+        """
+        text = pg.TextItem("输入数据{}：".format(self.data2))
+        p1.addItem(text)
+        """
+        self.data1 = np.random.normal(size=1000)
+        # self.data1 = self.wave_data()
+        curve1 = self.p1.plot(self.data1)
 
-# mainWindow
-class MyMainWindow(QMainWindow, main_widget.Ui_Form):
-    def __init__(self):
-        super(MyMainWindow, self).__init__()
-        self.setupUi(self)
-        self.setWindowTitle('main window')
+        def update1():
+            self.data1[:-1] = self.data1[1:]
+            self.data1[-1] = np.random.normal()
+            curve1.setData(self.data1)
 
-    def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Escape:
-            self.close()
+        def update():
+            update1()
 
+        timer = pg.QtCore.QTimer()
+        timer.timeout.connect(update)
+        timer.start(50)
 
-class ChildWindow(QDialog, IP_load.Ui_Form):
-    def __init__(self):
-        super(ChildWindow, self).__init__()
-        self.setupUi(self)
+    def wave_data(self, data1, axis=None):
+        self.data1 = data1
 
-        self.setWindowTitle('child window')
-        self.pushButton.clicked.connect(self.btnClick)  # 按钮事件绑定
-
-    def btnClick(self):  # 子窗体自定义事件
-        self.close()
+    def in_data(self, dataz, data0):
+        self.data2 = '参数1：{}，参数2：{}'.format(dataz, data0)
+        self.p1.setLabel('top', self.data2)
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)  # 获取命令行参数
+    # 创建一个窗口
+    w = SpectrumScreen(app)
 
-    main = MyMainWindow()
-
-    child = ChildWindow()
-
-    btn = main.Connect_AWG  # 主窗体按钮事件绑定
-    btn.clicked.connect(child.show)
-
-    main.show()
+    # 显示窗口
+    w.show()
     sys.exit(app.exec_())
+
+
+
+
+    def addwave(self, chnl_num):
+        self.chnl_num = chnl_num
+        self.chnl_8.setText("chnlnum".format(chnl_num))
+        self.chnl_wave_6.addWidget(SpectrumScreen())
 
 
 

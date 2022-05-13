@@ -20,6 +20,8 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.repeat_times = 1
         self.frame_2.hide()
         self.frame_4.hide()
+        self.tab.removeTab(0)
+        self.tab.removeTab(0)
 
 
         # 控制信号连接
@@ -62,7 +64,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.frame_4.hide()
 
     def manualsign(self):
-        self.addawg("second", 4)
+        pass
 
     def externalsign(self):
         pass
@@ -96,7 +98,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.chnl_num = chnl_num
         self.waveui = wave(self)
         self.waveui.chnl_8.setText('{}'.format(chnl_num))
-        #self.waveui.chnl_wave_6.addwige()
+        # self.waveui.chnl_wave_6.addwige()
 
     def wave_form(self):
         pass
@@ -110,6 +112,6 @@ if __name__ == '__main__':
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     btn = main.Connect_AWG  # 主窗体按钮事件绑定
     btn.clicked.connect(main.addawg)
-
+    # main.tab.removeTab(0)
     main.show()
     sys.exit(app.exec_())

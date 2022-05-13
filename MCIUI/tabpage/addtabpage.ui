@@ -184,7 +184,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_7">
+                    <widget class="QFrame" name="wave0">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -266,7 +266,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_8">
+                    <widget class="QFrame" name="wave1">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -348,7 +348,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_30">
+                    <widget class="QFrame" name="wave2">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -430,7 +430,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_29">
+                    <widget class="QFrame" name="wave3">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -512,7 +512,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_28">
+                    <widget class="QFrame" name="wave3_2">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -594,7 +594,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_27">
+                    <widget class="QFrame" name="wave5">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -676,7 +676,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_26">
+                    <widget class="QFrame" name="wave6">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -758,7 +758,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_25">
+                    <widget class="QFrame" name="wave7">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -840,7 +840,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_24">
+                    <widget class="QFrame" name="wave8">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -922,7 +922,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_11">
+                    <widget class="QFrame" name="wave9">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1004,7 +1004,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_23">
+                    <widget class="QFrame" name="wave10">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1086,7 +1086,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_22">
+                    <widget class="QFrame" name="wave11">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1168,7 +1168,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_13">
+                    <widget class="QFrame" name="wave12">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1250,7 +1250,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_21">
+                    <widget class="QFrame" name="wave13">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1332,7 +1332,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_12">
+                    <widget class="QFrame" name="wave14">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1414,7 +1414,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_10">
+                    <widget class="QFrame" name="wave15">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1496,7 +1496,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_20">
+                    <widget class="QFrame" name="wave16">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1578,7 +1578,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_9">
+                    <widget class="QFrame" name="wave17">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1660,7 +1660,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_19">
+                    <widget class="QFrame" name="wave18">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1742,7 +1742,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_18">
+                    <widget class="QFrame" name="wave19">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1824,7 +1824,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_17">
+                    <widget class="QFrame" name="wave20">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1906,7 +1906,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_16">
+                    <widget class="QFrame" name="wave21">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -1988,7 +1988,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_15">
+                    <widget class="QFrame" name="wave22">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
@@ -2070,7 +2070,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QFrame" name="chnl_wave_14">
+                    <widget class="QFrame" name="wave23">
                      <property name="minimumSize">
                       <size>
                        <width>0</width>

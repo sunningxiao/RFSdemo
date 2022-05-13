@@ -20,8 +20,9 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.intrigtimes = self.repeat_times_2.text()
         self.intrigcycle = self.trigger_cycle.text()
         self.manualcycle = self.lineEdit_2.text()
-
         self.tabadd = self.frame_19
+
+
 
     def trig_mode(self, i):
         if i == 1:
@@ -58,7 +59,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def createpy(self):
         pass
 
-    '''
+
+'''
     def addawg(self, tabname, chnlnum):
         self.tabname = tabname
         self.chnlnum = chnlnum

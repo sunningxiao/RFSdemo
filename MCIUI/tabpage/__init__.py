@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
+import pyqtgraph as pg
+import numpy as np
 
 
 class Tabadd(QtWidgets.QWidget, Ui_addtab):
@@ -22,6 +24,51 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.manualcycle = self.lineEdit_2.text()
         self.tabadd = self.frame_19
 
+
+
+        self._layout = QtWidgets.QGridLayout()
+        self.plot_win = pg.GraphicsLayoutWidget(self)
+        self._layout.addWidget(self.plot_win)
+        self.p1 = self.plot_win.addPlot()
+        self.data1 = np.random.normal(size=300)
+        curve1 = self.p1.plot(self.data1)
+        def update1():
+            self.data1[:-1] = self.data1[1:]
+            self.data1[-1] = np.random.normal()
+            curve1.setData(self.data1)
+
+        def update():
+            update1()
+
+        timer = pg.QtCore.QTimer()
+        timer.timeout.connect(update)
+        timer.start(50)
+        self.verticalLayout_10.addLayout(self._layout)
+        self.verticalLayout_11.addLayout(self._layout)
+        self.verticalLayout_33.addLayout(self._layout)
+        self.verticalLayout_32.addLayout(self._layout)
+        self.verticalLayout_31.addLayout(self._layout)
+        self.verticalLayout_30.addLayout(self._layout)
+        self.verticalLayout_29.addLayout(self._layout)
+        self.verticalLayout_28.addLayout(self._layout)
+        self.verticalLayout_27.addLayout(self._layout)
+        self.verticalLayout_14.addLayout(self._layout)
+
+        self.verticalLayout_26.addLayout(self._layout)
+        self.verticalLayout_25.addLayout(self._layout)
+        self.verticalLayout_16.addLayout(self._layout)
+        self.verticalLayout_24.addLayout(self._layout)
+        self.verticalLayout_15.addLayout(self._layout)
+        self.verticalLayout_13.addLayout(self._layout)
+        self.verticalLayout_23.addLayout(self._layout)
+        self.verticalLayout_12.addLayout(self._layout)
+        self.verticalLayout_22.addLayout(self._layout)
+        self.verticalLayout_21.addLayout(self._layout)
+
+        self.verticalLayout_20.addLayout(self._layout)
+        self.verticalLayout_19.addLayout(self._layout)
+        self.verticalLayout_18.addLayout(self._layout)
+        self.verticalLayout_17.addLayout(self._layout)
 
 
     def trig_mode(self, i):
@@ -60,30 +107,3 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         pass
 
 
-'''
-    def addawg(self, tabname, chnlnum):
-        self.tabname = tabname
-        self.chnlnum = chnlnum
-        self.pagea = Tabadd(self)
-        self.AWGADD = QtWidgets.QWidget(self)
-        awg_layout = QtWidgets.QGridLayout(self.AWGADD)
-        awg_layout.addWidget(self.pagea)
-        awg_layout.setContentsMargins(0, 0, 0, 0)
-        self.AWGADD.setObjectName("AWGADD")
-        from MCIUI.main_widget import MAIN
-        self.Main = MAIN(self)
-        self.Main.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
-
-        if self.chnlnum != 0:
-            self.Main.verticalLayout_6.addWidget(MAIN.waves(self, 2))
-            self.chnlnum = self.chnlnum - 1
-
-    def waves(self, chnl_num):
-        self.chnl_num = chnl_num
-        self.waveui = wave(self)
-        self.waveui.chnl_8.setText('{}'.format(chnl_num))
-        self.waveui.verticalLayout_2.addWidget(self.wave_form())
-
-    def wave_form(self):
-        pass
-'''

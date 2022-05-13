@@ -15,7 +15,6 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
 
     def login(self):
         self.ui_parent.addawg("second", 1)
-
         self.close()
 
 '''

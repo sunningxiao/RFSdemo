@@ -79,6 +79,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         ip1 = IPloading(self)
         ip1.exec()
         ip = ip1.IPlineEdit.text()
+
         self.tabname = "second"
         self.chnlnum = 1
         self.pagea = Tabadd(self)

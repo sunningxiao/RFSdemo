@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>952</width>
-    <height>760</height>
+    <height>621</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -418,6 +418,12 @@ font: 12pt &quot;Arial&quot;;</string>
           </property>
           <item>
            <widget class="QFrame" name="frame_20">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>600</width>
@@ -463,7 +469,7 @@ font: 12pt &quot;Arial&quot;;</string>
                   <x>0</x>
                   <y>0</y>
                   <width>648</width>
-                  <height>629</height>
+                  <height>495</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -729,6 +735,9 @@ margin-top:3px;</string>
                    </property>
                    <item>
                     <layout class="QVBoxLayout" name="verticalLayout_3">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
                      <item>
                       <widget class="QFrame" name="frame_2">
                        <property name="sizePolicy">
@@ -774,23 +783,6 @@ margin-top:3px;</string>
                         <property name="spacing">
                          <number>0</number>
                         </property>
-                        <item row="0" column="1">
-                         <widget class="QPushButton" name="pushButton_2">
-                          <property name="minimumSize">
-                           <size>
-                            <width>0</width>
-                            <height>20</height>
-                           </size>
-                          </property>
-                          <property name="styleSheet">
-                           <string notr="true">margin-left:5px;
-margin-right:5px;</string>
-                          </property>
-                          <property name="text">
-                           <string>config</string>
-                          </property>
-                         </widget>
-                        </item>
                         <item row="0" column="2">
                          <widget class="QPushButton" name="pushButton_3">
                           <property name="minimumSize">
@@ -818,6 +810,23 @@ margin-left:5px;
                           </property>
                           <property name="text">
                            <string>External</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item row="0" column="1">
+                         <widget class="QPushButton" name="pushButton_2">
+                          <property name="minimumSize">
+                           <size>
+                            <width>0</width>
+                            <height>20</height>
+                           </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">margin-left:5px;
+margin-right:5px;</string>
+                          </property>
+                          <property name="text">
+                           <string>config</string>
                           </property>
                          </widget>
                         </item>
@@ -1075,13 +1084,7 @@ margin-left:5px;</string>
       <attribute name="title">
        <string>probe-0</string>
       </attribute>
-      <layout class="QFormLayout" name="formLayout_2">
-       <property name="horizontalSpacing">
-        <number>0</number>
-       </property>
-       <property name="verticalSpacing">
-        <number>0</number>
-       </property>
+      <layout class="QGridLayout" name="gridLayout_9">
        <property name="leftMargin">
         <number>0</number>
        </property>
@@ -1094,7 +1097,10 @@ margin-left:5px;</string>
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="0" column="0" colspan="2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item row="0" column="0">
         <widget class="QFrame" name="frame_39">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

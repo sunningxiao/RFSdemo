@@ -1,19 +1,23 @@
+import numpy as np
+import quantum_driver
 
 
 
+dtrace = np.empty(shape=[0 ,ADPointNumber])
+dIQ = np.empty(shape = [0 ,cntfreq, shots], dtype= complex)
+time_start = time()
+for i in range(chnls):
+    driver.set('Waveform', wav_readout[i](DAtmspace), i+ 1)
+    driver.set('FrequencyList', freqlist[i], i + 1)
 
-class control:
+driver.set('StartCapture')  # 启动指令
+driver.set('GenerateTrig', period)
 
-    def addawg(self, awgname):
-        self.awgname = awgname
-        self.AWGADD = QtWidgets.QWidget()
-        self.AWGADD.setObjectName("AWGADD")
-        self.AWG_1.addTab(self.AWGADD, "name".format(self.awgname))
+for i in range(chnls):
+    dIQ = np.append(dIQ, [np.swapaxes(driver.get('IQ', channel=(i + 1)), 0, 1)], axis=0)
+print(f'单次配置及硬解耗时：{time() - time_start}')
 
-    def addwave(self, chnl_num):
-        self.chnl_num = chnl_num
-        self.chnl_8.setText("chnlnum".format(chnl_num))
-        self.chnl_wave_6.addWidget(SpectrumScreen())
-
+for i in range(chnls):
+    dtrace = np.append(dtrace, [np.mean(driver.get('TraceIQ', channel=(i + 1)), axis=0)], axis=0)
 
 

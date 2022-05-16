@@ -8,6 +8,7 @@ import numpy as np
 class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def __init__(self, ui_parent):
         super(Tabadd, self).__init__(ui_parent)
+        self.i = 0
         self.setupUi(self)
         self.ui_parent = ui_parent
 
@@ -23,15 +24,28 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.intrigcycle = self.trigger_cycle.text()
         self.manualcycle = self.lineEdit_2.text()
         self.tabadd = self.frame_19
+        for i in range(24):
+            self.waves()
 
 
+    def waves(self):
+        # self.date1 = value
+        waveui = wave(self)
+        self.param1 = 12
+        self.param2 = 23
+        waveui.chnl_0.setText('chnl_0')
 
-        self._layout = QtWidgets.QGridLayout()
+        #self._layout = QtWidgets.QGridLayout()
         self.plot_win = pg.GraphicsLayoutWidget(self)
-        self._layout.addWidget(self.plot_win)
+        #self._layout.addWidget(self.plot_win)
         self.p1 = self.plot_win.addPlot()
         self.data1 = np.random.normal(size=300)
         curve1 = self.p1.plot(self.data1)
+        self.data2 = '参数1：{}，参数2：{}'.format(self.param1, self.param2)
+        self.p1.setLabel('top', self.data2)
+        waveui.verticalLayout.addWidget(self.plot_win)
+        self.verticalLayout.addWidget(waveui)
+
         def update1():
             self.data1[:-1] = self.data1[1:]
             self.data1[-1] = np.random.normal()
@@ -40,35 +54,13 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         def update():
             update1()
 
+
+
         timer = pg.QtCore.QTimer()
         timer.timeout.connect(update)
         timer.start(50)
-        self.verticalLayout_10.addLayout(self._layout)
-        self.verticalLayout_11.addLayout(self._layout)
-        self.verticalLayout_33.addLayout(self._layout)
-        self.verticalLayout_32.addLayout(self._layout)
-        self.verticalLayout_31.addLayout(self._layout)
-        self.verticalLayout_30.addLayout(self._layout)
-        self.verticalLayout_29.addLayout(self._layout)
-        self.verticalLayout_28.addLayout(self._layout)
-        self.verticalLayout_27.addLayout(self._layout)
-        self.verticalLayout_14.addLayout(self._layout)
 
-        self.verticalLayout_26.addLayout(self._layout)
-        self.verticalLayout_25.addLayout(self._layout)
-        self.verticalLayout_16.addLayout(self._layout)
-        self.verticalLayout_24.addLayout(self._layout)
-        self.verticalLayout_15.addLayout(self._layout)
-        self.verticalLayout_13.addLayout(self._layout)
-        self.verticalLayout_23.addLayout(self._layout)
-        self.verticalLayout_12.addLayout(self._layout)
-        self.verticalLayout_22.addLayout(self._layout)
-        self.verticalLayout_21.addLayout(self._layout)
 
-        self.verticalLayout_20.addLayout(self._layout)
-        self.verticalLayout_19.addLayout(self._layout)
-        self.verticalLayout_18.addLayout(self._layout)
-        self.verticalLayout_17.addLayout(self._layout)
 
 
     def trig_mode(self, i):
@@ -105,5 +97,3 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
     def createpy(self):
         pass
-
-

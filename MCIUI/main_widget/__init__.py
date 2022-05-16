@@ -12,6 +12,7 @@ from MCIUI.main_widget.frame import Ui_Form
 from MCIUI.通道波形 import wave
 
 
+
 class MAIN(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent):
         super(MAIN, self).__init__()
@@ -75,13 +76,12 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
     def createpy(self):
         pass
 
-    def addawg(self):
+    def addawg(self, tabname):
         ip1 = IPloading(self)
         ip1.exec()
         ip = ip1.IPlineEdit.text()
 
         self.tabname = "second"
-        self.chnlnum = 1
         self.pagea = Tabadd(self)
         self.AWGADD = QtWidgets.QWidget(self)
         awg_layout = QtWidgets.QGridLayout(self.AWGADD)
@@ -91,18 +91,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
 
 
-        if self.chnlnum != 0:
-            self.verticalLayout_6.addWidget(self.waves(1))
-            self.chnlnum = self.chnlnum - 1
 
-    def waves(self, chnl_num):
-        self.chnl_num = chnl_num
-        self.waveui = wave(self)
-        self.waveui.chnl_8.setText('{}'.format(chnl_num))
-        # self.waveui.chnl_wave_6.addwige()
-
-    def wave_form(self):
-        pass
 
 
 if __name__ == '__main__':

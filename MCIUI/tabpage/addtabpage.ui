@@ -396,101 +396,6 @@ margin-top:3px;</string>
                   <item>
                    <layout class="QVBoxLayout" name="verticalLayout_3">
                     <item>
-                     <widget class="QFrame" name="frame_2">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QGridLayout" name="gridLayout_2">
-                       <property name="leftMargin">
-                        <number>0</number>
-                       </property>
-                       <property name="topMargin">
-                        <number>0</number>
-                       </property>
-                       <property name="rightMargin">
-                        <number>0</number>
-                       </property>
-                       <property name="bottomMargin">
-                        <number>0</number>
-                       </property>
-                       <property name="spacing">
-                        <number>0</number>
-                       </property>
-                       <item row="0" column="1">
-                        <widget class="QPushButton" name="pushButton_2">
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">margin-left:5px;
-margin-right:5px;</string>
-                         </property>
-                         <property name="text">
-                          <string>config</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="2">
-                        <widget class="QPushButton" name="pushButton_3">
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">margin-left:5px;
-margin-right:5px;</string>
-                         </property>
-                         <property name="text">
-                          <string>Trig</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="0">
-                        <widget class="QPushButton" name="pushButton">
-                         <property name="styleSheet">
-                          <string notr="true">
-margin-right:5px;
-margin-left:5px;
-</string>
-                         </property>
-                         <property name="text">
-                          <string>External</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QFrame" name="frame_4">
                       <property name="enabled">
                        <bool>true</bool>
@@ -533,26 +438,6 @@ margin-left:5px;
                          </property>
                         </widget>
                        </item>
-                       <item row="0" column="1" colspan="2">
-                        <widget class="QLineEdit" name="repeat_times_2"/>
-                       </item>
-                       <item row="2" column="2">
-                        <widget class="QPushButton" name="trig_2">
-                         <property name="minimumSize">
-                          <size>
-                           <width>0</width>
-                           <height>20</height>
-                          </size>
-                         </property>
-                         <property name="styleSheet">
-                          <string notr="true">margin-left:5px;
-margin-right:5px;</string>
-                         </property>
-                         <property name="text">
-                          <string>Trig</string>
-                         </property>
-                        </widget>
-                       </item>
                        <item row="2" column="1">
                         <widget class="QPushButton" name="config">
                          <property name="minimumSize">
@@ -582,7 +467,7 @@ margin-right:5px;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">
+                          <string notr="true">background-color: rgb(0, 61, 184);
 margin-right:5px;</string>
                          </property>
                          <property name="text">
@@ -599,6 +484,26 @@ margin-right:5px;</string>
                           <string>repeat times</string>
                          </property>
                         </widget>
+                       </item>
+                       <item row="2" column="2">
+                        <widget class="QPushButton" name="trig_2">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">margin-left:5px;
+margin-right:5px;</string>
+                         </property>
+                         <property name="text">
+                          <string>Trig</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="1" colspan="2">
+                        <widget class="QLineEdit" name="repeat_times_2"/>
                        </item>
                       </layout>
                      </widget>
@@ -683,7 +588,7 @@ margin-right:5px;</string>
                           </size>
                          </property>
                          <property name="styleSheet">
-                          <string notr="true">;
+                          <string notr="true">background-color: rgb(167, 167, 167);
 margin-right:5px;
 margin-left:5px;</string>
                          </property>
@@ -715,6 +620,101 @@ margin-left:5px;</string>
  &lt;resources/&gt;
 &lt;/ui&gt;
 </string>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QFrame" name="frame_2">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true"/>
+                      </property>
+                      <property name="frameShape">
+                       <enum>QFrame::StyledPanel</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <layout class="QGridLayout" name="gridLayout_2">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
+                       <item row="0" column="2">
+                        <widget class="QPushButton" name="pushButton_3">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">margin-left:5px;
+margin-right:5px;</string>
+                         </property>
+                         <property name="text">
+                          <string>Trig</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="1">
+                        <widget class="QPushButton" name="pushButton_2">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">margin-left:5px;
+margin-right:5px;</string>
+                         </property>
+                         <property name="text">
+                          <string>config</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="0">
+                        <widget class="QPushButton" name="pushButton">
+                         <property name="styleSheet">
+                          <string notr="true">background-color: rgb(255, 85, 128);
+margin-right:5px;
+margin-left:5px;
+</string>
+                         </property>
+                         <property name="text">
+                          <string>External</string>
                          </property>
                         </widget>
                        </item>

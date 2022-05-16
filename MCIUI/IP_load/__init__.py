@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, Qt, QtCore
+from PyQt5 import QtWidgets, QtCore
 
 import MCIUI
 from MCIUI.IP_load.ipload import Ui_Form

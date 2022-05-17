@@ -1,5 +1,4 @@
 import sys
-import pyqtgraph as pg
 from PyQt5 import QtWidgets
 import qdarkstyle
 from PyQt5.QtWidgets import QApplication

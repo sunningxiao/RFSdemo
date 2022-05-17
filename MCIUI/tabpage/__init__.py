@@ -25,15 +25,14 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.external_config.clicked.connect(self.externalsign)
         self.manual_trig.clicked.connect(self.manualsign)
         self.internal_trig.clicked.connect(self.internalsign)
-        self.intrigtimes = self.repeat_times_2.text()
-        self.intrigcycle = self.trigger_cycle.text()
-        self.manualcycle = self.manual_trigge_cycle.text()
-        self.pytext = self.textEditpy.toPlainText()
+        self.intrigtimes = self.repeat_times_2.text
+        self.manualcycle = self.manual_trigge_cycle.text
+        self.pytext = self.textEditpy.toPlainText
 
         self.tabadd = self.frame_19
         self.ip1 = IPloading(self)
         self.ip1.exec()
-        self.ip = self.ip1.IPlineEdit.text()
+        self.ip = self.ip1.IPlineEdit.text
 
         self.driver = Driver(self.ip)
         sysparam = {
@@ -41,12 +40,17 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         }
         self.driver.open(system_parameter=sysparam)
 
-        self.alldata = []
+        self.alldata = {}
+        self.pydate = {}
         for i in range(24):
             self.waves()
 
-    def waves(self):
-        # self.date1 = value
+    @property
+    def intrigcycle(self):
+        return self.trigger_cycle.text()
+
+    def waves(self, value=None):
+        value = np.random.normal(size=300) if value is None else value
         waveui = wave(self)
         self.param1 = 12
         self.param2 = 23
@@ -55,8 +59,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         waveui.chnl_0.setText(self.chnlname)
         self.plot_win = pg.GraphicsLayoutWidget(self)
         self.p1 = self.plot_win.addPlot()
-        self.data1 = np.random.normal(size=300)
-        self.alldata.append(self.data1)
+        self.data1 = value
+        self.alldata.update(self.chnlname ,self.data1)
         self.curve1 = self.p1.plot(self.data1)
         self.data2 = '参数1：{}，参数2：{}'.format(self.param1, self.param2)
         self.p1.setLabel('top', self.data2)
@@ -133,10 +137,9 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         }
 
         self.driver.open(system_parameter=sysparam)
-        self.internal_config_sign()
         self.manual_config_sign()
 
     def createpy(self):
-        self.inputdata = exec(compile(self.pytext))
-        for i in range(len(self.inputdata)):
-            self.waves(self.inputdata[i])
+        self.inputdata = compile(self.pytext, '', 'exec')
+        self.pydate = exec(self.inputdata)
+

@@ -13,15 +13,12 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.OK.clicked.connect(self.close)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
+    '''
     def login(self):
-        # self.ui_parent.addawg("Third")
-
+        self.ui_parent.addawg()
         self.close()
-
-
 '''
 
-        if self.ip == "127.0.0.1":
-            open()
-            self.window().close()
-'''
+
+
+

@@ -58,10 +58,6 @@ if __name__ == '__main__':
 
 
 
-    def addwave(self, chnl_num):
-        self.chnl_num = chnl_num
-        self.chnl_8.setText("chnlnum".format(chnl_num))
-        self.chnl_wave_6.addWidget(SpectrumScreen())
 
 
 

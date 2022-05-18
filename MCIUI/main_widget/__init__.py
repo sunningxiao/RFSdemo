@@ -11,7 +11,6 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         super(MAIN, self).__init__()
         self.setupUi(self)
         self.ui_parent = ui_parent
-        # self.repeat_times = 1
         self.tab.removeTab(0)
         self.tab.removeTab(0)
         self.page_list = []
@@ -22,7 +21,6 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
     def addawg(self):
 
         self.tabname = 'AWG-' + str(self.i)
-        self.i = self.i + 1
         self.pagea = Tabadd(self)
 
         self.page_list.append(self.pagea)
@@ -32,15 +30,12 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         awg_layout.setContentsMargins(0, 0, 0, 0)
         self.AWGADD.setObjectName("AWGADD")
         self.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
-        self.tab.setCurrentIndex(0)
-
-
-
+        self.tab.setCurrentIndex(self.i)
+        self.i = self.i + 1
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
     main = MAIN(ui_parent=None)
     child = IPloading(ui_parent=main)
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())

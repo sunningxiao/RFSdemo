@@ -249,7 +249,7 @@ margin-left:50px;
 margin-top:3px;</string>
                  </property>
                  <property name="text">
-                  <string>Submit</string>
+                  <string>Connect</string>
                  </property>
                 </widget>
                </item>

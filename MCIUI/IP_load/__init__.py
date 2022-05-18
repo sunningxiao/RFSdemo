@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
 
-import MCIUI
 from MCIUI.IP_load.ipload import Ui_Form
 
 
@@ -18,7 +17,3 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.ui_parent.addawg()
         self.close()
 '''
-
-
-
-

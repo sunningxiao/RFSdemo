@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_addtab(object):
     def setupUi(self, addtab):
         addtab.setObjectName("addtab")
-        addtab.resize(948, 619)
+        addtab.resize(948, 502)
         self.gridLayout = QtWidgets.QGridLayout(addtab)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setHorizontalSpacing(0)
@@ -56,7 +56,7 @@ class Ui_addtab(object):
         self.scrollArea_2.setWidgetResizable(True)
         self.scrollArea_2.setObjectName("scrollArea_2")
         self.scrollAreaWidgetContents_2 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 648, 611))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 648, 494))
         self.scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -314,7 +314,7 @@ class Ui_addtab(object):
     def retranslateUi(self, addtab):
         _translate = QtCore.QCoreApplication.translate
         addtab.setWindowTitle(_translate("addtab", "Form"))
-        self.changepy.setText(_translate("addtab", "Submit"))
+        self.changepy.setText(_translate("addtab", "Connect"))
         self.label_12.setText(_translate("addtab", "Trig Mode"))
         self.comboBox_2.setItemText(0, _translate("addtab", "Manual Trigger"))
         self.comboBox_2.setItemText(1, _translate("addtab", "Internl Trigger"))

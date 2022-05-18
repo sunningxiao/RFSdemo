@@ -13,4 +13,9 @@ class wave(QtWidgets.QWidget, Ui_Form):
         super(wave, self).__init__(ui_parent)
         self.setupUi(self)
         self.ui_parent = ui_parent
+        pg.setConfigOption('background', '#19232D')
+
+
+
+
 

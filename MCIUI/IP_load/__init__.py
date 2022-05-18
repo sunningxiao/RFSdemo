@@ -1,7 +1,7 @@
-from PyQt5 import QtWidgets, Qt, QtCore
+from PyQt5 import QtWidgets, QtCore
 
-import MCIUI
 from MCIUI.IP_load.ipload import Ui_Form
+
 
 class IPloading(QtWidgets.QDialog, Ui_Form):
     def __init__(self, ui_parent):
@@ -12,13 +12,8 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.OK.clicked.connect(self.close)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
-
+    '''
     def login(self):
-        self.ui_parent.addawg("second", 1)
+        self.ui_parent.addawg()
         self.close()
-
-'''
-        if self.ip == "127.0.0.1":
-            open()
-            self.window().close()
 '''

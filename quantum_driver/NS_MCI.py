@@ -91,24 +91,25 @@ class Driver(BaseDriver):
                                                 use_builtin_types=True)
 
         self.fast_rpc = FastRPC(self.addr)
-        # 此时会连接rfsoc的指令接收tcp server
-        self.handle.start_command()
-
-        # 配置系统初始值
-        system_parameter = kw.get('system_parameter', {})
-        values = self.SystemParameter.copy()
-        values.update(system_parameter)
-        for name, value in values.items():
-            if value is not None:
-                self.handle.rpc_set(name, value, 1, False)
-
-        # 系统开启前必须进行过一次初始化
-        result = self.__exec_command('初始化')
-        result = self.__exec_command('DAC配置')
-        result = self.__exec_command('ADC配置')
-        self.handle.init_dma()
-        if not result:
-            print(self.handle.get_all_status())
+        # # 此时会连接rfsoc的指令接收tcp server
+        # self.handle.start_command()
+        #
+        # # 配置系统初始值
+        # system_parameter = kw.get('system_parameter', {})
+        # values = self.SystemParameter.copy()
+        # values.update(system_parameter)
+        # for name, value in values.items():
+        #     if value is not None:
+        #         self.handle.rpc_set(name, value, 1, False)
+        #
+        # # 系统开启前必须进行过一次初始化
+        # result = self.__exec_command('初始化')
+        # result = self.__exec_command('DAC配置')
+        # result = self.__exec_command('ADC配置')
+        # self.handle.init_dma()
+        # if not result:
+        #     print(self.handle.get_all_status())
+        print(kw)
 
     @solve_rpc_exception
     def close(self, **kw):
@@ -152,15 +153,16 @@ class Driver(BaseDriver):
                 "Output" --> bool
         :param channel：通道号
         """
-        value = RPCValueParser.dump(value)
-        if name in {'Waveform', 'GenWave'}:
-            func = self.fast_rpc.rpc_set
-        else:
-            func = self.handle.rpc_set
-
-        if not func(name, value, channel):
-            raise xmlrpc.client.Fault(400, '指令执行失败, 请重新open板卡')
-            # pass
+        # value = RPCValueParser.dump(value)
+        # if name in {'Waveform', 'GenWave'}:
+        #     func = self.fast_rpc.rpc_set
+        # else:
+        #     func = self.handle.rpc_set
+        #
+        # if not func(name, value, channel):
+        #     raise xmlrpc.client.Fault(400, '指令执行失败, 请重新open板卡')
+        #     # pass
+        print(name, value, channel)
 
     @solve_rpc_exception
     def get(self, name, channel=1, value=0):

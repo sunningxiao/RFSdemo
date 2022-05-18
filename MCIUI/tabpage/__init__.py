@@ -1,8 +1,11 @@
 from PyQt5 import QtWidgets
+
+from MCIUI.IP_load import IPloading
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
 import pyqtgraph as pg
 import numpy as np
+from quantum_driver.NS_MCI import Driver
 
 
 class Tabadd(QtWidgets.QWidget, Ui_addtab):
@@ -10,66 +13,66 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         super(Tabadd, self).__init__(ui_parent)
         self.setupUi(self)
         self.ui_parent = ui_parent
+        self.frame_external.hide()
+        self.frame_internal.hide()
+        self.changepy.clicked.connect(self.createpy)
+        self.i = 0
 
-        self.frame_2.hide()
-        self.frame_4.hide()
+        self.external_trig.setEnabled(False)
+        self.manual_config.clicked.connect(self.manual_config_sign)
+        self.internal_config.clicked.connect(self.internal_config_sign)
         self.comboBox_2.currentIndexChanged.connect(self.trig_mode)
-        self.pushButton_2.clicked.connect(self.externalsign)
-        self.Trig_2.clicked.connect(self.manualsign)
-        self.trig_2.clicked.connect(self.internalsign)
-        self.pushButton_4.clicked.connect(self.createpy)
+        self.external_config.clicked.connect(self.externalsign)
+        self.manual_trig.clicked.connect(self.manualsign)
+        self.internal_trig.clicked.connect(self.internalsign)
+        self.manualcycle = self.manual_trigge_cycle.text
 
-        self.intrigtimes = self.repeat_times_2.text()
-        self.intrigcycle = self.trigger_cycle.text()
-        self.manualcycle = self.lineEdit_2.text()
         self.tabadd = self.frame_19
+        self.ip1 = IPloading(self)
+        self.ip1.exec()
+        self.ip = self.ip1.IPlineEdit.text
+        self.driver = Driver(self.ip())
+        sysparam = {
+            'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+        }
+        self.driver.open(system_parameter=sysparam)
+
+        self.alldata = {}
+        self.allwave = []
+        #self.pydata = {}
+        # for i in range(24):
+        #     self.waves()
 
 
+    @property
+    def intrigcycle(self):
+        return self.trigger_cycle.text()
 
-        self._layout = QtWidgets.QGridLayout()
+    @property
+    def intrigtimes(self):
+        return self.repeat_times_2.text()
+
+    @property
+    def pytext(self):
+        return self.textEditpy.toPlainText()
+
+    def waves(self, value=None, tabname=None):
+        value = np.random.normal(size=300) if value is None else value
+        waveui = wave(self)
+        self.param1 = 12
+        self.param2 = 23
+        self.chnlname = 'chnl-' + str(self.i)
+        self.i = self.i + 1
+        waveui.chnl_0.setText(self.chnlname)
         self.plot_win = pg.GraphicsLayoutWidget(self)
-        self._layout.addWidget(self.plot_win)
         self.p1 = self.plot_win.addPlot()
-        self.data1 = np.random.normal(size=300)
-        curve1 = self.p1.plot(self.data1)
-        def update1():
-            self.data1[:-1] = self.data1[1:]
-            self.data1[-1] = np.random.normal()
-            curve1.setData(self.data1)
-
-        def update():
-            update1()
-
-        timer = pg.QtCore.QTimer()
-        timer.timeout.connect(update)
-        timer.start(50)
-        self.verticalLayout_10.addLayout(self._layout)
-        self.verticalLayout_11.addLayout(self._layout)
-        self.verticalLayout_33.addLayout(self._layout)
-        self.verticalLayout_32.addLayout(self._layout)
-        self.verticalLayout_31.addLayout(self._layout)
-        self.verticalLayout_30.addLayout(self._layout)
-        self.verticalLayout_29.addLayout(self._layout)
-        self.verticalLayout_28.addLayout(self._layout)
-        self.verticalLayout_27.addLayout(self._layout)
-        self.verticalLayout_14.addLayout(self._layout)
-
-        self.verticalLayout_26.addLayout(self._layout)
-        self.verticalLayout_25.addLayout(self._layout)
-        self.verticalLayout_16.addLayout(self._layout)
-        self.verticalLayout_24.addLayout(self._layout)
-        self.verticalLayout_15.addLayout(self._layout)
-        self.verticalLayout_13.addLayout(self._layout)
-        self.verticalLayout_23.addLayout(self._layout)
-        self.verticalLayout_12.addLayout(self._layout)
-        self.verticalLayout_22.addLayout(self._layout)
-        self.verticalLayout_21.addLayout(self._layout)
-
-        self.verticalLayout_20.addLayout(self._layout)
-        self.verticalLayout_19.addLayout(self._layout)
-        self.verticalLayout_18.addLayout(self._layout)
-        self.verticalLayout_17.addLayout(self._layout)
-
+        self.data1 = value
+        self.alldata[self.chnlname] = self.data1
+        self.curve1 = self.p1.plot(self.data1)
+        self.data2 = '参数1：{}，参数2：{}'.format(self.param1, self.param2)
+        self.p1.setLabel('top', self.data2)
+        waveui.verticalLayout.addWidget(self.plot_win)
+        self.verticalLayout.addWidget(waveui)
 
     def trig_mode(self, i):
         if i == 1:
@@ -80,30 +83,71 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
             self.Manaul_trigger()
 
     def external_trigger(self):
-        self.frame_2.show()
-        self.frame_4.hide()
-        self.frame_38.hide()
+        self.frame_external.show()
+        self.frame_internal.hide()
+        self.frame_manual.hide()
 
     def internal_trigger(self):
-        self.frame_4.show()
-        self.frame_2.hide()
-        self.frame_38.hide()
+        self.frame_internal.show()
+        self.frame_external.hide()
+        self.frame_manual.hide()
 
     def Manaul_trigger(self):
-        self.frame_38.show()
-        self.frame_2.hide()
-        self.frame_4.hide()
+        self.frame_manual.show()
+        self.frame_external.hide()
+        self.frame_internal.hide()
 
-    def manualsign(self):
-        pass
+    def manual_config_sign(self):
+        for i, data_i in self.alldata.items():
+            self.driver.set('Waveform', data_i, i)
+        self.driver.set('Shot', 1)
+        self.driver.set('StartCapture')  # 启动指令
+        self.driver.set('GenerateTrig', self.manualcycle())
+
+    def internal_config_sign(self):
+        for i, data_i in self.alldata.items():
+            self.driver.set('Waveform', data_i, i)
+        self.driver.set('Shot', self.intrigtimes)
+        self.driver.set('StartCapture')  # 启动指令
+        self.driver.set('GenerateTrig', self.intrigcycle)
 
     def externalsign(self):
-        pass
+        for i, data_i in self.alldata.items():
+            self.driver.set('Waveform', data_i, i)
+        self.driver.set('Shot', 1)
 
     def internalsign(self):
-        pass
+        self.driver = Driver(self.ip)
+        sysparam = {
+            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+        }
+        self.driver.open(system_parameter=sysparam)
+        self.internal_config_sign()
+
+    def manualsign(self):
+
+        self.driver = Driver(self.ip)
+        sysparam = {
+            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+        }
+
+        self.driver.open(system_parameter=sysparam)
+        self.manual_config_sign()
 
     def createpy(self):
-        pass
+        pydata = {}
+        try:
+            exec(self.pytext, globals(), pydata)
+        except Exception as e:
+            print(e)
 
+        try:
+            if type(pydata['out_wave']) == dict:
+                self.py_data = pydata['out_wave']
+                for i, data_i in self.py_data.items():
+                    self.waves(data_i, i)
 
+            else:
+                print("请将数据类型处理为字典。")
+        except Exception as e:
+            print(e)

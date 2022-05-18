@@ -147,8 +147,6 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
                 for i, data_i in self.py_data.items():
                     self.waves(data_i, i)
 
-
-
             else:
                 print("请将数据类型处理为字典。")
         except Exception as e:

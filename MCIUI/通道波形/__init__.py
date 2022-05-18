@@ -17,3 +17,5 @@ class wave(QtWidgets.QWidget, Ui_Form):
 
 
 
+
+

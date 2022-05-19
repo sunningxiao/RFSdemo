@@ -12,8 +12,6 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.OK.clicked.connect(self.close)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
 
-    '''
-    def login(self):
-        self.ui_parent.addawg()
-        self.close()
-'''
+
+
+

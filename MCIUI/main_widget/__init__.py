@@ -16,7 +16,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.page_list = []
         self.i = 0
 
-        # 控制信号连接
+
 
     def addawg(self):
 

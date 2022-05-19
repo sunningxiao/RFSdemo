@@ -129,17 +129,37 @@ cdef inline _exp_type exp(_exp_type t, _exp_type alpha) nogil:
 # interp运算函数**********************************************************************************
 # INTERP = registerBaseFunc(lambda t, start, stop, points: np.interp(
 #     t, np.linspace(start, stop, len(points)), points))
-# TODO: 完成插值算法
+# TODO 当前插值算法与原版未成功匹配，np.arange与np.linspace两个函数行为不太一样
 cdef int INTERP = 7
-cdef double[::1] _interp(double[::1] t, double start, double stop, double[::1] y):
-    cdef Py_ssize_t ny = y.shape[0]
+
+@cython.cdivision(True)
+cdef inline double[::1] interp(double[::1] t, double start, double stop, tuple _y, double[::1] out):
+    cdef Py_ssize_t ny = len(_y)
     cdef Py_ssize_t nt = t.shape[0]
-    cdef double[::1] x = np.linspace(start, stop, ny)
-    cdef Py_ssize_t i, j
-    for i in range(ny):
-        for j in range(nt):
-            if x[i] > t[j]:
-                break
+    # cdef double[::1] x = np.linspace(start, stop, ny)
+    cdef Py_ssize_t index, j
+    cdef double step = (stop-start)/ny
+    cdef double* y_p = <double*>malloc(ny*sizeof(double))
+    cdef double[::1] y = <double[:ny]>y_p
+    for j in range(ny):
+        y[j] = _y[j]
+
+    print(ny, nt, step, np.asarray(t))
+
+    j = 0
+    for j in prange(nt, nogil=True, num_threads=THREAD_NUM):
+        if t[j]<=start:
+            # out[j] = y[0]
+            out[j] = 0
+        elif t[j]>=stop:
+            # out[j] = y[ny-1]
+            out[j] = ny-1
+        else:
+            index = int((t[j]-start)//step)
+            # out[j] = (y[index+1]-y[index])/step*(t[j]-start-index*step)
+            out[j] = index
+    free(y_p)
+    return out
 
 
 # linear_chirp运算函数**********************************************************************************
@@ -151,13 +171,13 @@ ctypedef fused _linear_chirp_type:
 
 @cython.cdivision(True)
 cdef inline _linear_chirp_type linear_chirp(_linear_chirp_type t,
-                                     _linear_chirp_type f0, _linear_chirp_type f1,
-                                     _linear_chirp_type T, _linear_chirp_type phi0) nogil:
+                                            _linear_chirp_type f0, _linear_chirp_type f1,
+                                            _linear_chirp_type T, _linear_chirp_type phi0) nogil:
     """
     可并行的linear_chirp函数
     """
     # phi0 + 2 * np.pi * ((f1 - f0) / (2 * T) * t ** 2 + f0 * t)
-    return <_linear_chirp_type>sin(phi0 + 2 * M_PI * ((f1 - f0) / (2 * T) * pow(t, 2) + f0 * t))
+    return <_linear_chirp_type> sin(phi0 + 2 * M_PI * ((f1 - f0) / (2 * T) * pow(t, 2) + f0 * t))
 
 # exponential_chirp运算函数**********************************************************************************
 cdef int EXPONENTIALCHIRP = 9
@@ -168,13 +188,13 @@ ctypedef fused _exponential_chirp_type:
 
 @cython.cdivision(True)
 cdef inline _exponential_chirp_type exponential_chirp(_exponential_chirp_type t,
-                                               _exponential_chirp_type f0,
-                                               _exponential_chirp_type alpha,
-                                               _exponential_chirp_type phi0) nogil:
+                                                      _exponential_chirp_type f0,
+                                                      _exponential_chirp_type alpha,
+                                                      _exponential_chirp_type phi0) nogil:
     """
     可并行的exponential_chirp函数
     """
-    return <_exponential_chirp_type>sin(phi0 + 2 * M_PI * f0 * (_exp(alpha * t) - 1) / alpha)
+    return <_exponential_chirp_type> sin(phi0 + 2 * M_PI * f0 * (_exp(alpha * t) - 1) / alpha)
 
 # hyperbolic_chirp运算函数**********************************************************************************
 cdef int HYPERBOLICCHIRP = 10
@@ -185,9 +205,9 @@ ctypedef fused _hyperbolic_chirp_type:
 
 @cython.cdivision(True)
 cdef inline _hyperbolic_chirp_type hyperbolic_chirp(_hyperbolic_chirp_type t,
-                                             _hyperbolic_chirp_type f0,
-                                             _hyperbolic_chirp_type k,
-                                             _hyperbolic_chirp_type phi0) nogil:
+                                                    _hyperbolic_chirp_type f0,
+                                                    _hyperbolic_chirp_type k,
+                                                    _hyperbolic_chirp_type phi0) nogil:
     """
     可并行的hyperbolic_chirp函数
     """
@@ -300,7 +320,7 @@ cdef double[::1] compute_func(tuple mt, double[::1] array, double[::1] _m, doubl
 
     # 预先定义传入的参数
     cdef double para_0, para_1, para_2, para_3, para_4, para_5, para_6
-    cdef double[::1] points
+    cdef tuple points
 
     if Type == LINEAR:
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
@@ -326,10 +346,8 @@ cdef double[::1] compute_func(tuple mt, double[::1] array, double[::1] _m, doubl
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
             out_view[i] = _m[i]*pow(exp(array[i] - shift, para_0), _p)
     elif Type == INTERP:
-        pass
-        # cdef double param = <double> args[0]
-        # for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):
-        #     out_view[i] = interp(array[i] - shift, param)
+        para_0, para_1, points = args[0], args[1], args[2]
+        out_view = interp(array, para_0, para_1, points, out_view)
     elif Type == LINEARCHIRP:
         para_0, para_1, para_2, para_3 = args[0], args[1], args[2], args[3]
         for i in prange(x_max, nogil=True, num_threads=THREAD_NUM):

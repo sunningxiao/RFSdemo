@@ -91,8 +91,15 @@ class Driver(BaseDriver):
                                                 use_builtin_types=True)
 
         self.fast_rpc = FastRPC(self.addr)
-        # 此时会连接rfsoc的指令接收tcp server
-        self.handle.start_command()
+
+        # 判断是否更改ip
+        rfs_ip = kw.get('rfs_ip', None)
+        if rfs_ip is not None:
+            self.handle.start_command(rfs_ip)
+            # self.handle.change_rfs_addr(rfs_ip)
+        else:
+            # 此时会连接rfsoc的指令接收tcp server
+            self.handle.start_command()
 
         # 配置系统初始值
         system_parameter = kw.get('system_parameter', {})

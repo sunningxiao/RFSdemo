@@ -1,5 +1,5 @@
 import os
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from MCIUI.IP_load import IPloading
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
@@ -15,7 +15,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.ui_parent = ui_parent
         self.frame_external.hide()
         self.frame_internal.hide()
-        self.changepy.clicked.connect(self.createpy)
+        self.changepy.clicked.connect(self.action_exec_user_code)
         self.i = 0
 
         self.external_trig.setEnabled(False)
@@ -47,7 +47,11 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         super(Tabadd, self).setupUi(addtab)
         self.textEditpy.load(
             QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
+        # QtWidgets.QApplication.instance.processEvent()
 
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        self.textEditpy.reload()
+        super(Tabadd, self).showEvent(a0)
 
     @property
     def intrigcycle(self):
@@ -57,11 +61,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def intrigtimes(self):
         return self.repeat_times_2.text()
 
-    @property
-    def pytext(self):
-        codes = []
-        self.textEditpy.page().runJavaScript('save()', lambda res: codes.append(res))
-        return codes[0]
+    def action_exec_user_code(self):
+        self.textEditpy.page().runJavaScript('save()', self.createpy)
 
     def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value
@@ -136,10 +137,10 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.driver.open(system_parameter=sysparam)
         self.manual_config_sign()
 
-    def createpy(self):
+    def createpy(self, pytext):
         pydata = {}
         try:
-            exec(self.pytext, globals(), pydata)
+            exec(pytext, globals(), pydata)
         except Exception as e:
             print(e)
 

@@ -6,6 +6,7 @@ from MCIUI.tabpage import Tabadd
 from MCIUI.IP_load import IPloading
 from MCIUI.main_widget.frame import Ui_Form
 
+
 class MAIN(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent):
         super(MAIN, self).__init__()
@@ -17,11 +18,14 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.i = 0
 
 
-
     def addawg(self):
-
+        self.ip1 = IPloading(self)
+        self.ip1.exec()
+        self.addr = self.ip1.IPlineEdit.text
+        if not self.ip1.click_ok:
+            return
         self.tabname = 'AWG-' + str(self.i)
-        self.pagea = Tabadd(self)
+        self.pagea = Tabadd(self, self.addr)
 
         self.page_list.append(self.pagea)
         self.AWGADD = QtWidgets.QWidget(self)

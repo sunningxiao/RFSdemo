@@ -9,7 +9,7 @@ from quantum_driver.NS_MCI import Driver
 
 
 class Tabadd(QtWidgets.QWidget, Ui_addtab):
-    def __init__(self, ui_parent):
+    def __init__(self, ui_parent, ip):
         super(Tabadd, self).__init__(ui_parent)
         self.setupUi(self)
         self.ui_parent = ui_parent
@@ -28,10 +28,9 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.manualcycle = self.manual_trigge_cycle.text
 
         self.tabadd = self.frame_19
-        self.ip1 = IPloading(self)
-        self.ip1.exec()
-        self.ip = self.ip1.IPlineEdit.text
-        self.driver = Driver(self.ip())
+
+        self.ip = ip
+        self.driver = Driver(self.ip)
         sysparam = {
             'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
         }
@@ -40,7 +39,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.alldata = {}
         self.allwave = []
         #self.pydata = {}
-        for i in range(2):
+        for i in range(10):
             self.waves()
 
     def setupUi(self, addtab):

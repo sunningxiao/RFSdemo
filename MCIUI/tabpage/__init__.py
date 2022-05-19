@@ -1,4 +1,5 @@
-from PyQt5 import QtWidgets
+import os
+from PyQt5 import QtWidgets, QtCore
 from MCIUI.IP_load import IPloading
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
@@ -42,6 +43,11 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         for i in range(2):
             self.waves()
 
+    def setupUi(self, addtab):
+        super(Tabadd, self).setupUi(addtab)
+        self.textEditpy.load(
+            QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
+
 
     @property
     def intrigcycle(self):
@@ -53,7 +59,9 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
     @property
     def pytext(self):
-        return self.textEditpy.toPlainText()
+        codes = []
+        self.textEditpy.page().runJavaScript('save()', lambda res: codes.append(res))
+        return codes[0]
 
     def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value

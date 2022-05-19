@@ -219,13 +219,11 @@
                 <number>2</number>
                </property>
                <item>
-                <widget class="QTextEdit" name="textEditpy">
-                 <property name="styleSheet">
-                  <string notr="true">&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.17.1/prism.min.js&quot;&gt;&lt;/script&gt;
-
-&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/prism/1.17.1/components/prism-python.min.js&quot;&gt;&lt;/script&gt;
-
-</string>
+                <widget class="QWebEngineView" name="textEditpy">
+                 <property name="url">
+                  <url>
+                   <string>about:blank</string>
+                  </url>
                  </property>
                 </widget>
                </item>
@@ -740,6 +738,13 @@ margin-right:5px;</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

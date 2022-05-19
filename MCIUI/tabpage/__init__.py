@@ -1,5 +1,4 @@
 from PyQt5 import QtWidgets
-
 from MCIUI.IP_load import IPloading
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
@@ -40,8 +39,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.alldata = {}
         self.allwave = []
         #self.pydata = {}
-        # for i in range(24):
-        #     self.waves()
+        for i in range(2):
+            self.waves()
 
 
     @property
@@ -56,23 +55,18 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def pytext(self):
         return self.textEditpy.toPlainText()
 
-    def waves(self, value=None, tabname=None):
+    def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value
         waveui = wave(self)
-        self.param1 = 12
-        self.param2 = 23
         self.chnlname = 'chnl-' + str(self.i)
         self.i = self.i + 1
         waveui.chnl_0.setText(self.chnlname)
-        self.plot_win = pg.GraphicsLayoutWidget(self)
-        self.p1 = self.plot_win.addPlot()
         self.data1 = value
         self.alldata[self.chnlname] = self.data1
-        self.curve1 = self.p1.plot(self.data1)
-        self.data2 = '参数1：{}，参数2：{}'.format(self.param1, self.param2)
-        self.p1.setLabel('top', self.data2)
-        waveui.verticalLayout.addWidget(self.plot_win)
+        self.curve1 = waveui.p1.plot(self.data1)
         self.verticalLayout.addWidget(waveui)
+        self.allwave.append(waveui)
+
 
     def trig_mode(self, i):
         if i == 1:
@@ -145,9 +139,12 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
             if type(pydata['out_wave']) == dict:
                 self.py_data = pydata['out_wave']
                 for i, data_i in self.py_data.items():
-                    self.waves(data_i, i)
-
+                    self.fixwave(data_i, i)
             else:
                 print("请将数据类型处理为字典。")
         except Exception as e:
             print(e)
+
+    def fixwave(self, fix_data, chnls):
+        self.allwave[chnls].p1.plot(fix_data, clear=True)
+

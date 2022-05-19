@@ -18,5 +18,3 @@ class IPloading(QtWidgets.QDialog, Ui_Form):
         self.close()
 
 
-
-

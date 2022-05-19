@@ -1,6 +1,7 @@
 import numpy as np
 from waveforms import cos, sin, gaussian
 import math
+# import torch
 from time import time
 
 
@@ -16,6 +17,9 @@ def demodCPU(y, coff_para=np.asarray([])):
 
 def demodMatrix(y, coff_para):
     return y.dot(coff_para.T) / y.shape[1]
+
+# def demodTorch(y, coff_para):
+#     return (torch.bmm(y, coff_para) / y.shape[2]).numpy()
 
 
 class SolveQubit:

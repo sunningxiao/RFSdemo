@@ -17,7 +17,8 @@ class LightDMAMixin:
     fpga_clear_trig_address = 0x0 + 4 * 63
 
     fd_count = 1  # 10个颗粒度的缓存
-    dma_size = 512 * 1024 ** 2  # 2GB颗粒度
+    dma_size = 1024 ** 3  # 4GB颗粒度
+    shots_block = 128     # 单次上行的shots数量
     da_channel_num = 8
     da_channel_width = 102.4e-6
     da_keep_amp = 1
@@ -186,13 +187,16 @@ class LightDMAMixin:
             # stop_flag -= 1
         self.has_data_flag -= 1
 
-    def _cache_dma_size(self, size: int, callback=None):
+    def _cache_dma_size(self, one_shot: int, shots, callback=None):
         st = time.time()
-        print(f'dma开始: {size} ')
-        split = 1
-        frame = size // split
+        print(f'dma开始: {one_shot*shots}')
+        split = shots//self.shots_block
+        frame = one_shot*self.shots_block
         self.stop_event.clear()
+        _count = 0
         with self.recv_lock:
+            fd = self.fd_list[self.fd_index]
+            pointer = self.buffer_pointer_list[self.fd_index]
             for i in range(split):
                 fd = self.fd_list[self.fd_index]
                 pointer = self.buffer_pointer_list[self.fd_index]
@@ -200,10 +204,12 @@ class LightDMAMixin:
                     print('xdma终止')
                     return
 
+                _st = time.time()
                 if not self.xdma_obj.stream_read(0, 0, fd, frame, pointer,
                                                  lambda: self.stop_event.is_set(), 0):
                     print('上行失败')
                     return
+                _count += time.time()-_st
 
                 if self.stop_event.is_set():
                     print('xdma终止')
@@ -214,7 +220,19 @@ class LightDMAMixin:
                 self.ad_data = self.buffer_list[self.fd_index][:pointer]
                 self.buffer_pointer_list[self.fd_index] = pointer
 
+            lost = one_shot*(shots-split*self.shots_block)
+            if lost != 0:
+                if not self.xdma_obj.stream_read(0, 0, fd, lost, pointer,
+                                                 lambda: self.stop_event.is_set(), 0):
+                    print('上行失败')
+                    return
+                pointer += lost
+                print(f'数据指针位置{pointer}')
+                self.ad_data = self.buffer_list[self.fd_index][:pointer]
+                self.buffer_pointer_list[self.fd_index] = pointer
+
             print(f'dma耗时{time.time() - st}')
+            print(f'dma纯耗时{_count}')
             if callable(callback):
                 callback()
             print(f'总耗时{time.time() - st}')

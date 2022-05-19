@@ -116,6 +116,7 @@ class CommandTCPInterface(metaclass=RFSInterfaceMeta, _root=True):
 
     def accept(self, target_id=None, *args):
         _target_id = self._target_id if target_id is None else target_id
+        self._target_id = target_id
         with self.busy_lock:
             self.close()
             self._tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -5,6 +5,7 @@ from typing import List, Tuple
 import waveforms
 from threading import Thread
 import socketserver
+import socket
 import struct
 import pickle
 
@@ -26,16 +27,27 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         CommandTCPInterface._timeout = 10
         CommandTCPInterface._target_id = rfs_addr
         self.rfs_kit = RFSKit(auto_load_icd=True,
+                              auto_start_command=True,
                               auto_write_file=False,
                               cmd_interface=CommandTCPInterface,
                               data_interface=DataNoneInterface)
         handle = LightTCPHandler
         handle.rpc_server = self
-        self.cmd_server = socketserver.ThreadingTCPServer(('0.0.0.0', 10800), handle)
-        # self.cmd_server.server_bind()
-        # self.cmd_server.server_activate()
+        self.cmd_server = socketserver.TCPServer(('0.0.0.0', 10800), handle)
         self.cmd_thread = Thread(target=self.cmd_server.serve_forever, daemon=True)
         self.cmd_thread.start()
+
+        handle = ICDispenserHandler
+        handle.rfs_kit = self.rfs_kit
+        self.dispenser_server = socketserver.TCPServer(('0.0.0.0', 5001), handle)
+        self.dispenser_thread = Thread(target=self.dispenser_server.serve_forever, daemon=True)
+        self.dispenser_thread.start()
+
+        handle = UDPScannHandler
+        self.scanning_server = socketserver.ThreadingUDPServer(('0.0.0.0', 5003), handle)
+        self.scanning_thread = Thread(target=self.scanning_server.serve_forever, daemon=True)
+        self.scanning_thread.start()
+
         # self.cmd_server.serve_forever()
         self.qubit_solver = SolveQubit()
         self._setup_dma()
@@ -43,6 +55,18 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         self.compute_cache = {}
         self.config_params = {}
         self.start_mode = False
+
+    def change_rfs_addr(self, rfs_addr):
+        printWarning('更换ip')
+        if self.rfs_kit._connected:
+            self.rfs_kit.close()
+        CommandTCPInterface._timeout = 10
+        CommandTCPInterface._target_id = rfs_addr
+        self.rfs_kit = RFSKit(auto_load_icd=True,
+                              auto_write_file=False,
+                              cmd_interface=CommandTCPInterface,
+                              data_interface=DataNoneInterface)
+        printWarning('ip更换完成')
 
     @solve_exception
     def rpc_set(self, name, value=0, channel=1, execute=True):
@@ -212,6 +236,11 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 self.qubit_solver.setshots(value)
                 self.config_params[f'{name}'] = value
             case 'StartCapture':
+                # self.config_params['StartCapture前'] = f'时钟锁定 {self.sig_fpga_clk_online}, ' \
+                #                                       f'接收触发数 {self.sig_fpga_trig_count}, ' \
+                #                                       f'当前ddr深度 {self.sig_fpga_current_deep}, ' \
+                #                                       f'进入ddr数据量 {self.sig_fpga_recv_count}, ' \
+                #                                       f'ddr流出数据两 {self.sig_fpga_send_count}'
                 self.stop_event.set()
                 self.rfs_kit.execute_command('复位')
                 if not self.sig_fpga_reset_trig:
@@ -227,9 +256,17 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     # raise RuntimeError('上次dma未结束')
                 # points = int((self.qubit_solver.pointnum+15)//16*16)
                 thread = Thread(target=self._cache_dma_size,
-                                args=(self.qubit_solver.pointnum * self.qubit_solver.shots * 4, self._compute_data),
+                                args=(self.qubit_solver.pointnum * 4,
+                                      self.qubit_solver.shots,
+                                      self._compute_data),
                                 daemon=True)
                 thread.start()
+
+                # self.config_params['StartCapture后'] = f'时钟锁定 {self.sig_fpga_clk_online}, ' \
+                #                                       f'接收触发数 {self.sig_fpga_trig_count}, ' \
+                #                                       f'当前ddr深度 {self.sig_fpga_current_deep}, ' \
+                #                                       f'进入ddr数据量 {self.sig_fpga_recv_count}, ' \
+                #                                       f'ddr流出数据两 {self.sig_fpga_send_count}'
             case 'FrequencyList':
                 print(f'FrequencyList: {value}')
                 if channel == 8:
@@ -318,6 +355,26 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
                 if execute:
                     result = self.rfs_kit.execute_command('内部PRF产生')
+
+                # def __test():
+                #     self.config_params['GenerateTrig后'] = {
+                #         '时钟锁定': [],
+                #         '接收触发数': [],
+                #         '当前ddr深度': [],
+                #         '进入ddr数据量': [],
+                #         'ddr流出数据量': []
+                #     }
+                #     printInfo('查询线程启动')
+                #     _i = 0
+                #     while _i <= 10 and not self.stop_event.is_set():
+                #         self.config_params['GenerateTrig后']['时钟锁定'].append(self.sig_fpga_clk_online)
+                #         self.config_params['GenerateTrig后']['接收触发数'].append(self.sig_fpga_trig_count)
+                #         self.config_params['GenerateTrig后']['当前ddr深度'].append(self.sig_fpga_current_deep)
+                #         self.config_params['GenerateTrig后']['进入ddr数据量'].append(self.sig_fpga_recv_count)
+                #         self.config_params['GenerateTrig后']['ddr流出数据量'].append(self.sig_fpga_send_count)
+                #         _i += 1
+                # thread = Thread(target=__test, daemon=True)
+                # thread.start()
             case _:
                 # 参数名透传，直接根据icd.json中的参数名配置对应值
                 # 如果在param_cmd_map中找到了对应参数配置后要执行的指令，则执行相应指令
@@ -397,7 +454,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             elif trig_count != self.qubit_solver.shots:
                 raise RuntimeError(f'异常: 接收shots不全, 当前已接收 {self.sig_fpga_trig_count}')
             else:
-                raise RuntimeError(f'异常: DA采集数据溢出，请检查触发信号是否过快')
+                raise RuntimeError(f'异常: DA采集数据溢出，请检查触发信号是否过快 \n'
+                                   f'当前ddr深度 {self.sig_fpga_current_deep}\n'
+                                   f'进入ddr数据量 {self.sig_fpga_recv_count}\n'
+                                   f'ddr流出数据两 {self.sig_fpga_send_count}')
             # return RPCValueParser.dump(np.array([]))
         if solve:
             data = self.compute_cache[channel][1]
@@ -467,6 +527,9 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
 
     def __del__(self):
         self.cmd_server.shutdown()
+        self.dispenser_server.shutdown()
+        self.scanning_server.shutdown()
+        self.release_dma()
 
 
 class LightTCPHandler(socketserver.StreamRequestHandler):
@@ -522,11 +585,44 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
                 printWarning('错误的FastRPC指令包头')
 
 
+class ICDispenserHandler(socketserver.StreamRequestHandler):
+    rfs_kit: RFSKit = None
+    head = b'\xcf\xcf\xcf\xcf'
+
+    def handle(self) -> None:
+        head = self.rfile.read(16)
+        printInfo(head)
+        _length = struct.unpack('=I', head[12:])[0]
+        data = self.rfile.read(_length - 16)
+        if self.rfs_kit._execute_command(head + data):
+            error = 0
+        else:
+            error = 1
+
+        self.wfile.write(self.head+head[4:12]+struct.pack('=II', 20, error))
+
+
+class UDPScannHandler(socketserver.DatagramRequestHandler):
+    """
+    回应UDP扫描
+    """
+
+    flag_data = b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00"
+    feedback_data = b"\xcf\xcf\xcf\xcf\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00"
+
+    def handle(self) -> None:
+        data = self.rfile.read(20)
+        if data == self.flag_data:
+            self.wfile.write(self.feedback_data)
+
+
 if __name__ == '__main__':
     import sys
+    time.sleep(5)
 
-    with RFSKitRPCServer(rfs_addr='192.168.1.176', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.181', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
+        server.register_function(server.change_rfs_addr)
 
         server.register_function(server.get_adc_data)
         server.register_function(server.clear_ad_cache)

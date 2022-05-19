@@ -91,8 +91,15 @@ class Driver(BaseDriver):
                                                 use_builtin_types=True)
 
         self.fast_rpc = FastRPC(self.addr)
-        # 此时会连接rfsoc的指令接收tcp server
-        self.handle.start_command()
+
+        # 判断是否更改ip
+        rfs_ip = kw.get('rfs_ip', None)
+        if rfs_ip is not None:
+            self.handle.start_command(rfs_ip)
+            # self.handle.change_rfs_addr(rfs_ip)
+        # else:
+        #     # 此时会连接rfsoc的指令接收tcp server
+        #     self.handle.start_command()
 
         # 配置系统初始值
         system_parameter = kw.get('system_parameter', {})
@@ -197,6 +204,7 @@ class FastRPC:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.addr, 10800))
         sock.settimeout(10)
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         # sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
         # sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 30 * 1000))
         # sock.close()
@@ -207,7 +215,7 @@ class FastRPC:
         a = pickle.dumps(param)
         head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000001, 0, 16 + len(a)])
         sock.sendall(head)
-        sock.sendall(a)
+        sock.sendall(memoryview(a))
         head = struct.unpack("=IIIII", sock.recv(20))
         # print(head)
         data = sock.recv(head[3] - 20)

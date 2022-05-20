@@ -1,6 +1,7 @@
 import sys
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 import qdarkstyle
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication
 from MCIUI.tabpage import Tabadd
 from MCIUI.IP_load import IPloading
@@ -17,6 +18,14 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.page_list = []
         self.i = 0
 
+        pix = QtGui.QPixmap("static/img.png")
+        self.picture.setPixmap(pix)
+        self.picture.setScaledContents(True)
+
+        '''
+        pixmap = QtGui.QPixmap("static/img.png").scaled(self.picture.width(), self.picture.height())
+        self.picture.setPixmap(pixmap)
+        '''
 
     def addawg(self):
         self.ip1 = IPloading(self)
@@ -47,3 +56,5 @@ if __name__ == '__main__':
     btn.clicked.connect(main.addawg)
     main.show()
     sys.exit(app.exec_())
+
+

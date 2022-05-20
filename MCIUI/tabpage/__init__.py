@@ -1,6 +1,5 @@
 import os
 from PyQt5 import QtWidgets, QtCore, QtGui
-from MCIUI.IP_load import IPloading
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
 import pyqtgraph as pg

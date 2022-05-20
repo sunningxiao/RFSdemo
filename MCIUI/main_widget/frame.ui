@@ -249,7 +249,7 @@ background-color: rgb(255, 0, 0);</string>
       <item>
        <widget class="QPushButton" name="Connect_AWG">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -257,11 +257,13 @@ background-color: rgb(255, 0, 0);</string>
         <property name="minimumSize">
          <size>
           <width>157</width>
-          <height>0</height>
+          <height>40</height>
          </size>
         </property>
         <property name="styleSheet">
          <string notr="true">margin-left:1px;
+margin-top:4px;
+margin-bottom:4px;
 font: 12pt &quot;Arial&quot;;</string>
         </property>
         <property name="text">
@@ -284,7 +286,9 @@ font: 12pt &quot;Arial&quot;;</string>
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">margin-left:3px;
+         <string notr="true">margin-left:2px;
+margin-top:4px;
+margin-bottom:4px;
 font: 12pt &quot;Arial&quot;;</string>
         </property>
         <property name="text">
@@ -319,19 +323,30 @@ font: 12pt &quot;Arial&quot;;</string>
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <widget class="QLabel" name="label_15">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>10</y>
-           <width>75</width>
-           <height>20</height>
-          </rect>
+        <layout class="QGridLayout" name="gridLayout_10">
+         <property name="leftMargin">
+          <number>0</number>
          </property>
-         <property name="text">
-          <string>预留logo</string>
+         <property name="topMargin">
+          <number>0</number>
          </property>
-        </widget>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="picture">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -341,7 +356,7 @@ font: 12pt &quot;Arial&quot;;</string>
     <widget class="QTabWidget" name="tab">
      <property name="styleSheet">
       <string notr="true">QTabBar::tab{width:150px;}
-QTabBar::tab{height:35px;}
+QTabBar::tab{height:20px;}
 border-radius:10px;
 font: 12pt &quot;Arial&quot;;</string>
      </property>
@@ -351,7 +366,7 @@ font: 12pt &quot;Arial&quot;;</string>
      <property name="iconSize">
       <size>
        <width>16</width>
-       <height>16</height>
+       <height>5</height>
       </size>
      </property>
      <property name="elideMode">
@@ -469,7 +484,7 @@ font: 12pt &quot;Arial&quot;;</string>
                   <x>0</x>
                   <y>0</y>
                   <width>648</width>
-                  <height>566</height>
+                  <height>581</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_6">

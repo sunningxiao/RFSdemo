@@ -95,13 +95,15 @@ class Ui_Form(object):
         self.horizontalLayout_6.setSpacing(0)
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
         self.Connect_AWG = QtWidgets.QPushButton(self.frame_3)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.Connect_AWG.sizePolicy().hasHeightForWidth())
         self.Connect_AWG.setSizePolicy(sizePolicy)
-        self.Connect_AWG.setMinimumSize(QtCore.QSize(157, 0))
+        self.Connect_AWG.setMinimumSize(QtCore.QSize(157, 40))
         self.Connect_AWG.setStyleSheet("margin-left:1px;\n"
+"margin-top:4px;\n"
+"margin-bottom:4px;\n"
 "font: 12pt \"Arial\";")
         self.Connect_AWG.setObjectName("Connect_AWG")
         self.horizontalLayout_6.addWidget(self.Connect_AWG)
@@ -112,7 +114,9 @@ class Ui_Form(object):
         sizePolicy.setHeightForWidth(self.Connect_Probe_2.sizePolicy().hasHeightForWidth())
         self.Connect_Probe_2.setSizePolicy(sizePolicy)
         self.Connect_Probe_2.setMinimumSize(QtCore.QSize(157, 0))
-        self.Connect_Probe_2.setStyleSheet("margin-left:3px;\n"
+        self.Connect_Probe_2.setStyleSheet("margin-left:2px;\n"
+"margin-top:4px;\n"
+"margin-bottom:4px;\n"
 "font: 12pt \"Arial\";")
         self.Connect_Probe_2.setObjectName("Connect_Probe_2")
         self.horizontalLayout_6.addWidget(self.Connect_Probe_2)
@@ -123,17 +127,22 @@ class Ui_Form(object):
         self.frame_25.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_25.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_25.setObjectName("frame_25")
-        self.label_15 = QtWidgets.QLabel(self.frame_25)
-        self.label_15.setGeometry(QtCore.QRect(30, 10, 75, 20))
-        self.label_15.setObjectName("label_15")
+        self.gridLayout_10 = QtWidgets.QGridLayout(self.frame_25)
+        self.gridLayout_10.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_10.setSpacing(0)
+        self.gridLayout_10.setObjectName("gridLayout_10")
+        self.picture = QtWidgets.QLabel(self.frame_25)
+        self.picture.setText("")
+        self.picture.setObjectName("picture")
+        self.gridLayout_10.addWidget(self.picture, 0, 0, 1, 1)
         self.horizontalLayout_6.addWidget(self.frame_25)
         self.verticalLayout.addWidget(self.frame_3)
         self.tab = QtWidgets.QTabWidget(Form)
         self.tab.setStyleSheet("QTabBar::tab{width:150px;}\n"
-"QTabBar::tab{height:35px;}\n"
+"QTabBar::tab{height:20px;}\n"
 "border-radius:10px;\n"
 "font: 12pt \"Arial\";")
-        self.tab.setIconSize(QtCore.QSize(16, 16))
+        self.tab.setIconSize(QtCore.QSize(16, 5))
         self.tab.setElideMode(QtCore.Qt.ElideLeft)
         self.tab.setObjectName("tab")
         self.tab_3 = QtWidgets.QWidget()
@@ -176,7 +185,7 @@ class Ui_Form(object):
         self.scrollArea_2.setWidgetResizable(True)
         self.scrollArea_2.setObjectName("scrollArea_2")
         self.scrollAreaWidgetContents_2 = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 648, 566))
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 648, 581))
         self.scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2")
         self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout_6.setContentsMargins(3, 7, 3, -1)
@@ -645,7 +654,6 @@ class Ui_Form(object):
         self.btn_close.setToolTip(_translate("Form", "close"))
         self.Connect_AWG.setText(_translate("Form", "Connect  AWG"))
         self.Connect_Probe_2.setText(_translate("Form", "Connect  Probe"))
-        self.label_15.setText(_translate("Form", "预留logo"))
         self.pushButton_4.setText(_translate("Form", "Submit"))
         self.label_12.setText(_translate("Form", "Trig Mode"))
         self.comboBox_2.setItemText(0, _translate("Form", "Manual Trigger"))

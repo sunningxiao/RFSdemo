@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1026</width>
-    <height>629</height>
+    <width>1017</width>
+    <height>631</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -79,7 +79,7 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QGridLayout" name="gridLayout_4">
+        <layout class="QGridLayout" name="gridLayout_3">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -95,59 +95,46 @@
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="2" column="2">
-          <widget class="QWidget" name="page10" native="true"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QWidget" name="page1" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>120</width>
-             <height>0</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QWidget" name="page2" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>120</width>
-             <height>0</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QWidget" name="page9" native="true"/>
-         </item>
          <item row="0" column="0">
-          <widget class="QWidget" name="page0" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>120</width>
-             <height>0</height>
-            </size>
+          <widget class="QScrollArea" name="scrollArea">
+           <property name="widgetResizable">
+            <bool>true</bool>
            </property>
+           <widget class="QWidget" name="scrollAreaWidgetContents">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>646</width>
+              <height>625</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_6">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_4">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+              </layout>
+             </item>
+            </layout>
+           </widget>
           </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QWidget" name="page2_2" native="true"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QWidget" name="page6" native="true"/>
-         </item>
-         <item row="1" column="3">
-          <widget class="QWidget" name="page7" native="true"/>
-         </item>
-         <item row="2" column="3">
-          <widget class="QWidget" name="page11" native="true"/>
-         </item>
-         <item row="2" column="0">
-          <widget class="QWidget" name="page8" native="true"/>
-         </item>
-         <item row="1" column="2">
-          <widget class="QWidget" name="page6_2" native="true"/>
          </item>
         </layout>
        </widget>
@@ -241,7 +228,7 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QComboBox" name="comboBox_3">
+             <widget class="QComboBox" name="MODE">
               <property name="toolTipDuration">
                <number>0</number>
               </property>
@@ -255,11 +242,6 @@
                 <string>MODE-2</string>
                </property>
               </item>
-              <item>
-               <property name="text">
-                <string>MODE-3</string>
-               </property>
-              </item>
              </widget>
             </item>
             <item row="2" column="1">
@@ -270,6 +252,12 @@
          </item>
          <item>
           <widget class="QFrame" name="frame_43">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>200</height>
+            </size>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>
@@ -293,8 +281,14 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QWidget" name="widget_2" native="true">
+             <widget class="QWidget" name="MODE1" native="true">
               <layout class="QGridLayout" name="gridLayout">
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item row="0" column="0">
                 <widget class="QLabel" name="label_6">
                  <property name="text">
@@ -311,7 +305,7 @@
                <item row="1" column="0">
                 <widget class="QLabel" name="label_7">
                  <property name="text">
-                  <string>Phase</string>
+                  <string>Phaselist</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignCenter</set>
@@ -325,7 +319,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QWidget" name="widget" native="true">
+             <widget class="QWidget" name="MODE2" native="true">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -467,6 +461,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="styleSheet">
+                  <string notr="true">margin-right:10px;</string>
+                 </property>
                  <item>
                   <property name="text">
                    <string>Manual Trigger</string>
@@ -528,14 +525,14 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_2">
+                   <widget class="QPushButton" name="manualconfig">
                     <property name="text">
                      <string>config</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_3">
+                   <widget class="QPushButton" name="manualtrig">
                     <property name="text">
                      <string>Trig</string>
                     </property>
@@ -555,14 +552,14 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_5">
+                   <widget class="QPushButton" name="interconfig">
                     <property name="text">
                      <string>config</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_4">
+                   <widget class="QPushButton" name="intertrig">
                     <property name="text">
                      <string>Trig</string>
                     </property>
@@ -582,14 +579,14 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_8">
+                   <widget class="QPushButton" name="exterconfig">
                     <property name="text">
                      <string>config</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton_7">
+                   <widget class="QPushButton" name="extertrig">
                     <property name="text">
                      <string>Trig</string>
                     </property>

@@ -1,15 +1,13 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QFileDialog
-import sys
+from PyQt5.QtWidgets import QFileDialog
 from MCIUI.tab_probe.probe_page import Ui_Form
-import qdarkstyle
 from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
 import numpy as np
 
 
 class probe_wave(QtWidgets.QWidget, Ui_Form):
-    def __init__(self, ui_parent, ip=None):
+    def __init__(self, ui_parent, ip):
         super(probe_wave, self).__init__(ui_parent)
         self.setupUi(self)
         self.ui_parent = ui_parent
@@ -41,11 +39,17 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         }
         self.driver.open(system_parameter=sysparam)
         self.all_data = {}
+        self.all_waves = []
+        self.i = 0
+        from MCIUI.main_widget import MAIN
+        mainui = MAIN(ui_parent=None)
+        if self.ip in mainui.ip_list:
+            pass
 
         for i in range(12):
             self.a = int(i / 4)
             self.b = int(i % 4)
-            self.add_probe()
+            self.add_probe(None)
 
     def mode(self, i):
         if i == 1:
@@ -85,6 +89,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.widget_internal.hide()
 
     def manual_config(self):
+        # if self.MODE.currentIndex() == 0:
         for i, data_i in self.all_data.items():
             self.driver.set('FrequencyList', data_i, i)
             self.driver.set('PhaseList', data_i, i)
@@ -103,7 +108,13 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.manual_config()
 
     def inter_config(self):
-        pass
+        for i, data_i in self.all_data.items():
+            self.driver.set('FrequencyList', data_i, i)
+            self.driver.set('PhaseList', data_i, i)
+        self.driver.set('StartCapture')
+        self.driver.set('Shot', self.shot_txt())
+        self.driver.set('PointNumber', self.pointnumber_txt())
+        self.driver.set('TriggerDelay', self.triggerdelay, 9)
 
     def inter_trig(self):
         self.driver = Driver(self.ip)
@@ -114,23 +125,39 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.inter_config()
 
     def exter_config(self):
-        pass
+        for i, data_i in self.all_data.items():
+            self.driver.set('FrequencyList', data_i, i)
+            self.driver.set('PhaseList', data_i, i)
+        self.driver.set('StartCapture')
+        self.driver.set('Shot', self.shot_txt())
+        self.driver.set('PointNumber', self.pointnumber_txt())
+        self.driver.set('TriggerDelay', self.triggerdelay, 9)
 
     def get_file(self):
 
         my_file_path = QFileDialog.getOpenFileName(None, '选择文件', r'C:', "")
         with open(my_file_path[0]) as f:
             my_file = f.read()
-        self.t.setText(my_file)
+        self.file_path.setText(my_file)
 
-
-    def add_probe(self):
+    def add_probe(self, value=None):
+        if value is None:
+            self.x = np.random.normal(size=1024)
+            self.y = np.random.normal(size=1024)
+        else:
+            self.value = value
         self.probes = pg.GraphicsLayoutWidget()
-        plt2 = self.probes.addPlot()
+        self.plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
-        self.x = np.random.normal(size=50)
-        self.y = np.random.normal(size=50)
-        plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=5, symbolPen=(255,255,255,200), symbolBrush=(0,0,255,150))
+        self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
+                       symbolBrush=(0, 0, 255, 150))
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
+        self.all_data[self.i] = self.x, self.y
+        self.i = self.i + 1
+        self.all_waves.append(self.probes)
 
+    def add_plot(self, add_data, number):
+        self.add_data = add_data
 
+        self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(155,200,160,200),
+                       symbolBrush=(0, 0, 255, 150))

@@ -22,12 +22,13 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.i = 0
         self.j = 0
         self.k = 0
-
+        self.ip_list = []
         # 插入logo
 
         pix = QtGui.QPixmap("static/img.png")
         self.picture.setPixmap(pix)
         self.picture.setScaledContents(True)
+
 
         '''
         pixmap = QtGui.QPixmap("static/img.png").scaled(self.picture.width(), self.picture.height())

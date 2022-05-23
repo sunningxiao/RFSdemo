@@ -1,8 +1,8 @@
 import os
 from PyQt5 import QtWidgets, QtCore, QtGui
+
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import wave
-import pyqtgraph as pg
 import numpy as np
 from quantum_driver.NS_MCI import Driver
 
@@ -27,7 +27,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.manualcycle = self.manual_trigge_cycle.text
 
         self.tabadd = self.frame_19
-
+        self.ip_list = []
         self.ip = ip
         self.driver = Driver(self.ip)
         sysparam = {
@@ -37,6 +37,10 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
         self.alldata = {}
         self.allwave = []
+        from MCIUI.main_widget import MAIN
+        mainip = MAIN(ui_parent=None)
+        mainip.ip_list.append(self.ip)
+
         #self.pydata = {}
         for i in range(10):
             self.waves()

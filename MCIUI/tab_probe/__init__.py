@@ -125,7 +125,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
 
 
     def add_probe(self):
-        self.probes = pg.GraphicsLayoutWidget(show=True)
+        self.probes = pg.GraphicsLayoutWidget()
         plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
         self.x = np.random.normal(size=50)
@@ -133,11 +133,4 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=5, symbolPen=(255,255,255,200), symbolBrush=(0,0,255,150))
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
 
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    windows = probe_wave(ui_parent=None)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    windows.show()
-    app.exec()
 

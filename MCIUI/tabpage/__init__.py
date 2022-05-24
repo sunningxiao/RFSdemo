@@ -27,7 +27,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.manualcycle = self.manual_trigge_cycle.text
 
         self.tabadd = self.frame_19
-        self.ip_list = []
+        self.show_i = 0
         self.ip = ip
         self.driver = Driver(self.ip)
         sysparam = {
@@ -37,10 +37,6 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
         self.alldata = {}
         self.allwave = []
-        from MCIUI.main_widget import MAIN
-        mainip = MAIN(ui_parent=None)
-        mainip.ip_list.append(self.ip)
-
         #self.pydata = {}
         for i in range(10):
             self.waves()
@@ -52,7 +48,9 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         # QtWidgets.QApplication.instance.processEvent()
 
     def showEvent(self, a0: QtGui.QShowEvent) -> None:
-        self.textEditpy.reload()
+        if self.show_i == 0:
+            self.textEditpy.reload()
+            self.show_i = self.show_i + 1
         super(Tabadd, self).showEvent(a0)
 
     @property
@@ -138,7 +136,6 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
         self.driver.open(system_parameter=sysparam)
         self.manual_config_sign()
-
     def createpy(self, pytext):
         pydata = {}
         try:
@@ -158,4 +155,3 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
     def fixwave(self, fix_data, chnls):
         self.allwave[chnls].p1.plot(fix_data, clear=True)
-

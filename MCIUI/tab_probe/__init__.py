@@ -40,12 +40,13 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.driver.open(system_parameter=sysparam)
         self.all_data = {}
         self.all_waves = []
-        self.txt = []
+        self.txt = {}
         self.i = 0
         from MCIUI.main_widget import MAIN
         mainui = MAIN(ui_parent=None)
         if self.ip in mainui.ip_list:
-            pass
+            connect_awg = mainui.page_list[self.ip]
+            self.getdata = connect_awg.alldata
 
         for i in range(12):
             self.a = int(i / 4)
@@ -90,10 +91,15 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.widget_internal.hide()
 
     def manual_config(self):
-        # if self.MODE.currentIndex() == 0:
-        for i, data_i in self.all_data.items():
-            self.driver.set('FrequencyList', data_i, i)
-            self.driver.set('PhaseList', data_i, i)
+        if self.MODE.currentIndex() == 0:
+            for i, data_i in self.all_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+        else:
+            for i, data_i in self.txt.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+
         self.driver.set('StartCapture')
         self.driver.set('Shot', self.shot_txt())
         self.driver.set('PointNumber', self.pointnumber_txt())
@@ -109,9 +115,14 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.manual_config()
 
     def inter_config(self):
-        for i, data_i in self.all_data.items():
-            self.driver.set('FrequencyList', data_i, i)
-            self.driver.set('PhaseList', data_i, i)
+        if self.MODE.currentIndex() == 0:
+            for i, data_i in self.all_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+        else:
+            for i, data_i in self.txt.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
         self.driver.set('StartCapture')
         self.driver.set('Shot', self.shot_txt())
         self.driver.set('PointNumber', self.pointnumber_txt())
@@ -126,9 +137,14 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.inter_config()
 
     def exter_config(self):
-        for i, data_i in self.all_data.items():
-            self.driver.set('FrequencyList', data_i, i)
-            self.driver.set('PhaseList', data_i, i)
+        if self.MODE.currentIndex() == 0:
+            for i, data_i in self.all_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+        else:
+            for i, data_i in self.txt.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
         self.driver.set('StartCapture')
         self.driver.set('Shot', self.shot_txt())
         self.driver.set('PointNumber', self.pointnumber_txt())
@@ -150,8 +166,10 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.probes = pg.GraphicsLayoutWidget()
         self.plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
-        self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
-                       symbolBrush=(0, 0, 255, 150))
+
+        # self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
+        #                symbolBrush=(0, 0, 255, 150))
+
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
         self.all_data[self.i] = self.x, self.y
         self.i = self.i + 1
@@ -159,6 +177,9 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
 
     def add_plot(self, add_data, number):
         self.add_data = add_data
+        for i in range(len(self.add_data)):
+            self.x.append(self.add_data[i][0])
+            self.y.append(self.add_data[i][1])
 
         self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1,
                                          symbolPen=(155, 200, 160, 200),

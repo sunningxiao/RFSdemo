@@ -1,8 +1,4 @@
-import sys
 from PyQt5 import QtWidgets, QtGui
-import qdarkstyle
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication
 
 from MCIUI.IP_probe import IPprobe
 from MCIUI.tab_probe import probe_wave
@@ -18,7 +14,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.ui_parent = ui_parent
         self.tab.removeTab(0)
         self.tab.removeTab(0)
-        self.page_list = []
+        self.page_list = {}
         self.i = 0
         self.j = 0
         self.k = 0
@@ -43,8 +39,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
             return
         self.tabname = 'AWG-' + str(self.i)
         self.pagea = Tabadd(self, self.addr)
-
-        self.page_list.append(self.pagea)
+        self.ip_list.append(self.addr)
         self.AWGADD = QtWidgets.QWidget(self)
         awg_layout = QtWidgets.QGridLayout(self.AWGADD)
         awg_layout.addWidget(self.pagea)
@@ -65,7 +60,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = probe_wave(self, self.addr_P)
 
-        self.page_list.append(self.pageb)
+        self.page_list[self.ip2] = self.pagea
         self.AWGProbe = QtWidgets.QWidget(self)
         awg_layout1 = QtWidgets.QGridLayout(self.AWGProbe)
         awg_layout1.addWidget(self.pageb)
@@ -75,18 +70,4 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.tab.setCurrentIndex(self.k)
         self.j = self.j + 1
         self.k = self.k + 1
-'''
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main = MAIN(ui_parent=None)
-    child = IPloading(ui_parent=main)
-    child1 = IPprobe(ui_parent=main)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    btn = main.Connect_AWG # 主窗体按钮事件绑定
-    btn2 = main.Connect_Probe_2
-    btn.clicked.connect(main.addawg)
-    btn2.clicked.connect(main.addprobe)
-    main.show()
-    sys.exit(app.exec_())
 
-'''

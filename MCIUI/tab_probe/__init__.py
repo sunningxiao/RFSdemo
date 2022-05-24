@@ -40,6 +40,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.driver.open(system_parameter=sysparam)
         self.all_data = {}
         self.all_waves = []
+        self.txt = []
         self.i = 0
         from MCIUI.main_widget import MAIN
         mainui = MAIN(ui_parent=None)
@@ -134,11 +135,11 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.driver.set('TriggerDelay', self.triggerdelay, 9)
 
     def get_file(self):
-
-        my_file_path = QFileDialog.getOpenFileName(None, '选择文件', r'C:', "")
-        with open(my_file_path[0]) as f:
-            my_file = f.read()
-        self.file_path.setText(my_file)
+        fname = QFileDialog.getOpenFileName(self, '打开文件', './')
+        if fname[0]:
+            with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
+                self.txt.append(f.read())
+        self.file_path.setText(str(fname[0]))
 
     def add_probe(self, value=None):
         if value is None:
@@ -159,5 +160,6 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
     def add_plot(self, add_data, number):
         self.add_data = add_data
 
-        self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(155,200,160,200),
-                       symbolBrush=(0, 0, 255, 150))
+        self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1,
+                                         symbolPen=(155, 200, 160, 200),
+                                         symbolBrush=(0, 0, 255, 150))

@@ -25,7 +25,6 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.picture.setPixmap(pix)
         self.picture.setScaledContents(True)
 
-
         '''
         pixmap = QtGui.QPixmap("static/img.png").scaled(self.picture.width(), self.picture.height())
         self.picture.setPixmap(pixmap)

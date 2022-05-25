@@ -5,7 +5,6 @@ from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
 import numpy as np
 
-
 class probe_wave(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent, ip):
         super(probe_wave, self).__init__(ui_parent)
@@ -42,11 +41,18 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.all_waves = []
         self.txt = {}
         self.i = 0
-        from MCIUI.main_widget import MAIN
-        mainui = MAIN(ui_parent=None)
-        if self.ip in mainui.ip_list:
-            connect_awg = mainui.page_list[self.ip]
-            self.getdata = connect_awg.alldata
+
+
+
+        if self.ip in self.ui_parent.ip_list:  # 判断IP是否在列表中，前面将每个awg页面的ip存放在主界面列表中
+            connect_awg = self.ui_parent.page_list[self.ip]  # 前面将IP：IP对应的页面存放在主页字典中，取页面
+            self.getdata = connect_awg.alldata  # 获取相应IP awg页面内存储的数据
+            connect_awg.manual_config.setEnabled(False)  # 设置对应按钮不可用
+            connect_awg.manual_trig.setEnabled(False)
+            connect_awg.external_config.setEnabled(False)
+            connect_awg.external_trig.setEnabled(False)
+            connect_awg.internal_config.setEnabled(False)
+            connect_awg.internal_trig.setEnabled(False)
 
         for i in range(12):
             self.a = int(i / 4)

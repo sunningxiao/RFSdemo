@@ -5,6 +5,7 @@ from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
 import numpy as np
 
+
 class probe_wave(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent, ip):
         super(probe_wave, self).__init__(ui_parent)
@@ -42,22 +43,11 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.txt = {}
         self.i = 0
 
-
-
-        if self.ip in self.ui_parent.ip_list:  # 判断IP是否在列表中，前面将每个awg页面的ip存放在主界面列表中
-            connect_awg = self.ui_parent.page_list[self.ip]  # 前面将IP：IP对应的页面存放在主页字典中，取页面
-            self.getdata = connect_awg.alldata  # 获取相应IP awg页面内存储的数据
-            connect_awg.manual_config.setEnabled(False)  # 设置对应按钮不可用
-            connect_awg.manual_trig.setEnabled(False)
-            connect_awg.external_config.setEnabled(False)
-            connect_awg.external_trig.setEnabled(False)
-            connect_awg.internal_config.setEnabled(False)
-            connect_awg.internal_trig.setEnabled(False)
-
         for i in range(12):
             self.a = int(i / 4)
             self.b = int(i % 4)
             self.add_probe(None)
+
 
     def mode(self, i):
         if i == 1:
@@ -163,7 +153,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
                 self.txt.append(f.read())
         self.file_path.setText(str(fname[0]))
 
-    def add_probe(self, value=None):
+    def add_probe(self, value):
         if value is None:
             self.x = np.random.normal(size=1024)
             self.y = np.random.normal(size=1024)
@@ -172,7 +162,6 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.probes = pg.GraphicsLayoutWidget()
         self.plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
-
         # self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
         #                symbolBrush=(0, 0, 255, 150))
 

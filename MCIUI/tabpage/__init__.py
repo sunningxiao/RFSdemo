@@ -11,6 +11,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def __init__(self, ui_parent, ip):
         super(Tabadd, self).__init__(ui_parent)
         self.setupUi(self)
+        self.ip = ip
         self.ui_parent = ui_parent
         self.frame_external.hide()
         self.frame_internal.hide()
@@ -26,9 +27,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.internal_trig.clicked.connect(self.internalsign)
         self.manualcycle = self.manual_trigge_cycle.text
 
-        self.tabadd = self.frame_19
+
         self.show_i = 0
-        self.ip = ip
         self.driver = Driver(self.ip)
         sysparam = {
             'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9

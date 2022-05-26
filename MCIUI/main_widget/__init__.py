@@ -14,11 +14,12 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.ui_parent = ui_parent
         self.tab.removeTab(0)
         self.tab.removeTab(0)
-        self.page_list = {}
+        self.page_dic = {}
         self.i = 0
         self.j = 0
         self.k = 0
-        self.ip_list = []
+        self.awg_ip_list = []
+        self.probe_ip_list = []
         # 插入logo
 
         pix = QtGui.QPixmap("static/img.png")
@@ -37,8 +38,11 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         if not self.ip1.click_ok:
             return
         self.tabname = 'AWG-' + str(self.i)
-        self.pagea = Tabadd(self, self.addr)
-        self.ip_list.append(self.addr)
+        if self.addr() in self.awg_ip_list:
+            print("已经打开相同IP的AWG页面")
+            return
+        self.pagea = Tabadd(self, self.addr())
+        self.awg_ip_list.append(self.addr())
         self.AWGADD = QtWidgets.QWidget(self)
         awg_layout = QtWidgets.QGridLayout(self.AWGADD)
         awg_layout.addWidget(self.pagea)
@@ -46,6 +50,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.AWGADD.setObjectName("AWGADD")
         self.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
         self.tab.setCurrentIndex(self.k)
+        self.page_dic[self.addr()] = self.pagea
         self.i = self.i + 1
         self.k = self.k + 1
 
@@ -56,10 +61,19 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.addr_P = self.ip2.ipaddr.text
         if not self.ip2.click_ok:
             return
-        self.tabname1 = 'Probe-' + str(self.j)
-        self.pageb = probe_wave(self, self.addr_P)
+        if self.addr_P() in self.awg_ip_list:  # 判断输入ip是否在列表中
+            self.getdata= self.page_dic[self.addr_P()].alldata  # 前面将IP：tab页面内容存在字典page_dic中 想直接通过这个字典获取响应页面的alldata
+            self.page_dic[self.addr_P()].manual_config.setEnabled(False)
+            self.page_dic[self.addr_P()].manual_trig.setEnabled(False)
+            self.page_dic[self.addr_P()].external_config.setEnabled(False)
+            self.page_dic[self.addr_P()].external_trig.setEnabled(False)
+            self.page_dic[self.addr_P()].internal_config.setEnabled(False)
+            self.page_dic[self.addr_P()].internal_trig.setEnabled(False)
 
-        self.page_list[self.ip2] = self.pagea
+
+        self.tabname1 = 'Probe-' + str(self.j)
+        self.pageb = probe_wave(self, self.addr_P())
+        self.probe_ip_list.append(self.addr_P())
         self.AWGProbe = QtWidgets.QWidget(self)
         awg_layout1 = QtWidgets.QGridLayout(self.AWGProbe)
         awg_layout1.addWidget(self.pageb)

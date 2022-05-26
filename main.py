@@ -1,12 +1,10 @@
 import sys
-from PyQt5 import QtWidgets
 import qdarkstyle
 from PyQt5.QtWidgets import QApplication
 
 from MCIUI.IP_probe import IPprobe
 from MCIUI.IP_load import IPloading
 from MCIUI.main_widget import MAIN
-from MCIUI.tab_probe import probe_wave
 
 
 if __name__ == '__main__':
@@ -20,5 +18,4 @@ if __name__ == '__main__':
     btn.clicked.connect(main.addawg)
     btn2.clicked.connect(main.addprobe)
     main.show()
-    child2 = probe_wave(ui_parent=main)
     sys.exit(app.exec_())

@@ -1,6 +1,8 @@
 import numpy
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
+
+from MCIUI.chnl_mode_list import chnls_list
 from MCIUI.tab_probe.probe_page import Ui_Form
 from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
@@ -19,8 +21,8 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.shot_txt = self.shots.text
         self.pointnumber_txt = self.PointNumber.text
         self.triggerdelay_txt = self.triggerdelay.text
-        self.frequencylist_txt = self.FrequencyList.text
-        self.Phase_txt = self.Phase.text
+        # self.frequencylist_txt = self.FrequencyList.text
+        # self.Phase_txt = self.Phase.text
         self.MODE.currentIndexChanged.connect(self.mode)
         self.MODE2.hide()
 
@@ -43,11 +45,24 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.all_data = {}
         self.all_waves = []
         self.numpy_data = {}
+        self.dif_chnl_list = []
         self.i = 0
+        self.tabWidget.removeTab(0)
+        self.tabWidget.removeTab(0)
+        for i in range(10):
+            self.mode_list = chnls_list(self)
+            self.mode_add = QtWidgets.QWidget(self)
+            awg_layout = QtWidgets.QGridLayout(self.mode_add)
+            awg_layout.addWidget(self.mode_list)
+            awg_layout.setContentsMargins(0, 0, 0, 0)
+            self.tabname = 'chnl-' + str(i)
+            self.mode_add.setObjectName("mode_chnls")
+            self.tabWidget.addTab(self.mode_add, '{}'.format(self.tabname))
+            self.dif_chnl_list.append(self.mode_list)
 
         for i in range(12):
-            self.a = int(i / 4)
-            self.b = int(i % 4)
+            self.a = int(i / 3)
+            self.b = int(i % 3)
             self.add_probe(None)
 
 
@@ -90,11 +105,11 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
 
     def manual_config(self):
         if self.MODE.currentIndex() == 0:
-            for i, data_i in self.all_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
+            for i in range(len(self.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.dif_chnl_list[i].PhaseList.text(), i)
         else:
-            for i, data_i in self.txt.items():
+            for i, data_i in self.numpy_data.items():
                 self.driver.set('FrequencyList', data_i, i)
                 self.driver.set('PhaseList', data_i, i)
 
@@ -114,11 +129,11 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
 
     def inter_config(self):
         if self.MODE.currentIndex() == 0:
-            for i, data_i in self.all_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
+            for i in range(len(self.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.dif_chnl_list[i].PhaseList.text(), i)
         else:
-            for i, data_i in self.txt.items():
+            for i, data_i in self.numpy_data.items():
                 self.driver.set('FrequencyList', data_i, i)
                 self.driver.set('PhaseList', data_i, i)
         self.driver.set('StartCapture')
@@ -136,11 +151,11 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
 
     def exter_config(self):
         if self.MODE.currentIndex() == 0:
-            for i, data_i in self.all_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
+            for i in range(len(self.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.dif_chnl_list[i].PhaseList.text(), i)
         else:
-            for i, data_i in self.txt.items():
+            for i, data_i in self.numpy_data.items():
                 self.driver.set('FrequencyList', data_i, i)
                 self.driver.set('PhaseList', data_i, i)
         self.driver.set('StartCapture')
@@ -166,7 +181,6 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.probes.setMinimumSize(0, 200)
         # self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
         #                symbolBrush=(0, 0, 255, 150))
-
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
         self.all_data[self.i] = self.x, self.y
         self.i = self.i + 1

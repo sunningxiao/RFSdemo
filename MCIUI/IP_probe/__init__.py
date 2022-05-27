@@ -9,7 +9,6 @@ class IPprobe(QtWidgets.QDialog, Ui_Form):
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.Cancel.clicked.connect(self.close)
-        # self.OK.clicked.connect(self.addawg)
         self.OK.clicked.connect(self.action_click_ok)
         self.setWindowModality(QtCore.Qt.ApplicationModal)
         self.click_ok = False

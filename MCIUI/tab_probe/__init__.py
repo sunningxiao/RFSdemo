@@ -1,9 +1,11 @@
+import numpy
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 from MCIUI.tab_probe.probe_page import Ui_Form
 from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
 import numpy as np
+import xlrd
 
 
 class probe_wave(QtWidgets.QWidget, Ui_Form):
@@ -40,7 +42,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.driver.open(system_parameter=sysparam)
         self.all_data = {}
         self.all_waves = []
-        self.txt = {}
+        self.numpy_data = {}
         self.i = 0
 
         for i in range(12):
@@ -149,8 +151,8 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
     def get_file(self):
         fname = QFileDialog.getOpenFileName(self, '打开文件', './')
         if fname[0]:
-            with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
-                self.txt.append(f.read())
+            #with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
+            self.numpy_data.append(numpy.load(fname[0]))
         self.file_path.setText(str(fname[0]))
 
     def add_probe(self, value):
@@ -179,3 +181,27 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1,
                                          symbolPen=(155, 200, 160, 200),
                                          symbolBrush=(0, 0, 255, 150))
+
+
+class ExcelReader:
+    def __init__(self, file_name):
+        self.xls_file = xlrd.open_workbook(file_name)
+
+    def sheets_names(self):
+        return self.xls_file.sheet_names()
+
+    # 返回表名对应的sheet的行数和列数
+    def sheet_size(self, sheet_name):
+        if not sheet_name in self.sheets_names():
+            return 0, 0
+        self.sheet = self.xls_file.sheet_by_name(sheet_name)
+        return self.sheet.nrows, self.sheet.ncols
+
+    # 以二位列表，返回sheet的内容
+    def sheet_content(self, sheet_name):
+        if not sheet_name in self.sheets_names():
+            return []
+
+        self.sheet = self.xls_file.sheet_by_name(sheet_name)
+        nr, nc = self.sheet.nrows, self.sheet.ncols
+        return [[self.sheet.cell(r, c).value for c in range(nc)] for r in range(nr)]

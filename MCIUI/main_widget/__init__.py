@@ -51,6 +51,13 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
         self.tab.setCurrentIndex(self.k)
         self.page_dic[self.addr()] = self.pagea
+        if self.addr() in self.probe_ip_list:
+            self.page_dic[self.addr()].manual_config.setEnabled(False)
+            self.page_dic[self.addr()].manual_trig.setEnabled(False)
+            self.page_dic[self.addr()].external_config.setEnabled(False)
+            self.page_dic[self.addr()].external_trig.setEnabled(False)
+            self.page_dic[self.addr()].internal_config.setEnabled(False)
+            self.page_dic[self.addr()].internal_trig.setEnabled(False)
         self.i = self.i + 1
         self.k = self.k + 1
 
@@ -60,6 +67,9 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.ip2.exec()
         self.addr_P = self.ip2.ipaddr.text
         if not self.ip2.click_ok:
+            return
+        if self.addr_P() in self.probe_ip_list:
+            print("已经打开相同IP的probe页面")
             return
         if self.addr_P() in self.awg_ip_list:  # 判断输入ip是否在列表中
             self.getdata= self.page_dic[self.addr_P()].alldata  # 前面将IP：tab页面内容存在字典page_dic中 想直接通过这个字典获取响应页面的alldata
@@ -83,4 +93,3 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.tab.setCurrentIndex(self.k)
         self.j = self.j + 1
         self.k = self.k + 1
-

@@ -41,6 +41,9 @@ class RCMConfigUI(QtWidgets.QWidget, Ui_RCMConfig):
     def link_rcm_config_ui(self):
         self.select_chnl.currentIndexChanged.connect(self.action_select_chnl)
 
+        self.txt_mode_code.editingFinished.connect(
+            self.ui_parent.change_param("模式码", self.txt_mode_code)
+        )
         self.txt_transmit_atte.editingFinished.connect(
             self.ui_parent.change_param("发送衰减", self.txt_transmit_atte, float)
         )
@@ -58,8 +61,9 @@ class RCMConfigUI(QtWidgets.QWidget, Ui_RCMConfig):
         self.ui_parent.rfs_kit.set_param_value("通道掩码", min(1 << chnl, 0xFF), int)
 
     def show_rcm_config_ui(self):
-        self.select_chnl.setCurrentIndex(
-            {4: 0, 5: 1, 6: 2, 7: 3, 8: 4}[self.ui_parent.rfs_kit.get_param_value("RCM槽位号", 0, int)]
+        self.select_chnl.setCurrentIndex(self.ui_parent.rfs_kit.get_param_value("RCM槽位号", 0, int))
+        self.txt_mode_code.setText(
+            self.ui_parent.rfs_kit.get_param_value('模式码', 0, str)
         )
         self.txt_transmit_atte.setText(
             self.ui_parent.rfs_kit.get_param_value("发送衰减", 0, str)

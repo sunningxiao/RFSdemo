@@ -1,14 +1,8 @@
-import pickle
 import time
 from typing import Union
 import socket
 import struct
-import xmlrpc.client
-from xmlrpc.client import Transport
-from functools import lru_cache, wraps
-
-import numpy as np
-import waveforms
+from functools import lru_cache
 
 from .common import BaseDriver, Quantity, get_coef
 
@@ -22,11 +16,13 @@ class Driver(BaseDriver):
         Quantity('ResetTrig', value=None, unit='ns'),
         Quantity('Shot', value=1024, ch=1),               # set/get, 运行次数
         Quantity('TrigPeriod', value=200e-6, ch=1),       # set/get, 触发周期
+        Quantity('TrigFrom', value=0, ch=1),  # Trig来源： 0：内部产生；1：外部输入
     ]
 
     SystemParameter = {
         'MixMode': 2,  # Mix模式，1：第一奈奎斯特去； 2：第二奈奎斯特区
-        'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
+        'TrigFrom': 0,  # Trig来源： 0：内部产生；1：外部输入
+        'TrigPeriod': 200e6,
         'ADrate': 4e9,  # AD采样率，单位Hz
         'DArate': 6e9,  # DA采样率，单位Hz
         'KeepAmp': 1,  # DA波形发射完毕后，保持最后一个值
@@ -74,7 +70,7 @@ class Driver(BaseDriver):
         result = self.get(name, channel)
         return result
 
-    def set(self, name, value=0, channel=1):
+    def set(self, name, value=None, channel=1):
         """
         设置设备属性
         """
@@ -82,7 +78,8 @@ class Driver(BaseDriver):
             data = self.__fmt_qsync_sync(self.param['MixMode'], self.param['ADrate'], self.param['DArate'])
             self._send_command(data)
         elif name == 'GenerateTrig':
-            data = self.__fmt_qsync_start(self.param['TrigPeriod'], self.param['Shot'])
+            value = self.param['TrigPeriod'] if value is None else value
+            data = self.__fmt_qsync_start(self.param['TrigFrom'], value, self.param['Shot'])
             self._send_command(data)
         elif name == 'ResetTrig':
             data = self.__fmt_qsync_reset()
@@ -135,6 +132,7 @@ class Driver(BaseDriver):
             if command_bak[4:8] != _feedback[4:8]:
                 print('返回指令ID错误')
                 return False
+            print(_feedback)
             _feedback = struct.unpack('=IIIII', _feedback)
             if _feedback[4] != 0:
                 print('指令成功下发，但执行失败')
@@ -150,7 +148,7 @@ class Driver(BaseDriver):
     def __fmt_qsync_reset(self):
         cmd_pack = (
             0x5F5F5F5F,
-            0x31000000,
+            0x41000002,
             0x00000000,
             16,
         )
@@ -158,17 +156,18 @@ class Driver(BaseDriver):
         return struct.pack('=IIII', *cmd_pack)
 
     @lru_cache(maxsize=32)
-    def __fmt_qsync_start(self, period, shots):
+    def __fmt_qsync_start(self, src, period, shots):
         cmd_pack = (
             0x5F5F5F5F,
-            0x31000000,
+            0x41000001,
             0x00000000,
-            24,
-            period,
-            shots
+            28,
+            int(src),
+            int(period),
+            int(shots)
         )
 
-        return struct.pack('=IIIIII', *cmd_pack)
+        return struct.pack('=IIIIIII', *cmd_pack)
 
     @lru_cache(maxsize=32)
     def __fmt_qsync_sync(self, *args):

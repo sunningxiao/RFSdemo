@@ -49,7 +49,9 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.i = 0
         self.tabWidget.removeTab(0)
         self.tabWidget.removeTab(0)
-        for i in range(10):
+        self.initprobe()
+
+        for i in range(12):
             self.mode_list = chnls_list(self)
             self.mode_add = QtWidgets.QWidget(self)
             awg_layout = QtWidgets.QGridLayout(self.mode_add)

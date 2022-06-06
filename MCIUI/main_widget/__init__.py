@@ -1,3 +1,5 @@
+import sys
+
 from PyQt5 import QtWidgets, QtGui
 
 from MCIUI.IP_probe import IPprobe
@@ -22,25 +24,38 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.probe_ip_list = []
         # 插入logo
 
-        pix = QtGui.QPixmap("static/img.png")
-        self.picture.setPixmap(pix)
-        self.picture.setScaledContents(True)
-
-        '''
-        pixmap = QtGui.QPixmap("static/img.png").scaled(self.picture.width(), self.picture.height())
+        pixmap = QtGui.QPixmap("MCIUI/static/img.png").scaled(self.picture.width(), self.picture.height())
         self.picture.setPixmap(pixmap)
-        '''
+
+        # self.pix = QtGui.QPixmap('MCIUI/static/img.png')
+        # self.picture.setPixmap(self.pix)
+        # self.picture.setScaledContents(True)
+
+        self.btn_close.clicked.connect(self.close)
+        self.btn_min.clicked.connect(self.showMinimized)
+        self.btn_max.clicked.connect(self.max_func)
+
+    # 点击按钮尺寸缩放
+    def max_func(self):
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
+    # 根据IP增加主页面下awg页面，不允许同IP打开多个页面
 
     def addawg(self):
         self.ip1 = IPloading(self)
-        self.ip1.exec()
         self.addr = self.ip1.IPlineEdit.text
+        self.ip1.exec()
         if not self.ip1.click_ok:
             return
+
         self.tabname = 'AWG-' + str(self.i)
         if self.addr() in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
+        self.judge_ip(self.addr())
         self.pagea = Tabadd(self, self.addr())
         self.awg_ip_list.append(self.addr())
         self.AWGADD = QtWidgets.QWidget(self)
@@ -61,7 +76,19 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.i = self.i + 1
         self.k = self.k + 1
 
+    # 判断IP地址是否合法
 
+    def judge_ip(self, ip):
+        num_list = ip.split(".")
+        if len(num_list) != 4:
+            return
+        check_num = 0
+        for num in num_list:
+            if num.isdigit() and 0 <= int(num) <= 255 and str(int(num)) == num:
+                check_num = check_num + 1
+        if check_num != 4:
+            return
+    # 根据IP地址增加probe页面，同IP只可打开一个界面，当前界面下有同IP的awg页面的情况下将awg页面的配置按钮设置为不可用
     def addprobe(self):
         self.ip2 = IPprobe(self)
         self.ip2.exec()
@@ -72,14 +99,13 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
             print("已经打开相同IP的probe页面")
             return
         if self.addr_P() in self.awg_ip_list:  # 判断输入ip是否在列表中
-            self.getdata= self.page_dic[self.addr_P()].alldata  # 前面将IP：tab页面内容存在字典page_dic中 想直接通过这个字典获取响应页面的alldata
+            self.getdata = self.page_dic[self.addr_P()].alldata  # 前面将IP：tab页面内容存在字典page_dic中 想直接通过这个字典获取响应页面的alldata
             self.page_dic[self.addr_P()].manual_config.setEnabled(False)
             self.page_dic[self.addr_P()].manual_trig.setEnabled(False)
             self.page_dic[self.addr_P()].external_config.setEnabled(False)
             self.page_dic[self.addr_P()].external_trig.setEnabled(False)
             self.page_dic[self.addr_P()].internal_config.setEnabled(False)
             self.page_dic[self.addr_P()].internal_trig.setEnabled(False)
-
 
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = probe_wave(self, self.addr_P())

@@ -313,8 +313,14 @@ font: 12pt &quot;Arial&quot;;</string>
        <widget class="QFrame" name="frame_25">
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>140</width>
           <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>140</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="frameShape">
@@ -339,8 +345,26 @@ font: 12pt &quot;Arial&quot;;</string>
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="0" column="0">
+         <item row="0" column="0" alignment="Qt::AlignHCenter|Qt::AlignVCenter">
           <widget class="QLabel" name="picture">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>40</height>
+            </size>
+           </property>
            <property name="text">
             <string/>
            </property>

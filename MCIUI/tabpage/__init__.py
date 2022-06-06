@@ -27,8 +27,6 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.internal_trig.clicked.connect(self.internalsign)
         self.manualcycle = self.manual_trigge_cycle.text
 
-
-        self.show_i = 0
         self.driver = Driver(self.ip)
         sysparam = {
             'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
@@ -41,17 +39,24 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         for i in range(10):
             self.waves()
 
+
+
+    def init_wave(self, data, chnl):
+        for i in range(chnl):
+            self.waves(data)
+
+
     def setupUi(self, addtab):
         super(Tabadd, self).setupUi(addtab)
         self.textEditpy.load(
             QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
         # QtWidgets.QApplication.instance.processEvent()
 
-    def showEvent(self, a0: QtGui.QShowEvent) -> None:
-        if self.show_i == 0:
-            self.textEditpy.reload()
-            self.show_i = self.show_i + 1
-        super(Tabadd, self).showEvent(a0)
+    # def showEvent(self, a0: QtGui.QShowEvent) -> None:
+    #     if self.j == 0:
+    #         self.j = self.j + 1
+    #         self.textEditpy.reload()
+    #     super(Tabadd, self).showEvent(a0)
 
     @property
     def intrigcycle(self):

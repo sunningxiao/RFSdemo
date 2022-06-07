@@ -1,3 +1,5 @@
+import os
+import re
 import sys
 
 from PyQt5 import QtWidgets, QtGui
@@ -27,10 +29,6 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         pixmap = QtGui.QPixmap("MCIUI/static/img.png").scaled(self.picture.width(), self.picture.height())
         self.picture.setPixmap(pixmap)
 
-        # self.pix = QtGui.QPixmap('MCIUI/static/img.png')
-        # self.picture.setPixmap(self.pix)
-        # self.picture.setScaledContents(True)
-
         self.btn_close.clicked.connect(self.close)
         self.btn_min.clicked.connect(self.showMinimized)
         self.btn_max.clicked.connect(self.max_func)
@@ -55,7 +53,8 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         if self.addr() in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
-        self.judge_ip(self.addr())
+        # self.judge_ip(self.addr())
+        self.check_ip(self.addr())
         self.pagea = Tabadd(self, self.addr())
         self.awg_ip_list.append(self.addr())
         self.AWGADD = QtWidgets.QWidget(self)
@@ -78,16 +77,15 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
 
     # 判断IP地址是否合法
 
-    def judge_ip(self, ip):
-        num_list = ip.split(".")
-        if len(num_list) != 4:
-            return
-        check_num = 0
-        for num in num_list:
-            if num.isdigit() and 0 <= int(num) <= 255 and str(int(num)) == num:
-                check_num = check_num + 1
-        if check_num != 4:
-            return
+    def check_ip(self, ip):
+        compile_ip = re.compile(
+            '^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$')
+        if compile_ip.match(ip):
+            return True
+        else:
+            self.ip1.exit(0) or self.ip2.exit(1)
+
+
     # 根据IP地址增加probe页面，同IP只可打开一个界面，当前界面下有同IP的awg页面的情况下将awg页面的配置按钮设置为不可用
     def addprobe(self):
         self.ip2 = IPprobe(self)
@@ -95,6 +93,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.addr_P = self.ip2.ipaddr.text
         if not self.ip2.click_ok:
             return
+        self.check_ip(self.addr_P())
         if self.addr_P() in self.probe_ip_list:
             print("已经打开相同IP的probe页面")
             return

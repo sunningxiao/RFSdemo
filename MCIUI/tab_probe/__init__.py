@@ -1,3 +1,5 @@
+import random
+
 import numpy
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
@@ -49,7 +51,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.i = 0
         self.tabWidget.removeTab(0)
         self.tabWidget.removeTab(0)
-        self.initprobe()
+        # self.initprobe()
 
         for i in range(12):
             self.mode_list = chnls_list(self)
@@ -104,6 +106,8 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.widget_external.show()
         self.widget_manual.hide()
         self.widget_internal.hide()
+
+    # 控制按钮调用driver，参数配置
 
     def manual_config(self):
         if self.MODE.currentIndex() == 0:
@@ -165,12 +169,16 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.driver.set('PointNumber', self.pointnumber_txt())
         self.driver.set('TriggerDelay', self.triggerdelay, 9)
 
+    # 从文件中读取FrequencyList和PhaseList
+
     def get_file(self):
         fname = QFileDialog.getOpenFileName(self, '打开文件', './')
         if fname[0]:
             #with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
             self.numpy_data.append(numpy.load(fname[0]))
         self.file_path.setText(str(fname[0]))
+
+    # probe页面实例化波形斑图控件并添加图层
 
     def add_probe(self, value):
         if value is None:
@@ -181,12 +189,14 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
         self.probes = pg.GraphicsLayoutWidget()
         self.plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
-        # self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(255, 255, 255, 200),
-        #                symbolBrush=(0, 0, 255, 150))
+        self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)),
+                       symbolBrush=(0, 0, 255, 150))
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
         self.all_data[self.i] = self.x, self.y
         self.i = self.i + 1
         self.all_waves.append(self.probes)
+
+    # 通过波形控件添加图像对比效果
 
     def add_plot(self, add_data, number):
         self.add_data = add_data
@@ -195,29 +205,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
             self.y.append(self.add_data[i][1])
 
         self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1,
-                                         symbolPen=(155, 200, 160, 200),
+                                         symbolPen=(random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)),
                                          symbolBrush=(0, 0, 255, 150))
 
 
-class ExcelReader:
-    def __init__(self, file_name):
-        self.xls_file = xlrd.open_workbook(file_name)
-
-    def sheets_names(self):
-        return self.xls_file.sheet_names()
-
-    # 返回表名对应的sheet的行数和列数
-    def sheet_size(self, sheet_name):
-        if not sheet_name in self.sheets_names():
-            return 0, 0
-        self.sheet = self.xls_file.sheet_by_name(sheet_name)
-        return self.sheet.nrows, self.sheet.ncols
-
-    # 以二位列表，返回sheet的内容
-    def sheet_content(self, sheet_name):
-        if not sheet_name in self.sheets_names():
-            return []
-
-        self.sheet = self.xls_file.sheet_by_name(sheet_name)
-        nr, nc = self.sheet.nrows, self.sheet.ncols
-        return [[self.sheet.cell(r, c).value for c in range(nc)] for r in range(nr)]

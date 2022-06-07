@@ -18,6 +18,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.changepy.clicked.connect(self.action_exec_user_code)
         self.i = 0
 
+        # 配置控制按钮
         self.external_trig.setEnabled(False)
         self.manual_config.clicked.connect(self.manual_config_sign)
         self.internal_config.clicked.connect(self.internal_config_sign)
@@ -35,17 +36,16 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
         self.alldata = {}
         self.allwave = []
-        #self.pydata = {}
+        # self.pydata = {}
         for i in range(10):
             self.waves()
 
-
-
+    # 初始化波形
     def init_wave(self, data, chnl):
         for i in range(chnl):
             self.waves(data)
 
-
+    # 给python编译器增加关键字高亮
     def setupUi(self, addtab):
         super(Tabadd, self).setupUi(addtab)
         self.textEditpy.load(
@@ -69,6 +69,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
     def action_exec_user_code(self):
         self.textEditpy.page().runJavaScript('save()', self.createpy)
 
+    # awg页面波形控件调用展示波形
     def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value
         waveui = wave(self)
@@ -81,7 +82,6 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         self.verticalLayout.addWidget(waveui)
         self.allwave.append(waveui)
 
-
     def trig_mode(self, i):
         if i == 1:
             self.internal_trigger()
@@ -90,6 +90,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         else:
             self.Manaul_trigger()
 
+    # 配置按照模式显示不同的配置指令
     def external_trigger(self):
         self.frame_external.show()
         self.frame_internal.hide()
@@ -123,6 +124,8 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
         for i, data_i in self.alldata.items():
             self.driver.set('Waveform', data_i, i)
         self.driver.set('Shot', 1)
+        self.driver.set('StartCapture')  # 启动指令
+
 
     def internalsign(self):
         self.driver = Driver(self.ip)
@@ -141,6 +144,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
         self.driver.open(system_parameter=sysparam)
         self.manual_config_sign()
+
     def createpy(self, pytext):
         pydata = {}
         try:

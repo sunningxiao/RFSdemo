@@ -9,12 +9,11 @@ from MCIUI.tab_probe.probe_page import Ui_Form
 from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
 import numpy as np
-import xlrd
 
 
-class probe_wave(QtWidgets.QWidget, Ui_Form):
+class Probe_wave(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent, ip):
-        super(probe_wave, self).__init__(ui_parent)
+        super(Probe_wave, self).__init__(ui_parent)
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.widget_internal.hide()
@@ -174,7 +173,7 @@ class probe_wave(QtWidgets.QWidget, Ui_Form):
     def get_file(self):
         fname = QFileDialog.getOpenFileName(self, '打开文件', './')
         if fname[0]:
-            #with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
+            # with open(fname[0], 'r', encoding='gb18030', errors='ignore') as f:
             self.numpy_data.append(numpy.load(fname[0]))
         self.file_path.setText(str(fname[0]))
 

@@ -7,9 +7,9 @@ import numpy as np
 from quantum_driver.NS_MCI import Driver
 
 
-class Tabadd(QtWidgets.QWidget, Ui_addtab):
+class Addawg(QtWidgets.QWidget, Ui_addtab):
     def __init__(self, ui_parent, ip):
-        super(Tabadd, self).__init__(ui_parent)
+        super(Addawg, self).__init__(ui_parent)
         self.setupUi(self)
         self.ip = ip
         self.ui_parent = ui_parent
@@ -47,7 +47,7 @@ class Tabadd(QtWidgets.QWidget, Ui_addtab):
 
     # 给python编译器增加关键字高亮
     def setupUi(self, addtab):
-        super(Tabadd, self).setupUi(addtab)
+        super(Addawg, self).setupUi(addtab)
         self.textEditpy.load(
             QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
         # QtWidgets.QApplication.instance.processEvent()

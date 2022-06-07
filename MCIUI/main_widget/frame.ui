@@ -313,13 +313,13 @@ font: 12pt &quot;Arial&quot;;</string>
        <widget class="QFrame" name="frame_25">
         <property name="minimumSize">
          <size>
-          <width>140</width>
+          <width>100</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>140</width>
+          <width>100</width>
           <height>16777215</height>
          </size>
         </property>
@@ -355,14 +355,14 @@ font: 12pt &quot;Arial&quot;;</string>
            </property>
            <property name="minimumSize">
             <size>
-             <width>0</width>
-             <height>0</height>
+             <width>50</width>
+             <height>41</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>100</width>
-             <height>40</height>
+             <width>50</width>
+             <height>41</height>
             </size>
            </property>
            <property name="text">

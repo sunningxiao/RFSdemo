@@ -1,12 +1,10 @@
-import os
 import re
-import sys
 
 from PyQt5 import QtWidgets, QtGui
 
 from MCIUI.IP_probe import IPprobe
-from MCIUI.tab_probe import probe_wave
-from MCIUI.tabpage import Tabadd
+from MCIUI.tab_probe import Probe_wave
+from MCIUI.tabpage import Addawg
 from MCIUI.IP_load import IPloading
 from MCIUI.main_widget.frame import Ui_Form
 
@@ -25,9 +23,10 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.awg_ip_list = []
         self.probe_ip_list = []
         # 插入logo
-
+        self.frame_25.hide()
         pixmap = QtGui.QPixmap("MCIUI/static/img.png").scaled(self.picture.width(), self.picture.height())
         self.picture.setPixmap(pixmap)
+        self.picture.setScaledContents(True)
 
         self.btn_close.clicked.connect(self.close)
         self.btn_min.clicked.connect(self.showMinimized)
@@ -53,9 +52,8 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         if self.addr() in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
-        # self.judge_ip(self.addr())
         self.check_ip(self.addr())
-        self.pagea = Tabadd(self, self.addr())
+        self.pagea = Addawg(self, self.addr())
         self.awg_ip_list.append(self.addr())
         self.AWGADD = QtWidgets.QWidget(self)
         awg_layout = QtWidgets.QGridLayout(self.AWGADD)
@@ -85,8 +83,8 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         else:
             self.ip1.exit(0) or self.ip2.exit(1)
 
-
     # 根据IP地址增加probe页面，同IP只可打开一个界面，当前界面下有同IP的awg页面的情况下将awg页面的配置按钮设置为不可用
+
     def addprobe(self):
         self.ip2 = IPprobe(self)
         self.ip2.exec()
@@ -107,7 +105,7 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
             self.page_dic[self.addr_P()].internal_trig.setEnabled(False)
 
         self.tabname1 = 'Probe-' + str(self.j)
-        self.pageb = probe_wave(self, self.addr_P())
+        self.pageb = Probe_wave(self, self.addr_P())
         self.probe_ip_list.append(self.addr_P())
         self.AWGProbe = QtWidgets.QWidget(self)
         awg_layout1 = QtWidgets.QGridLayout(self.AWGProbe)

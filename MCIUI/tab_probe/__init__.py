@@ -4,7 +4,7 @@ import numpy
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 
-from MCIUI.chnl_mode_list import chnls_list
+from MCIUI.chnl_mode_list import Chnls_list
 from MCIUI.tab_probe.probe_page import Ui_Form
 from quantum_driver.NS_MCI import Driver
 import pyqtgraph as pg
@@ -53,7 +53,7 @@ class Probe_wave(QtWidgets.QWidget, Ui_Form):
         # self.initprobe()
 
         for i in range(12):
-            self.mode_list = chnls_list(self)
+            self.mode_list = Chnls_list(self)
             self.mode_add = QtWidgets.QWidget(self)
             awg_layout = QtWidgets.QGridLayout(self.mode_add)
             awg_layout.addWidget(self.mode_list)

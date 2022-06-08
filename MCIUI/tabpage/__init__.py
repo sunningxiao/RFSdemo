@@ -2,7 +2,7 @@ import os
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from MCIUI.tabpage.addtabpage import Ui_addtab
-from MCIUI.通道波形 import wave
+from MCIUI.通道波形 import Wave
 import numpy as np
 from quantum_driver.NS_MCI import Driver
 
@@ -72,7 +72,7 @@ class Addawg(QtWidgets.QWidget, Ui_addtab):
     # awg页面波形控件调用展示波形
     def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value
-        waveui = wave(self)
+        waveui = Wave(self)
         self.chnlname = 'chnl-' + str(self.i)
         self.i = self.i + 1
         waveui.chnl_0.setText(self.chnlname)

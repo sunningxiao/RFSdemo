@@ -52,7 +52,7 @@ class Probe_wave(QtWidgets.QWidget, Ui_Form):
         self.tabWidget.removeTab(0)
         # self.initprobe()
 
-        for i in range(12):
+        for i in range(20):
             self.mode_list = Chnls_list(self)
             self.mode_add = QtWidgets.QWidget(self)
             awg_layout = QtWidgets.QGridLayout(self.mode_add)
@@ -67,7 +67,6 @@ class Probe_wave(QtWidgets.QWidget, Ui_Form):
             self.a = int(i / 3)
             self.b = int(i % 3)
             self.add_probe(None)
-
 
     def mode(self, i):
         if i == 1:
@@ -188,7 +187,9 @@ class Probe_wave(QtWidgets.QWidget, Ui_Form):
         self.probes = pg.GraphicsLayoutWidget()
         self.plt2 = self.probes.addPlot()
         self.probes.setMinimumSize(0, 200)
-        self.plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1, symbolPen=(random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)),
+        self.plt2.plot(self.x, self.y, pen=None, symbol='o',
+                       symbolSize=1, symbolPen=(random.uniform(0, 255),
+                                                random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)),
                        symbolBrush=(0, 0, 255, 150))
         self.gridLayout_4.addWidget(self.probes, self.a, self.b)
         self.all_data[self.i] = self.x, self.y
@@ -204,7 +205,7 @@ class Probe_wave(QtWidgets.QWidget, Ui_Form):
             self.y.append(self.add_data[i][1])
 
         self.all_waves[number].plt2.plot(self.x, self.y, pen=None, symbol='o', symbolSize=1,
-                                         symbolPen=(random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255)),
+                                         symbolPen=(
+                                             random.uniform(0, 255), random.uniform(0, 255), random.uniform(0, 255),
+                                             random.uniform(0, 255)),
                                          symbolBrush=(0, 0, 255, 150))
-
-

@@ -27,7 +27,6 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.btn_close.clicked.connect(self.close)
         self.btn_min.clicked.connect(self.showMinimized)
         self.btn_max.clicked.connect(self.max_func)
-        # self.Connect_AWG.clicked.connect(self.addawg)
 
     # 点击按钮尺寸缩放
     def max_func(self):

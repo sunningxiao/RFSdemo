@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1017</width>
+    <width>1126</width>
     <height>631</height>
    </rect>
   </property>
@@ -105,9 +105,12 @@
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>646</width>
+              <width>670</width>
               <height>625</height>
              </rect>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
             </property>
             <layout class="QGridLayout" name="gridLayout_6">
              <property name="leftMargin">
@@ -143,8 +146,14 @@
        <widget class="QFrame" name="frame_41">
         <property name="minimumSize">
          <size>
-          <width>288</width>
+          <width>450</width>
           <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>450</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="frameShape">
@@ -552,6 +561,9 @@ QTabBar::tab{height:20px;}</string>
                       <height>35</height>
                      </size>
                     </property>
+                    <property name="styleSheet">
+                     <string notr="true"/>
+                    </property>
                     <property name="text">
                      <string>Manual</string>
                     </property>
@@ -597,6 +609,9 @@ QTabBar::tab{height:20px;}</string>
                       <height>35</height>
                      </size>
                     </property>
+                    <property name="styleSheet">
+                     <string notr="true"/>
+                    </property>
                     <property name="text">
                      <string>Internal</string>
                     </property>
@@ -641,6 +656,9 @@ QTabBar::tab{height:20px;}</string>
                       <width>0</width>
                       <height>35</height>
                      </size>
+                    </property>
+                    <property name="styleSheet">
+                     <string notr="true"/>
                     </property>
                     <property name="text">
                      <string>External</string>

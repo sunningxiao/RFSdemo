@@ -1,16 +1,17 @@
 import sys
 import re
+import random
 
 import numpy as np
 import qdarkstyle
+import pyqtgraph as pg
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QFileDialog
 
 from MCIUI.main_widget import MAIN
 from MCIUI.tabpage import Addawg
 from MCIUI.tab_probe import Probe_wave
 from quantum_driver.NS_MCI import Driver
-from MCIUI.通道波形 import Wave
 
 class ConfigWidget:
 
@@ -22,6 +23,7 @@ class ConfigWidget:
         self.i = 0
         self.j = 0
         self.k = 0
+        self.m = 0
         self.awg_ip_list = []
         self.probe_ip_list = []
         self.page_dic = {}
@@ -48,6 +50,7 @@ class ConfigWidget:
         if not self.main_ui.ip2.click_ok:
             return
         addr = self.main_ui.ip2.ipaddr.text()
+        self.addr_p = addr
         self.main_ui.ip2.ipaddr.clear()
         if not self.check_ip(addr):
             return
@@ -59,12 +62,12 @@ class ConfigWidget:
         sys.exit(self.app.exec())
 
     def add_awg_function(self, addr):
-        self.tabname = 'AWG-' + str(self.i)
+        self.tabname = 'AWG-' + str(self.m)
         if addr in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
         self.pagea = Addawg(self, addr)
-        self.open_card()
+        self.open_card(self.addr_g)
         self.config_button()
         for i in range(5):
             self.pagea.waves()
@@ -85,8 +88,11 @@ class ConfigWidget:
             self.page_dic[addr].external_trig.setEnabled(False)
             self.page_dic[addr].internal_config.setEnabled(False)
             self.page_dic[addr].internal_trig.setEnabled(False)
-        self.i = self.i + 1
+        self.m = self.m + 1
         self.k = self.k + 1
+        self.pagea.Manual_2.setEnabled(False)
+        self.pagea.pushButton.setEnabled(False)
+        self.pagea.internal.setEnabled(False)
 
     def add_probe_function(self, addr):
         if addr in self.probe_ip_list:
@@ -103,8 +109,18 @@ class ConfigWidget:
 
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = Probe_wave(self, addr)
+        self.open_card(self.addr_p)
+        self.config_probe_button()
         self.probe_ip_list.append(addr)
+        for i in range(12):
+            self.a = int(i / 3)
+            self.b = int(i % 3)
+            self.add_scatter(None)
+        for i in range(12):
+            self.pageb.add_plot(i)
+
         self.AWGProbe = QtWidgets.QWidget()
+
         awg_layout1 = QtWidgets.QGridLayout(self.AWGProbe)
         awg_layout1.addWidget(self.pageb)
         awg_layout1.setContentsMargins(0, 0, 0, 0)
@@ -113,9 +129,12 @@ class ConfigWidget:
         self.main_ui.tab.setCurrentIndex(self.k)
         self.j = self.j + 1
         self.k = self.k + 1
+        self.pageb.pushButton.setEnabled(False)
+        self.pageb.pushButton_6.setEnabled(False)
+        self.pageb.pushButton_9.setEnabled(False)
 
-    def open_card(self):
-        self.driver = Driver(self.addr_g)
+    def open_card(self, ip):
+        self.driver = Driver(ip)
         sysparam = {
             'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
         }
@@ -137,6 +156,8 @@ class ConfigWidget:
         self.driver.set('Shot', 1)
         self.driver.set('StartCapture')  # 启动指令
         self.driver.set('GenerateTrig', self.manualcycle())
+        self.pagea.Manual_2.setStyleSheet("background-color: rgb(167, 167, 167);")
+
 
     def internal_config_sign(self):
         for i, data_i in self.pagea.alldata.items():
@@ -144,12 +165,14 @@ class ConfigWidget:
         self.driver.set('Shot', self.pagea.intrigtimes)
         self.driver.set('StartCapture')  # 启动指令
         self.driver.set('GenerateTrig', self.pagea.intrigcycle)
+        self.pagea.internal.setStyleSheet("background-color: rgb(0, 61, 184);")
 
     def externalsign(self):
         for i, data_i in self.pagea.alldata.items():
             self.driver.set('Waveform', data_i, i)
         self.driver.set('Shot', 1)
         self.driver.set('StartCapture')  # 启动指令
+        self.pagea.pushButton.setStyleSheet("background-color: rgb(255, 85, 128);")
 
 
     def internalsign(self):
@@ -202,4 +225,93 @@ class ConfigWidget:
         except Exception as e:
             print(e)
 
+    def config_probe_button(self):
+        self.pageb.manualconfig.clicked.connect(self.manual_config)
+        self.pageb.manualtrig.clicked.connect(self.manual_trig)
+        self.pageb.interconfig.clicked.connect(self.inter_config)
+        self.pageb.intertrig.clicked.connect(self.inter_trig)
+        self.pageb.exterconfig.clicked.connect(self.exter_config)
+        self.pageb.extertrig.setEnabled(False)
+        self.pageb.select_file_path.clicked.connect(self.pageb.get_file)
+
+    def manual_config(self):
+        if self.pageb.MODE.currentIndex() == 0:
+            for i in range(len(self.pageb.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+        else:
+            for i, data_i in self.pageb.numpy_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+
+        self.driver.set('StartCapture')
+        self.driver.set('Shot', self.pageb.shot_txt())
+        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+        self.pageb.pushButton.setStyleSheet("background-color: rgb(167, 167, 167);")
+
+    def manual_trig(self):
+        self.driver = Driver(self.addr_p)
+        sysparam = {
+            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+        }
+
+        self.driver.open(system_parameter=sysparam)
+        self.manual_config()
+
+    def inter_config(self):
+        if self.pageb.MODE.currentIndex() == 0:
+            for i in range(len(self.pageb.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+        else:
+            for i, data_i in self.pageb.numpy_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+        self.driver.set('StartCapture')
+        self.driver.set('Shot', self.pageb.shot_txt())
+        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+        self.pageb.pushButton_6.setStyleSheet("background-color: rgb(0, 61, 184);")
+
+    def inter_trig(self):
+        self.driver = Driver(self.addr_p)
+        sysparam = {
+            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+        }
+        self.driver.open(system_parameter=sysparam)
+        self.inter_config()
+
+    def exter_config(self):
+        if self.pageb.MODE.currentIndex() == 0:
+            for i in range(len(self.pageb.dif_chnl_list)):
+                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+        else:
+            for i, data_i in self.pageb.numpy_data.items():
+                self.driver.set('FrequencyList', data_i, i)
+                self.driver.set('PhaseList', data_i, i)
+        self.driver.set('StartCapture')
+        self.driver.set('Shot', self.pageb.shot_txt())
+        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+        self.pageb.pushButton_9.setStyleSheet("background-color: rgb(255, 85, 128);")
+
+    def add_scatter(self, value):
+        if value is None:
+            self.x = np.random.normal(size=1024)
+            self.y = np.random.normal(size=1024)
+        else:
+            self.value = value
+        self.probes = pg.GraphicsLayoutWidget()
+        self.plt2 = self.probes.addPlot()
+        self.probes.setMinimumSize(0, 200)
+        self.plt2.plot(self.x, self.y, pen=None, symbol='o',
+                       symbolSize=1, symbolPen=(random.uniform(130, 255),
+                                                random.uniform(130, 255), random.uniform(130, 255), random.uniform(130, 255)),
+                       symbolBrush=(0, 0, 255, 150))
+        self.pageb.gridLayout_4.addWidget(self.probes, self.a, self.b)
+        self.pageb.all_data[self.i] = self.x, self.y
+        self.i = self.i + 1
+        self.pageb.all_waves.append(self.plt2)
 

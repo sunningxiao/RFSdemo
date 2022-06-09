@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_addtab(object):
     def setupUi(self, addtab):
         addtab.setObjectName("addtab")
-        addtab.resize(949, 502)
+        addtab.resize(1107, 502)
         self.gridLayout = QtWidgets.QGridLayout(addtab)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setHorizontalSpacing(0)
@@ -69,7 +69,8 @@ class Ui_addtab(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.frame_34.sizePolicy().hasHeightForWidth())
         self.frame_34.setSizePolicy(sizePolicy)
-        self.frame_34.setMinimumSize(QtCore.QSize(292, 499))
+        self.frame_34.setMinimumSize(QtCore.QSize(500, 499))
+        self.frame_34.setMaximumSize(QtCore.QSize(500, 16777215))
         self.frame_34.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_34.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_34.setObjectName("frame_34")
@@ -179,8 +180,7 @@ class Ui_addtab(object):
         self.gridLayout_7.addWidget(self.manual_trig, 1, 2, 1, 1)
         self.Manual_2 = QtWidgets.QPushButton(self.frame_manual)
         self.Manual_2.setMinimumSize(QtCore.QSize(0, 25))
-        self.Manual_2.setStyleSheet("background-color: rgb(167, 167, 167);\n"
-"margin-right:5px;\n"
+        self.Manual_2.setStyleSheet("margin-right:5px;\n"
 "margin-left:5px;")
         self.Manual_2.setObjectName("Manual_2")
         self.gridLayout_7.addWidget(self.Manual_2, 1, 0, 1, 1)
@@ -226,7 +226,7 @@ class Ui_addtab(object):
         self.frame_external.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_external.setObjectName("frame_external")
         self.gridLayout_2 = QtWidgets.QGridLayout(self.frame_external)
-        self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_2.setContentsMargins(11, 11, 11, 11)
         self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.external_trig = QtWidgets.QPushButton(self.frame_external)
@@ -236,16 +236,15 @@ class Ui_addtab(object):
         self.external_trig.setObjectName("external_trig")
         self.gridLayout_2.addWidget(self.external_trig, 0, 2, 1, 1)
         self.pushButton = QtWidgets.QPushButton(self.frame_external)
-        self.pushButton.setMinimumSize(QtCore.QSize(0, 25))
-        self.pushButton.setStyleSheet("background-color: rgb(255, 85, 128);\n"
-"margin-right:5px;\n"
-"margin-left:15px;\n"
+        self.pushButton.setMinimumSize(QtCore.QSize(152, 25))
+        self.pushButton.setMaximumSize(QtCore.QSize(152, 16777215))
+        self.pushButton.setStyleSheet("margin-right:5px;\n"
 "")
         self.pushButton.setObjectName("pushButton")
         self.gridLayout_2.addWidget(self.pushButton, 0, 0, 1, 1)
         self.external_config = QtWidgets.QPushButton(self.frame_external)
         self.external_config.setMinimumSize(QtCore.QSize(0, 25))
-        self.external_config.setStyleSheet("margin-left:5px;\n"
+        self.external_config.setStyleSheet("margin-left:10px;\n"
 "margin-right:5px;")
         self.external_config.setObjectName("external_config")
         self.gridLayout_2.addWidget(self.external_config, 0, 1, 1, 1)
@@ -280,8 +279,7 @@ class Ui_addtab(object):
         self.gridLayout_3.addWidget(self.trigger_cycle, 1, 1, 1, 2)
         self.internal = QtWidgets.QPushButton(self.frame_internal)
         self.internal.setMinimumSize(QtCore.QSize(0, 25))
-        self.internal.setStyleSheet("background-color: rgb(0, 61, 184);\n"
-"margin-right:5px;")
+        self.internal.setStyleSheet("margin-right:5px;")
         self.internal.setObjectName("internal")
         self.gridLayout_3.addWidget(self.internal, 2, 0, 1, 1)
         self.label_10 = QtWidgets.QLabel(self.frame_internal)

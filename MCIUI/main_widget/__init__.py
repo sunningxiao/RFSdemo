@@ -10,7 +10,7 @@ from MCIUI.main_widget.frame import Ui_Form
 
 
 class MAIN(QtWidgets.QWidget, Ui_Form):
-    def __init__(self, ui_parent):
+    def __init__(self, ui_parent=None):
         super(MAIN, self).__init__()
         self.setupUi(self)
         self.ui_parent = ui_parent
@@ -27,10 +27,13 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         pixmap = QtGui.QPixmap("MCIUI/static/img.png").scaled(self.picture.width(), self.picture.height())
         self.picture.setPixmap(pixmap)
         self.picture.setScaledContents(True)
+        self.ip1 = IPloading(self)
+        self.ip2 = IPprobe(self)
 
         self.btn_close.clicked.connect(self.close)
         self.btn_min.clicked.connect(self.showMinimized)
         self.btn_max.clicked.connect(self.max_func)
+        # self.Connect_AWG.clicked.connect(self.addawg)
 
     # 点击按钮尺寸缩放
     def max_func(self):
@@ -39,22 +42,13 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         else:
             self.showMaximized()
 
-    # 根据IP增加主页面下awg页面，不允许同IP打开多个页面
-
-    def addawg(self):
-        self.ip1 = IPloading(self)
-        self.addr = self.ip1.IPlineEdit.text
-        self.ip1.exec()
-        if not self.ip1.click_ok:
-            return
-
+    def add_awg(self, addr):
         self.tabname = 'AWG-' + str(self.i)
-        if self.addr() in self.awg_ip_list:
+        if addr in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
-        self.check_ip(self.addr())
-        self.pagea = Addawg(self, self.addr())
-        self.awg_ip_list.append(self.addr())
+        self.pagea = Addawg(self, addr)
+        self.awg_ip_list.append(addr)
         self.AWGADD = QtWidgets.QWidget(self)
         awg_layout = QtWidgets.QGridLayout(self.AWGADD)
         awg_layout.addWidget(self.pagea)
@@ -62,31 +56,20 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.AWGADD.setObjectName("AWGADD")
         self.tab.addTab(self.AWGADD, '{}'.format(self.tabname))
         self.tab.setCurrentIndex(self.k)
-        self.page_dic[self.addr()] = self.pagea
-        if self.addr() in self.probe_ip_list:
-            self.page_dic[self.addr()].manual_config.setEnabled(False)
-            self.page_dic[self.addr()].manual_trig.setEnabled(False)
-            self.page_dic[self.addr()].external_config.setEnabled(False)
-            self.page_dic[self.addr()].external_trig.setEnabled(False)
-            self.page_dic[self.addr()].internal_config.setEnabled(False)
-            self.page_dic[self.addr()].internal_trig.setEnabled(False)
+        self.page_dic[addr] = self.pagea
+        if addr in self.probe_ip_list:
+            self.page_dic[addr].manual_config.setEnabled(False)
+            self.page_dic[addr].manual_trig.setEnabled(False)
+            self.page_dic[addr].external_config.setEnabled(False)
+            self.page_dic[addr].external_trig.setEnabled(False)
+            self.page_dic[addr].internal_config.setEnabled(False)
+            self.page_dic[addr].internal_trig.setEnabled(False)
         self.i = self.i + 1
         self.k = self.k + 1
-
-    # 判断IP地址是否合法
-
-    def check_ip(self, ip):
-        compile_ip = re.compile(
-            '^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$')
-        if compile_ip.match(ip):
-            return True
-        else:
-            self.ip1.exit(0) or self.ip2.exit(1)
 
     # 根据IP地址增加probe页面，同IP只可打开一个界面，当前界面下有同IP的awg页面的情况下将awg页面的配置按钮设置为不可用
 
     def addprobe(self):
-        self.ip2 = IPprobe(self)
         self.ip2.exec()
         self.addr_P = self.ip2.ipaddr.text
         if not self.ip2.click_ok:

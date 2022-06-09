@@ -1,4 +1,5 @@
 import sys
+import re
 
 import qdarkstyle
 from PyQt5 import QtWidgets
@@ -14,32 +15,29 @@ from MCIUI.通道波形 import Wave
 
 class ConfigWidget:
 
-    def __int__(self):
-        self.main_ui = MAIN(self)
-        self.awg_ui = Addawg(self)
-        # self.probe_ui = Probe_wave(self)
-        # self.ip_probe_ui = IPprobe(self)
-        self.ip_awg_ui = IPloading(self)
-        self.chnl_ui = Wave(self)
+    def __init__(self):
+        self.app = QApplication(sys.argv)
+        self.main_ui = MAIN()
+        self.main_ui.Connect_AWG.clicked.connect(self.add_awg)
 
+    # 判断IP地址是否合法
 
+    def check_ip(self, ip):
+        compile_ip = re.compile(
+            '^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$')
+        return isinstance(compile_ip.match(ip), re.Match)
 
+    def add_awg(self):
+        self.main_ui.ip1.exec()
+        if not self.main_ui.ip1.click_ok:
+            return
+        addr = self.main_ui.ip1.IPlineEdit.text()
+        print(addr)
+        if not self.check_ip(addr):
+            return
+        self.main_ui.add_awg(addr)
 
-
-
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main = MAIN(ui_parent=None)
-    child = IPloading(ui_parent=main)
-    child1 = IPprobe(ui_parent=main)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    btn = main.Connect_AWG # 主窗体按钮事件绑定
-    btn2 = main.Connect_Probe_2
-    btn.clicked.connect(lambda: child.show())
-    btn2.clicked.connect(lambda: child1.show())
-    main.show()
-    sys.exit(app.exec_())
-
-
+    def run_ui(self):
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.main_ui.show()
+        sys.exit(self.app.exec())

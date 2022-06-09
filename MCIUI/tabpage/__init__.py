@@ -1,5 +1,5 @@
 import os
-from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore
 
 from MCIUI.tabpage.addtabpage import Ui_addtab
 from MCIUI.通道波形 import Wave
@@ -9,7 +9,7 @@ from quantum_driver.NS_MCI import Driver
 
 class Addawg(QtWidgets.QWidget, Ui_addtab):
     def __init__(self, ui_parent, ip):
-        super(Addawg, self).__init__(ui_parent)
+        super(Addawg, self).__init__()
         self.setupUi(self)
         self.ip = ip
         self.ui_parent = ui_parent
@@ -52,11 +52,6 @@ class Addawg(QtWidgets.QWidget, Ui_addtab):
             QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
         # QtWidgets.QApplication.instance.processEvent()
 
-    # def showEvent(self, a0: QtGui.QShowEvent) -> None:
-    #     if self.j == 0:
-    #         self.j = self.j + 1
-    #         self.textEditpy.reload()
-    #     super(Tabadd, self).showEvent(a0)
 
     @property
     def intrigcycle(self):

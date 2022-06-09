@@ -13,7 +13,7 @@ import numpy as np
 
 class Probe_wave(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent, ip):
-        super(Probe_wave, self).__init__(ui_parent)
+        super(Probe_wave, self).__init__()
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.widget_internal.hide()

@@ -6,13 +6,12 @@ from PyQt5.QtWidgets import QFileDialog
 
 from MCIUI.chnl_mode_list import Chnls_list
 from MCIUI.tab_probe.probe_page import Ui_Form
-import pyqtgraph as pg
 import numpy as np
 
 
-class Probe_wave(QtWidgets.QWidget, Ui_Form):
+class Probe_widget(QtWidgets.QWidget, Ui_Form):
     def __init__(self, ui_parent, ip):
-        super(Probe_wave, self).__init__()
+        super(Probe_widget, self).__init__()
         self.setupUi(self)
         self.ui_parent = ui_parent
         self.widget_internal.hide()

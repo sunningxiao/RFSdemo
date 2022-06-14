@@ -9,8 +9,8 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QFileDialog
 
 from MCIUI.main_widget import MAIN
-from MCIUI.tabpage import Addawg
-from MCIUI.tab_probe import Probe_wave
+from MCIUI.tabpage import Awg_widget
+from MCIUI.tab_probe import Probe_widget
 from quantum_driver.NS_MCI import Driver
 
 class ConfigWidget:
@@ -66,7 +66,7 @@ class ConfigWidget:
         if addr in self.awg_ip_list:
             print("已经打开相同IP的AWG页面")
             return
-        self.pagea = Addawg(self, addr)
+        self.pagea = Awg_widget(self, addr)
         self.open_card(self.addr_g)
         self.config_button()
         for i in range(5):
@@ -108,7 +108,7 @@ class ConfigWidget:
             self.page_dic[addr].internal_trig.setEnabled(False)
 
         self.tabname1 = 'Probe-' + str(self.j)
-        self.pageb = Probe_wave(self, addr)
+        self.pageb = Probe_widget(self, addr)
         self.open_card(self.addr_p)
         self.config_probe_button()
         self.probe_ip_list.append(addr)
@@ -145,7 +145,7 @@ class ConfigWidget:
         self.pagea.manual_config.clicked.connect(self.manual_config_sign)
         self.pagea.internal_config.clicked.connect(self.internal_config_sign)
         self.pagea.comboBox_2.currentIndexChanged.connect(self.trig_mode)
-        self.pagea.external_config.clicked.connect(self.externalsign)
+        self.pagea.external_config.clicked.connect(self.external_config_sign)
         self.pagea.manual_trig.clicked.connect(self.manualsign)
         self.pagea.internal_trig.clicked.connect(self.internalsign)
         self.manualcycle = self.pagea.manual_trigge_cycle.text
@@ -167,7 +167,7 @@ class ConfigWidget:
         self.driver.set('GenerateTrig', self.pagea.intrigcycle)
         self.pagea.internal.setStyleSheet("background-color: rgb(0, 61, 184);")
 
-    def externalsign(self):
+    def external_config_sign(self):
         for i, data_i in self.pagea.alldata.items():
             self.driver.set('Waveform', data_i, i)
         self.driver.set('Shot', 1)

@@ -1,15 +1,14 @@
 import os
-import random
 
 from PyQt5 import QtWidgets, QtCore
 from MCIUI.tabpage.addtabpage import Ui_addtab
-from MCIUI.通道波形 import Wave
+from MCIUI.通道波形 import Chnl_wave
 import numpy as np
 
 
-class Addawg(QtWidgets.QWidget, Ui_addtab):
+class Awg_widget(QtWidgets.QWidget, Ui_addtab):
     def __init__(self, ui_parent, ip):
-        super(Addawg, self).__init__()
+        super(Awg_widget, self).__init__()
         self.setupUi(self)
         self.ip = ip
         self.ui_parent = ui_parent
@@ -20,7 +19,7 @@ class Addawg(QtWidgets.QWidget, Ui_addtab):
         self.allwave = []
 
     def setupUi(self, addtab):
-        super(Addawg, self).setupUi(addtab)
+        super(Awg_widget, self).setupUi(addtab)
         self.textEditpy.load(
             QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
 
@@ -35,7 +34,7 @@ class Addawg(QtWidgets.QWidget, Ui_addtab):
     # awg页面波形控件调用展示波形
     def waves(self, value=None):
         value = np.random.normal(size=300) if value is None else value
-        waveui = Wave(self)
+        waveui = Chnl_wave(self)
         self.chnlname = 'chnl-' + str(self.i)
         self.i = self.i + 1
         waveui.chnl_0.setText(self.chnlname)

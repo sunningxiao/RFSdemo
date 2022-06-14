@@ -1,10 +1,6 @@
-import re
-
 from PyQt5 import QtWidgets, QtGui
 
 from MCIUI.IP_probe import IPprobe
-from MCIUI.tab_probe import Probe_wave
-from MCIUI.tabpage import Addawg
 from MCIUI.IP_load import IPloading
 from MCIUI.main_widget.frame import Ui_Form
 

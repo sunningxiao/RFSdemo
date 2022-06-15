@@ -118,11 +118,13 @@ class ConfigWidget:
             self.page_dic[addr].external_trig.setEnabled(False)
             self.page_dic[addr].internal_config.setEnabled(False)
             self.page_dic[addr].internal_trig.setEnabled(False)
+            self.open_change_probe(self.addr_p)
+        else:
+            self.open_probe(self.addr_p)
 
 
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = Probe_widget(self, addr)
-        self.open_probe(self.addr_p)
         self.config_probe_button()
         self.probe_ip_list.append(addr)
         for i in range(12):
@@ -159,7 +161,7 @@ class ConfigWidget:
         sysparam = {
             'MixMode': self.main_ui.ip2.MixMode_param, 'RefClock': self.main_ui.ip2.RefClock_param,
             'ADrate': float(self.main_ui.ip2.ADrate.text()), 'KeepAmp': self.main_ui.ip2.Keep_Amp_param,
-            'DAtare': self.page_dic[ip]
+            'DAtare': float(self.darate[ip])
         }
         self.driver_probe.open(system_parameter=sysparam)
 
@@ -388,5 +390,5 @@ class ConfigWidget:
         if not self.check_ip(self.main_ui.ip3.ip_edit.text()):
             return
         self.QSYNC_driver = Driver(self.main_ui.ip3.ip_edit.text())
-        self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc");
+        self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc")
         self.QSYNC_flag = True

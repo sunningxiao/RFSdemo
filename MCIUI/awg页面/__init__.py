@@ -60,4 +60,4 @@ class Awg_widget(QtWidgets.QWidget, Ui_addtab):
         self.frame_internal.hide()
 
     def fixwave(self, fix_data, chnls):
-        self.allwave[chnls].p1.plot(fix_data, clear=True)
+        self.allwave[chnls].p1.plot(fix_data, pen=(115, 135, 116), clear=True)

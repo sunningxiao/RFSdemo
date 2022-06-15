@@ -1,8 +1,9 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets
 
-from MCIUI.IP_probe import IPprobe
-from MCIUI.IP_load import IPloading
-from MCIUI.main_widget.frame import Ui_Form
+from MCIUI.probe登录 import IPprobe
+from MCIUI.awg登录 import IPloading
+from MCIUI.QSYNC配置 import Device_ip
+from MCIUI.主框架.frame import Ui_Form
 
 
 class MAIN(QtWidgets.QWidget, Ui_Form):
@@ -12,13 +13,9 @@ class MAIN(QtWidgets.QWidget, Ui_Form):
         self.ui_parent = ui_parent
         self.tab.removeTab(0)
         self.tab.removeTab(0)
-        # 插入logo
-        self.frame_25.hide()  # 暂时隐藏logo
-        pixmap = QtGui.QPixmap("MCIUI/static/img.png").scaled(self.picture.width(), self.picture.height())
-        self.picture.setPixmap(pixmap)
-        self.picture.setScaledContents(True)
         self.ip1 = IPloading(self)
         self.ip2 = IPprobe(self)
+        self.ip3 = Device_ip(self)
 
         self.btn_close.clicked.connect(self.close)
         self.btn_min.clicked.connect(self.showMinimized)

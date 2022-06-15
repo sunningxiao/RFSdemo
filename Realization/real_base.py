@@ -8,9 +8,9 @@ import pyqtgraph as pg
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QFileDialog
 
-from MCIUI.main_widget import MAIN
-from MCIUI.tabpage import Awg_widget
-from MCIUI.tab_probe import Probe_widget
+from MCIUI.主框架 import MAIN
+from MCIUI.awg页面 import Awg_widget
+from MCIUI.probe页面 import Probe_widget
 from quantum_driver.NS_MCI import Driver
 
 class ConfigWidget:
@@ -20,6 +20,7 @@ class ConfigWidget:
         self.main_ui = MAIN()
         self.main_ui.Connect_AWG.clicked.connect(self.add_awg)
         self.main_ui.Connect_Probe_2.clicked.connect(self.add_probe)
+        self.main_ui.QSYNC.clicked.connect(self.config_driver_ip)
         self.i = 0
         self.j = 0
         self.k = 0
@@ -27,6 +28,8 @@ class ConfigWidget:
         self.awg_ip_list = []
         self.probe_ip_list = []
         self.page_dic = {}
+        self.QSYNC_flag = False
+        self.darate = {}
     # 判断IP地址是否合法
 
     def check_ip(self, ip):
@@ -35,17 +38,25 @@ class ConfigWidget:
         return isinstance(compile_ip.match(ip), re.Match)
 
     def add_awg(self):
+        if self.QSYNC_flag is False:
+            self.config_driver_ip()
+            if not self.main_ui.ip3.click_ok:
+                return
         self.main_ui.ip1.exec()
         if not self.main_ui.ip1.click_ok:
             return
         addr = self.main_ui.ip1.IPlineEdit.text()
         self.addr_g = addr
-        self.main_ui.ip1.IPlineEdit.clear()
+        # self.main_ui.ip1.IPlineEdit.clear()
         if not self.check_ip(addr):
             return
         self.add_awg_function(addr)
 
     def add_probe(self):
+        if self.QSYNC_flag is False:
+            self.config_driver_ip()
+            if not self.main_ui.ip3.click_ok:
+                return
         self.main_ui.ip2.exec()
         if not self.main_ui.ip2.click_ok:
             return
@@ -54,6 +65,7 @@ class ConfigWidget:
         self.main_ui.ip2.ipaddr.clear()
         if not self.check_ip(addr):
             return
+        self.darate[addr] = self.main_ui.ip1.DArate.text()
         self.add_probe_function(addr)
 
     def run_ui(self):
@@ -67,7 +79,7 @@ class ConfigWidget:
             print("已经打开相同IP的AWG页面")
             return
         self.pagea = Awg_widget(self, addr)
-        self.open_card(self.addr_g)
+        self.open_awg(self.addr_g)
         self.config_button()
         for i in range(5):
             self.pagea.waves()
@@ -107,9 +119,10 @@ class ConfigWidget:
             self.page_dic[addr].internal_config.setEnabled(False)
             self.page_dic[addr].internal_trig.setEnabled(False)
 
+
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = Probe_widget(self, addr)
-        self.open_card(self.addr_p)
+        self.open_probe(self.addr_p)
         self.config_probe_button()
         self.probe_ip_list.append(addr)
         for i in range(12):
@@ -133,12 +146,30 @@ class ConfigWidget:
         self.pageb.pushButton_6.setEnabled(False)
         self.pageb.pushButton_9.setEnabled(False)
 
-    def open_card(self, ip):
-        self.driver = Driver(ip)
+    def open_awg(self, ip):
+        self.driver_awg = Driver(ip)
         sysparam = {
-            'MixMode': 2, 'RefClock': 'out', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+            'MixMode': self.main_ui.ip1.MixMode_param, 'RefClock': self.main_ui.ip1.RefClock_param,
+            'DArate': float(self.main_ui.ip1.DArate.text()), 'KeepAmp': self.main_ui.ip1.Keep_Amp_param
         }
-        self.driver.open(system_parameter=sysparam)
+        self.driver_awg.open(system_parameter=sysparam)
+
+    def open_change_probe(self, ip):
+        self.driver_probe = Driver(ip)
+        sysparam = {
+            'MixMode': self.main_ui.ip2.MixMode_param, 'RefClock': self.main_ui.ip2.RefClock_param,
+            'ADrate': float(self.main_ui.ip2.ADrate.text()), 'KeepAmp': self.main_ui.ip2.Keep_Amp_param,
+            'DAtare': self.page_dic[ip]
+        }
+        self.driver_probe.open(system_parameter=sysparam)
+
+    def open_probe(self, ip):
+        self.driver_probe = Driver(ip)
+        sysparam = {
+            'MixMode': self.main_ui.ip2.MixMode_param, 'RefClock': self.main_ui.ip2.RefClock_param,
+            'ADrate': float(self.main_ui.ip2.ADrate.text()), 'KeepAmp': self.main_ui.ip2.Keep_Amp_param
+        }
+        self.driver_probe.open(system_parameter=sysparam)
 
     def config_button(self):
         self.pagea.external_trig.setEnabled(False)
@@ -152,45 +183,57 @@ class ConfigWidget:
 
     def manual_config_sign(self):
         for i, data_i in self.pagea.alldata.items():
-            self.driver.set('Waveform', data_i, i)
-        self.driver.set('Shot', 1)
-        self.driver.set('StartCapture')  # 启动指令
-        self.driver.set('GenerateTrig', self.manualcycle())
+            self.driver_awg.set('Waveform', data_i, i)
+            self.QSYNC_driver.set('Waveform', data_i, i)
+        self.driver_awg.set('Shot', 1)
+        self.driver_awg.set('StartCapture')  # 启动指令
+        self.driver_awg.set('GenerateTrig', self.manualcycle())
+        self.QSYNC_driver.set('Shot', 1)
+        self.QSYNC_driver.set('StartCapture')  # 启动指令
+        self.QSYNC_driver.set('GenerateTrig', self.manualcycle())
         self.pagea.Manual_2.setStyleSheet("background-color: rgb(167, 167, 167);")
 
 
     def internal_config_sign(self):
         for i, data_i in self.pagea.alldata.items():
-            self.driver.set('Waveform', data_i, i)
-        self.driver.set('Shot', self.pagea.intrigtimes)
-        self.driver.set('StartCapture')  # 启动指令
-        self.driver.set('GenerateTrig', self.pagea.intrigcycle)
+            self.driver_awg.set('Waveform', data_i, i)
+            self.QSYNC_driver.set('Waveform', data_i, i)
+        self.driver_awg.set('Shot', self.pagea.intrigtimes)
+        self.driver_awg.set('StartCapture')  # 启动指令
+        self.driver_awg.set('GenerateTrig', self.pagea.intrigcycle)
+        self.QSYNC_driver.set('Shot', self.pagea.intrigtimes)
+        self.QSYNC_driver.set('StartCapture')  # 启动指令
+        self.QSYNC_driver.set('GenerateTrig', self.pagea.intrigcycle)
         self.pagea.internal.setStyleSheet("background-color: rgb(0, 61, 184);")
 
     def external_config_sign(self):
         for i, data_i in self.pagea.alldata.items():
-            self.driver.set('Waveform', data_i, i)
-        self.driver.set('Shot', 1)
-        self.driver.set('StartCapture')  # 启动指令
+            self.driver_awg.set('Waveform', data_i, i)
+            self.QSYNC_driver.set('Waveform', data_i, i)
+        self.driver_awg.set('Shot', 1)
+        self.driver_awg.set('StartCapture')  # 启动指令
+        self.QSYNC_driver.set('Shot', 1)
+        self.QSYNC_driver.set('StartCapture')  # 启动指令
         self.pagea.pushButton.setStyleSheet("background-color: rgb(255, 85, 128);")
 
 
     def internalsign(self):
-        self.driver = Driver(self.addr_g)
+        self.driver_awg = Driver(self.addr_g)
         sysparam = {
-            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+            'MixMode': self.main_ui.ip1.MixMode_param, 'RefClock': self.main_ui.ip1.RefClock_param,
+            'DArate': self.main_ui.ip1.DArate.text(), 'KeepAmp': self.main_ui.ip1.Keep_Amp_param
         }
-        self.driver.open(system_parameter=sysparam)
+        self.driver_awg.open(system_parameter=sysparam)
         self.internal_config_sign()
 
     def manualsign(self):
 
-        self.driver = Driver(self.addr_g)
+        self.driver_awg = Driver(self.addr_g)
         sysparam = {
-            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
+            'MixMode': self.main_ui.ip1.MixMode_param, 'RefClock': self.main_ui.ip1.RefClock_param,
+            'DArate': self.main_ui.ip1.DArate.text(), 'KeepAmp': self.main_ui.ip1.Keep_Amp_param
         }
-
-        self.driver.open(system_parameter=sysparam)
+        self.driver_awg.open(system_parameter=sysparam)
         self.manual_config_sign()
 
     def trig_mode(self, i):
@@ -237,64 +280,87 @@ class ConfigWidget:
     def manual_config(self):
         if self.pageb.MODE.currentIndex() == 0:
             for i in range(len(self.pageb.dif_chnl_list)):
-                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
-                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.driver_probe.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver_probe.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.QSYNC_driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.QSYNC_driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
         else:
             for i, data_i in self.pageb.numpy_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
+                self.driver_probe.set('FrequencyList', data_i, i)
+                self.driver_probe.set('PhaseList', data_i, i)
+                self.QSYNC_driver.set('FrequencyList', data_i, i)
+                self.QSYNC_driver.set('PhaseList', data_i, i)
 
-        self.driver.set('StartCapture')
-        self.driver.set('Shot', self.pageb.shot_txt())
-        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+        self.driver_probe.set('StartCapture')
+        self.driver_probe.set('Shot', self.pageb.shot_txt())
+        self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('StartCapture')
+        self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
+        self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
         self.pageb.pushButton.setStyleSheet("background-color: rgb(167, 167, 167);")
 
     def manual_trig(self):
-        self.driver = Driver(self.addr_p)
+        self.driver_probe = Driver(self.addr_p)
         sysparam = {
             'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
         }
-
-        self.driver.open(system_parameter=sysparam)
+        self.driver_probe.open(system_parameter=sysparam)
         self.manual_config()
 
     def inter_config(self):
         if self.pageb.MODE.currentIndex() == 0:
             for i in range(len(self.pageb.dif_chnl_list)):
-                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
-                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.driver_probe.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver_probe.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.QSYNC_driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.QSYNC_driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
         else:
             for i, data_i in self.pageb.numpy_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
-        self.driver.set('StartCapture')
-        self.driver.set('Shot', self.pageb.shot_txt())
-        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+                self.driver_probe.set('FrequencyList', data_i, i)
+                self.driver_probe.set('PhaseList', data_i, i)
+                self.QSYNC_driver.set('FrequencyList', data_i, i)
+                self.QSYNC_driver.set('PhaseList', data_i, i)
+        self.driver_probe.set('StartCapture')
+        self.driver_probe.set('Shot', self.pageb.shot_txt())
+        self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('StartCapture')
+        self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
+        self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
         self.pageb.pushButton_6.setStyleSheet("background-color: rgb(0, 61, 184);")
 
     def inter_trig(self):
-        self.driver = Driver(self.addr_p)
+        self.driver_probe = Driver(self.addr_p)
         sysparam = {
             'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
         }
-        self.driver.open(system_parameter=sysparam)
+        self.driver_probe.open(system_parameter=sysparam)
         self.inter_config()
 
     def exter_config(self):
         if self.pageb.MODE.currentIndex() == 0:
             for i in range(len(self.pageb.dif_chnl_list)):
-                self.driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
-                self.driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.driver_probe.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.driver_probe.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
+                self.QSYNC_driver.set('FrequencyList', self.pageb.dif_chnl_list[i].FrequencyList.text(), i)
+                self.QSYNC_driver.set('PhaseList', self.pageb.dif_chnl_list[i].PhaseList.text(), i)
         else:
             for i, data_i in self.pageb.numpy_data.items():
-                self.driver.set('FrequencyList', data_i, i)
-                self.driver.set('PhaseList', data_i, i)
-        self.driver.set('StartCapture')
-        self.driver.set('Shot', self.pageb.shot_txt())
-        self.driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
+                self.driver_probe.set('FrequencyList', data_i, i)
+                self.driver_probe.set('PhaseList', data_i, i)
+                self.QSYNC_driver.set('FrequencyList', data_i, i)
+                self.QSYNC_driver.set('PhaseList', data_i, i)
+        self.driver_probe.set('StartCapture')
+        self.driver_probe.set('Shot', self.pageb.shot_txt())
+        self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('StartCapture')
+        self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
+        self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
         self.pageb.pushButton_9.setStyleSheet("background-color: rgb(255, 85, 128);")
 
     def add_scatter(self, value):
@@ -315,3 +381,12 @@ class ConfigWidget:
         self.i = self.i + 1
         self.pageb.all_waves.append(self.plt2)
 
+    def config_driver_ip(self):
+        self.main_ui.ip3.exec()
+        if not self.main_ui.ip3.click_ok:
+            return
+        if not self.check_ip(self.main_ui.ip3.ip_edit.text()):
+            return
+        self.QSYNC_driver = Driver(self.main_ui.ip3.ip_edit.text())
+        self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc");
+        self.QSYNC_flag = True

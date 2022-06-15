@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'probe_load.ui'
+# Form implementation generated from reading ui file 'device_driver_ip.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -14,9 +14,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(450, 208)
-        self.verticalLayout = QtWidgets.QVBoxLayout(Form)
-        self.verticalLayout.setObjectName("verticalLayout")
+        Form.resize(483, 207)
+        self.gridLayout = QtWidgets.QGridLayout(Form)
+        self.gridLayout.setObjectName("gridLayout")
         self.frame = QtWidgets.QFrame(Form)
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
@@ -61,9 +61,9 @@ class Ui_Form(object):
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_3.addWidget(self.label_2)
-        self.ipaddr = QtWidgets.QLineEdit(self.widget_3)
-        self.ipaddr.setObjectName("ipaddr")
-        self.horizontalLayout_3.addWidget(self.ipaddr)
+        self.ip_edit = QtWidgets.QLineEdit(self.widget_3)
+        self.ip_edit.setObjectName("ip_edit")
+        self.horizontalLayout_3.addWidget(self.ip_edit)
         self.verticalLayout_3.addWidget(self.widget_3)
         self.widget_4 = QtWidgets.QWidget(self.widget_2)
         self.widget_4.setMinimumSize(QtCore.QSize(0, 54))
@@ -97,7 +97,7 @@ class Ui_Form(object):
         self.horizontalLayout_2.addWidget(self.frame_5)
         self.verticalLayout_3.addWidget(self.widget_4)
         self.verticalLayout_2.addWidget(self.widget_2)
-        self.verticalLayout.addWidget(self.frame)
+        self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -105,7 +105,7 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
-        self.label.setText(_translate("Form", "Connect Device"))
+        self.label.setText(_translate("Form", "Connect QSYNC"))
         self.label_2.setText(_translate("Form", "device ip"))
         self.Cancel.setText(_translate("Form", "Cancel"))
         self.OK.setText(_translate("Form", "OK"))

@@ -1,7 +1,7 @@
 import os
 
 from PyQt5 import QtWidgets, QtCore
-from MCIUI.tabpage.addtabpage import Ui_addtab
+from MCIUI.awg页面.addtabpage import Ui_addtab
 from MCIUI.通道波形 import Chnl_wave
 import numpy as np
 
@@ -21,7 +21,7 @@ class Awg_widget(QtWidgets.QWidget, Ui_addtab):
     def setupUi(self, addtab):
         super(Awg_widget, self).setupUi(addtab)
         self.textEditpy.load(
-            QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/tabpage/static/index.html').replace('\\', '/')))
+            QtCore.QUrl('file:///' + os.path.abspath('./MCIUI/awg页面/static/index.html').replace('\\', '/')))
 
     @property
     def intrigcycle(self):

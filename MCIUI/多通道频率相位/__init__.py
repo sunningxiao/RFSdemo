@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 
-from MCIUI.chnl_mode_list.mode_tab import Ui_Form
+from MCIUI.多通道频率相位.mode_tab import Ui_Form
 
 
 class Chnls_list(QtWidgets.QWidget, Ui_Form):

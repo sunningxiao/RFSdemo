@@ -6,13 +6,13 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>405</width>
-    <height>208</height>
+    <width>510</width>
+    <height>376</height>
    </rect>
   </property>
   <property name="maximumSize">
    <size>
-    <width>405</width>
+    <width>16777215</width>
     <height>16777215</height>
    </size>
   </property>
@@ -95,7 +95,7 @@
             <string notr="true">font: 11pt &quot;Arial&quot;;</string>
            </property>
            <property name="text">
-            <string>Connect Device</string>
+            <string>Connect AWG</string>
            </property>
           </widget>
          </item>
@@ -134,23 +134,82 @@
            <property name="frameShadow">
             <enum>QFrame::Raised</enum>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item alignment="Qt::AlignHCenter">
+           <layout class="QGridLayout" name="gridLayout">
+            <item row="3" column="1">
+             <widget class="QComboBox" name="MixMode">
+              <item>
+               <property name="text">
+                <string>第一奈奎斯特区</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>第二奈奎斯特区</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="KeepAmp">
+              <item>
+               <property name="text">
+                <string>False</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>True</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="styleSheet">
+               <string notr="true">font: 10pt &quot;Arial&quot;;</string>
+              </property>
+              <property name="text">
+               <string>RefClock</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 10pt &quot;Arial&quot;;</string>
+              </property>
+              <property name="text">
+               <string>MixMode</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QComboBox" name="RefClock">
+              <item>
+               <property name="text">
+                <string>in</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>out</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="0">
              <widget class="QLabel" name="label_2">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -166,15 +225,24 @@
               </property>
               <property name="styleSheet">
                <string notr="true">font: 10pt &quot;Arial&quot;;
-border:0px;</string>
+</string>
               </property>
               <property name="text">
                <string>device ip</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
              </widget>
             </item>
-            <item alignment="Qt::AlignLeft">
+            <item row="0" column="1">
              <widget class="QLineEdit" name="IPlineEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>160</width>
@@ -183,11 +251,62 @@ border:0px;</string>
               </property>
              </widget>
             </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="DArate">
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 10pt &quot;Arial&quot;;</string>
+              </property>
+              <property name="text">
+               <string>DArate</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 10pt &quot;Arial&quot;;</string>
+              </property>
+              <property name="text">
+               <string>KeepAmp</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
          <item>
           <widget class="QFrame" name="frame_5">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>54</height>
+            </size>
+           </property>
            <property name="frameShape">
             <enum>QFrame::StyledPanel</enum>
            </property>

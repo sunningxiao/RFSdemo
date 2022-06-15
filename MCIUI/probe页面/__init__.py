@@ -4,8 +4,8 @@ import numpy
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog
 
-from MCIUI.chnl_mode_list import Chnls_list
-from MCIUI.tab_probe.probe_page import Ui_Form
+from MCIUI.多通道频率相位 import Chnls_list
+from MCIUI.probe页面.probe_page import Ui_Form
 import numpy as np
 
 

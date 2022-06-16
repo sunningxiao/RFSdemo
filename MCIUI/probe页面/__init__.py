@@ -36,7 +36,7 @@ class Probe_widget(QtWidgets.QWidget, Ui_Form):
         self.q1 = np.random.normal(size=1024)+10
         self.q2 = np.random.normal(size=1024)+5
 
-        for i in range(20):
+        for i in range(12):
             self.mode_list = Chnls_list(self)
             self.mode_add = QtWidgets.QWidget(self)
             awg_layout = QtWidgets.QGridLayout(self.mode_add)
@@ -104,4 +104,3 @@ class Probe_widget(QtWidgets.QWidget, Ui_Form):
                                          symbolBrush=(0, 0, 255, 150))
         self.x = []
         self.y = []
-

@@ -47,10 +47,11 @@ class ConfigWidget:
             return
         addr = self.main_ui.ip1.IPlineEdit.text()
         self.addr_g = addr
-        # self.main_ui.ip1.IPlineEdit.clear()
+        self.main_ui.ip1.IPlineEdit.clear()
         if not self.check_ip(addr):
             return
         self.add_awg_function(addr)
+        self.main_ui.ip1.click_ok = False
 
     def add_probe(self):
         if self.QSYNC_flag is False:
@@ -67,6 +68,7 @@ class ConfigWidget:
             return
         self.darate[addr] = self.main_ui.ip1.DArate.text()
         self.add_probe_function(addr)
+        self.main_ui.ip2.click_ok = False
 
     def run_ui(self):
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
@@ -105,6 +107,7 @@ class ConfigWidget:
         self.pagea.Manual_2.setEnabled(False)
         self.pagea.pushButton.setEnabled(False)
         self.pagea.internal.setEnabled(False)
+        self.main_ui.ip3.click_ok = False
 
     def add_probe_function(self, addr):
         if addr in self.probe_ip_list:
@@ -118,10 +121,8 @@ class ConfigWidget:
             self.page_dic[addr].external_trig.setEnabled(False)
             self.page_dic[addr].internal_config.setEnabled(False)
             self.page_dic[addr].internal_trig.setEnabled(False)
-            self.open_change_probe(self.addr_p)
-        else:
-            self.open_probe(self.addr_p)
 
+        self.judge_open_probe_param(addr)
 
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = Probe_widget(self, addr)
@@ -296,19 +297,15 @@ class ConfigWidget:
         self.driver_probe.set('StartCapture')
         self.driver_probe.set('Shot', self.pageb.shot_txt())
         self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.QSYNC_driver.set('StartCapture')
         self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
         self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.pageb.pushButton.setStyleSheet("background-color: rgb(167, 167, 167);")
 
     def manual_trig(self):
-        self.driver_probe = Driver(self.addr_p)
-        sysparam = {
-            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
-        }
-        self.driver_probe.open(system_parameter=sysparam)
+        self.judge_open_probe_param(self.addr_p)
         self.manual_config()
 
     def inter_config(self):
@@ -327,19 +324,15 @@ class ConfigWidget:
         self.driver_probe.set('StartCapture')
         self.driver_probe.set('Shot', self.pageb.shot_txt())
         self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.QSYNC_driver.set('StartCapture')
         self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
         self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.pageb.pushButton_6.setStyleSheet("background-color: rgb(0, 61, 184);")
 
     def inter_trig(self):
-        self.driver_probe = Driver(self.addr_p)
-        sysparam = {
-            'MixMode': 2, 'RefClock': 'in', 'DAC抽取倍数': 1, 'DAC本振频率': 0  # , 'DArate': 4e9
-        }
-        self.driver_probe.open(system_parameter=sysparam)
+        self.judge_open_probe_param(self.addr_p)
         self.inter_config()
 
     def exter_config(self):
@@ -358,11 +351,11 @@ class ConfigWidget:
         self.driver_probe.set('StartCapture')
         self.driver_probe.set('Shot', self.pageb.shot_txt())
         self.driver_probe.set('PointNumber', self.pageb.pointnumber_txt())
-        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.driver_probe.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.QSYNC_driver.set('StartCapture')
         self.QSYNC_driver.set('Shot', self.pageb.shot_txt())
         self.QSYNC_driver.set('PointNumber', self.pageb.pointnumber_txt())
-        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 0)
+        self.QSYNC_driver.set('TriggerDelay', self.pageb.triggerdelay, 9)
         self.pageb.pushButton_9.setStyleSheet("background-color: rgb(255, 85, 128);")
 
     def add_scatter(self, value):
@@ -392,3 +385,10 @@ class ConfigWidget:
         self.QSYNC_driver = Driver(self.main_ui.ip3.ip_edit.text())
         self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc")
         self.QSYNC_flag = True
+
+    def judge_open_probe_param(self, ip):
+        if ip in self.awg_ip_list:
+            self.open_change_probe(self.addr_p)
+        else:
+            self.open_probe(self.addr_p)
+

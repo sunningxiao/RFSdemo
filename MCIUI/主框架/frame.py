@@ -15,6 +15,7 @@ class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.resize(1160, 697)
+        Form.setMinimumSize(QtCore.QSize(1160, 0))
         self.verticalLayout = QtWidgets.QVBoxLayout(Form)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
@@ -128,7 +129,7 @@ class Ui_Form(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.QSYNC.sizePolicy().hasHeightForWidth())
         self.QSYNC.setSizePolicy(sizePolicy)
-        self.QSYNC.setMinimumSize(QtCore.QSize(157, 40))
+        self.QSYNC.setMinimumSize(QtCore.QSize(120, 40))
         self.QSYNC.setStyleSheet("margin-right:4px;\n"
 "margin-top:4px;\n"
 "margin-bottom:4px;\n"

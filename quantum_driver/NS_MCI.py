@@ -65,11 +65,8 @@ class Driver(BaseDriver):
         'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
         'ADrate': 4e9,  # AD采样率，单位Hz
         'DArate': 6e9,  # DA采样率，单位Hz
-        'KeepAmp': 1,  # DA波形发射完毕后，保持最后一个值
-        'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
-        'DAC本振频率': 0,  # DUC本振频率，单位MHz
-        'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
-        'ADC本振频率': 0  # DDC本振频率，单位MHz
+        'KeepAmp': 0,  # DA波形发射完毕后，保持最后一个值
+        'Delay': 0,    # 配置DA的原生Delay
     }
 
     def __init__(self, addr: str = '', timeout: float = 10.0, **kw):
@@ -91,8 +88,12 @@ class Driver(BaseDriver):
                                                 use_builtin_types=True)
 
         self.fast_rpc = FastRPC(self.addr)
+        debug = kw.get('debug', False)
+        if debug:
+            return
         # 此时会连接rfsoc的指令接收tcp server
-        self.handle.start_command()
+        result = True
+        result &= self.handle.start_command()
 
         # 配置系统初始值
         system_parameter = kw.get('system_parameter', {})
@@ -103,32 +104,31 @@ class Driver(BaseDriver):
                 self.handle.rpc_set(name, value, 1, False)
 
         # 系统开启前必须进行过一次初始化
-        result = self.__exec_command('初始化')
-        result = self.__exec_command('DAC配置')
-        result = self.__exec_command('ADC配置')
-        self.handle.init_dma()
-        if not result:
+        result &= self.__exec_command('初始化')
+        result &= self.__exec_command('DAC配置')
+        result &= self.__exec_command('ADC配置')
+        # self.handle.init_dma()
+        if result:
+            print(f'{self.addr}开启成功')
+        else:
             print(self.handle.get_all_status())
-        print(kw)
 
     @solve_rpc_exception
     def close(self, **kw):
         """
         关闭设备
         """
-        # self.handle.release_dma()
-        # self.handle.close()
-        pass
+        if getattr(self, 'handle', None) is not None:
+            self.handle.close()
+            self.handle = None
+        if getattr(self, 'fast_rpc', None) is not None:
+            self.fast_rpc = None
 
     def write(self, name: str, value, **kw):
         channel = kw.get('ch', 1)
-        if name in ['Coefficient']:
-            data, f_list, numberOfPoints, phases = get_coef(value, 4e9)
-            self.set('PointNumber', int(numberOfPoints), channel)
-            # self.set('FrequencyList', f_list, channel)
-            self.set('DemodulationParam', data, channel)
-            # self.setValue('PhaseList', phases)
-        elif name in ['CaptureMode', 'PhaseList']:
+        # if name in ['Coefficient']:
+        #     self.set('DemodulationParam', value, channel)
+        if name in ['CaptureMode']:
             pass
         else:
             return self.set(name, value, channel)
@@ -162,7 +162,6 @@ class Driver(BaseDriver):
         if not func(name, value, channel):
             raise xmlrpc.client.Fault(400, '指令执行失败, 请重新open板卡')
             # pass
-        # print(name, value, channel)
 
     @solve_rpc_exception
     def get(self, name, channel=1, value=0):
@@ -184,9 +183,7 @@ class Driver(BaseDriver):
                        need_feedback=True, file_name=None, check_feedback=True,
                        callback=lambda *args: True, wait: int = 0):
         flag = self.handle.execute_command(button_name, need_feedback, file_name, check_feedback)
-        if flag:
-            print(f'指令{button_name}执行成功')
-        else:
+        if not flag:
             print(f'指令{button_name}执行失败')
         return flag
 
@@ -276,8 +273,8 @@ class RPCValueParser:
             value = int(value)
         elif isinstance(value, np.uint):
             value = int(value)
-        elif isinstance(value, (np.complex, complex)):
-            value = 'complex', value.real, value.imag
+        elif isinstance(value, complex):
+            value = ['complex', value.real, value.imag]
         elif isinstance(value, waveforms.Waveform):
             value = ['waveform.Waveforms', pickle.dumps(value)]
         elif isinstance(value, (list, tuple)):

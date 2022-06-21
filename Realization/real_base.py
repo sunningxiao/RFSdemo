@@ -1,6 +1,7 @@
 import sys
 import re
 import random
+import threading
 
 import numpy as np
 import qdarkstyle
@@ -12,6 +13,7 @@ from MCIUI.主框架 import MAIN
 from MCIUI.awg页面 import Awg_widget
 from MCIUI.probe页面 import Probe_widget
 from quantum_driver.NS_MCI import Driver
+# from quantum_driver.NS_QSYNC import Driver as QDriver
 
 class ConfigWidget:
 
@@ -20,7 +22,7 @@ class ConfigWidget:
         self.main_ui = MAIN()
         self.main_ui.Connect_AWG.clicked.connect(self.add_awg)
         self.main_ui.Connect_Probe_2.clicked.connect(self.add_probe)
-        self.main_ui.QSYNC.clicked.connect(self.config_driver_ip)
+        self.main_ui.QSYNC.clicked.connect(self.config_QSYNC_ip)
         self.i = 0
         self.j = 0
         self.k = 0
@@ -39,7 +41,7 @@ class ConfigWidget:
 
     def add_awg(self):
         if self.QSYNC_flag is False:
-            self.config_driver_ip()
+            self.config_QSYNC_ip()
             if not self.main_ui.ip3.click_ok:
                 return
         self.main_ui.ip1.exec()
@@ -55,7 +57,7 @@ class ConfigWidget:
 
     def add_probe(self):
         if self.QSYNC_flag is False:
-            self.config_driver_ip()
+            self.config_QSYNC_ip()
             if not self.main_ui.ip3.click_ok:
                 return
         self.main_ui.ip2.exec()
@@ -376,13 +378,20 @@ class ConfigWidget:
         self.i = self.i + 1
         self.pageb.all_waves.append(self.plt2)
 
-    def config_driver_ip(self):
+    def config_QSYNC_ip(self):
         self.main_ui.ip3.exec()
         if not self.main_ui.ip3.click_ok:
             return
         if not self.check_ip(self.main_ui.ip3.ip_edit.text()):
             return
-        self.QSYNC_driver = Driver(self.main_ui.ip3.ip_edit.text())
+        try:
+            self.QSYNC_driver = Driver(self.main_ui.ip3.ip_edit.text())
+            self.QSYNC_driver.open()
+        except Exception as e:
+            self.main_ui.error_handles.tips_text.setText(str(e))
+            self.main_ui.error_handles.show()
+
+
         self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc")
         self.QSYNC_flag = True
 
@@ -391,4 +400,3 @@ class ConfigWidget:
             self.open_change_probe(self.addr_p)
         else:
             self.open_probe(self.addr_p)
-

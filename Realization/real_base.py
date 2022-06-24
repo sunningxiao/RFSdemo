@@ -1,3 +1,4 @@
+import signal
 import sys
 import re
 import random
@@ -16,6 +17,7 @@ from quantum_driver.NS_MCI import Driver
 from quantum_driver.NS_QSYNC import Driver as QDriver
 
 
+
 class ConfigWidget:
     def __init__(self):
         self.app = QApplication(sys.argv)
@@ -23,26 +25,25 @@ class ConfigWidget:
         self.main_ui.Connect_AWG.clicked.connect(self.add_awg)
         self.main_ui.Connect_Probe_2.clicked.connect(self.add_probe)
         self.main_ui.QSYNC.clicked.connect(self.config_QSYNC_ip)
-        self.i = 0
-        self.j = 0
-        self.k = 0
-        self.m = 0
+        self.main_ui.ip3.OK.clicked.connect(self.config_QSYNC_ip)
+        self.i, self.j, self.k, self.m = 0, 0, 0, 0
         self.awg_ip_list = []
         self.probe_ip_list = []
         self.page_dic = {}
         self.darate = {}
-    # 判断IP地址是否合法
 
+    def run_ui(self):
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.main_ui.show()
+        sys.exit(self.app.exec())
+
+    # 判断IP地址是否合法
     def check_ip(self, ip):
         compile_ip = re.compile(
             '^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$')
         return isinstance(compile_ip.match(ip), re.Match)
 
     def add_awg(self):
-        # if self.main_ui.ip3.QSYNC_flag is False:
-        #     self.main_ui.ip3.progress_bar()
-        #     if not self.main_ui.ip3.click_ok:
-        #         return
         self.main_ui.ip1.exec()
         if not self.main_ui.ip1.click_ok:
             return
@@ -51,19 +52,13 @@ class ConfigWidget:
         self.main_ui.ip1.IPlineEdit.clear()
         if not self.check_ip(addr):
             return
-        self.open_qsync()
-
-        # _thread = threading.Thread(target=self.add_awg_function(addr), daemon=True)
-        # _thread.start()
-        self.add_awg_function(addr)
+        _thread = threading.Thread(target=self.add_awg_function(addr), daemon=True)
+        _thread.start()
         self.main_ui.ip1.click_ok = False
+        _thread = threading.Thread(target=self.cnt_open_qsync, daemon=True)
+        _thread.start()
 
     def add_probe(self):
-        # if self.main_ui.ip3.QSYNC_flag is False:
-        #     self.main_ui.ip3.progress_bar()
-        #     # self.config_QSYNC_ip()
-        #     if not self.main_ui.ip3.click_ok:
-        #         return
         self.main_ui.ip2.exec()
         if not self.main_ui.ip2.click_ok:
             return
@@ -73,16 +68,13 @@ class ConfigWidget:
         if not self.check_ip(addr):
             return
         self.darate[addr] = self.main_ui.ip1.DArate.text()
-        self.open_qsync()
-        # _thread = threading.Thread(target=self.add_probe_function(addr), daemon=True)
-        # _thread.start()
-        self.add_probe_function(addr)
-        self.main_ui.ip2.click_ok = False
 
-    def run_ui(self):
-        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-        self.main_ui.show()
-        sys.exit(self.app.exec())
+        self.main_ui.ip2.click_ok = False
+        _thread = threading.Thread(target=self.add_probe_function(addr), daemon=True)
+        _thread.start()
+        _thread = threading.Thread(target=self.cnt_open_qsync(), daemon=True)
+        _thread.start()
+
 
     def add_awg_function(self, addr):
         self.tabname = 'AWG-' + str(self.m)
@@ -90,7 +82,8 @@ class ConfigWidget:
             print("已经打开相同IP的AWG页面")
             return
         self.pagea = Awg_widget(self, addr)
-
+        # _thread = threading.Thread(target=self.open_awg(self.addr_g), daemon=True)
+        # _thread.start()
         self.open_awg(self.addr_g)
         self.config_button()
         for i in range(5):
@@ -404,17 +397,25 @@ class ConfigWidget:
             return
         if not self.check_ip(self.main_ui.ip3.ip_edit.text()):
             return
+        self.OK_link_bar()
+
+
+    def OK_link_bar(self):
+        try:
+            self.main_ui.ip3.progress_bar(self.link_progress, self.display_status)
+        except Exception as e:
+            self.main_ui.ip3.error_handles.tips_text.setText(str(e))
+            self.main_ui.ip3.error_handles.show()
+            return False
+
+    def link_progress(self):
         self.QSYNC_driver = QDriver(self.main_ui.ip3.ip_edit.text())
-        # _thread = threading.Thread(target=self.open_qsync, daemon=True)
-        # _thread.start()
         self.open_qsync()
-        # self.QSYNC_lock.release()
 
     def display_status(self):
         self.main_ui.QSYNC.setStyleSheet("font: 12pt'Arial';color: #33ffcc")
 
     def open_qsync(self):
-        # self.QSYNC_lock.acquire()
         try:
             self.QSYNC_driver.open()
         except Exception as e:
@@ -428,8 +429,8 @@ class ConfigWidget:
         else:
             self.open_probe(self.addr_p)
 
-    def open_qsync(self):
+    def cnt_open_qsync(self):
         if self.main_ui.ip3.QSYNC_flag is False:
-            self.main_ui.ip3.progress_bar()
+            self.config_QSYNC_ip()
             if not self.main_ui.ip3.click_ok:
                 return

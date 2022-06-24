@@ -20,22 +20,15 @@ class Device_ip(QtWidgets.QDialog, Ui_Form):
     def action_click_ok(self):
         self.click_ok = True
         self.close()
-        try:
-            self.progress_bar()
-        except Exception as e:
-            self.main_ui.ip3.error_handles.tips_text.setText(str(e))
-            self.main_ui.ip3.error_handles.show()
-            return False
 
-    def progress_bar(self):
-        from Realization.real_base import ConfigWidget
-        _pg = pgdialog(self, ConfigWidget.config_QSYNC_ip, label="QSYNC连接", withcancel=False, mode=0)
-        # if _pg.perform():
-        #     print("记录系统连接成功")
-        #     self.QSYNC_flag = False
-        # else:
-        #     print(f"记录系统连接失败（{_pg.get_err_msg()}）")
-
+    def progress_bar(self, bar_function, QSYNC_status):
+        _pg = pgdialog(self, bar_function, label="QSYNC连接", withcancel=False, mode=0)
+        if _pg.perform():
+            print("记录系统连接成功")
+            QSYNC_status()
+            self.QSYNC_flag = True
+        else:
+            print(f"记录系统连接失败（{_pg.get_err_msg()}）")
 
 
 

@@ -1,4 +1,3 @@
-import signal
 import sys
 import re
 import random
@@ -17,7 +16,6 @@ from quantum_driver.NS_MCI import Driver
 from quantum_driver.NS_QSYNC import Driver as QDriver
 
 
-
 class ConfigWidget:
     def __init__(self):
         self.app = QApplication(sys.argv)
@@ -25,7 +23,6 @@ class ConfigWidget:
         self.main_ui.Connect_AWG.clicked.connect(self.add_awg)
         self.main_ui.Connect_Probe_2.clicked.connect(self.add_probe)
         self.main_ui.QSYNC.clicked.connect(self.config_QSYNC_ip)
-        self.main_ui.ip3.OK.clicked.connect(self.config_QSYNC_ip)
         self.i, self.j, self.k, self.m = 0, 0, 0, 0
         self.awg_ip_list = []
         self.probe_ip_list = []
@@ -52,10 +49,10 @@ class ConfigWidget:
         self.main_ui.ip1.IPlineEdit.clear()
         if not self.check_ip(addr):
             return
+        self.main_ui.ip1.click_ok = False
         _thread = threading.Thread(target=self.add_awg_function(addr), daemon=True)
         _thread.start()
-        self.main_ui.ip1.click_ok = False
-        _thread = threading.Thread(target=self.cnt_open_qsync, daemon=True)
+        _thread = threading.Thread(target=self.cnt_open_qsync(), daemon=True)
         _thread.start()
 
     def add_probe(self):
@@ -82,9 +79,6 @@ class ConfigWidget:
             print("已经打开相同IP的AWG页面")
             return
         self.pagea = Awg_widget(self, addr)
-        # _thread = threading.Thread(target=self.open_awg(self.addr_g), daemon=True)
-        # _thread.start()
-        self.open_awg(self.addr_g)
         self.config_button()
         for i in range(5):
             self.pagea.waves()
@@ -105,6 +99,9 @@ class ConfigWidget:
             self.page_dic[addr].external_trig.setEnabled(False)
             self.page_dic[addr].internal_config.setEnabled(False)
             self.page_dic[addr].internal_trig.setEnabled(False)
+        # _thread = threading.Thread(target=self.open_awg(self.addr_g), daemon=True)
+        # _thread.start()
+        self.open_awg(self.addr_g)
         self.m = self.m + 1
         self.k = self.k + 1
         self.pagea.Manual_2.setEnabled(False)
@@ -126,7 +123,6 @@ class ConfigWidget:
             self.page_dic[addr].internal_trig.setEnabled(False)
 
         self.judge_open_probe_param(addr)
-
         self.tabname1 = 'Probe-' + str(self.j)
         self.pageb = Probe_widget(self, addr)
         self.config_probe_button()
@@ -408,7 +404,7 @@ class ConfigWidget:
             self.main_ui.ip3.error_handles.show()
             return False
 
-    def link_progress(self):
+    def link_progress(self, pthread=None):
         self.QSYNC_driver = QDriver(self.main_ui.ip3.ip_edit.text())
         self.open_qsync()
 

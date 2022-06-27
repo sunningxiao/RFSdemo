@@ -371,6 +371,15 @@ margin-right:10px;</string>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>ipaddr</tabstop>
+  <tabstop>ADrate</tabstop>
+  <tabstop>KeepAmp</tabstop>
+  <tabstop>MixMode</tabstop>
+  <tabstop>RefClock</tabstop>
+  <tabstop>Cancel</tabstop>
+  <tabstop>OK</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

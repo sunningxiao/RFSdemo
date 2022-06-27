@@ -359,6 +359,15 @@ margin-right:10px;</string>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>IPlineEdit</tabstop>
+  <tabstop>DArate</tabstop>
+  <tabstop>KeepAmp</tabstop>
+  <tabstop>MixMode</tabstop>
+  <tabstop>RefClock</tabstop>
+  <tabstop>Cancel</tabstop>
+  <tabstop>OK</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

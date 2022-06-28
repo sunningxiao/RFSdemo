@@ -65,8 +65,8 @@ class Driver(BaseDriver):
         'RefClock': 'out',  # 参考时钟选择： ‘out’：外参考时钟；‘in’：内参考时钟
         'ADrate': 4e9,  # AD采样率，单位Hz
         'DArate': 6e9,  # DA采样率，单位Hz
-        'KeepAmp': 1,  # DA波形发射完毕后，保持最后一个值
-        'Delay': 0,    #
+        'KeepAmp': 0,  # DA波形发射完毕后，保持最后一个值
+        'Delay': 0,     # set/get,播放延时
         'DAC抽取倍数': 1,  # DA内插比例，1,2,4,8
         'DAC本振频率': 0,  # DUC本振频率，单位MHz
         'ADC抽取倍数': 1,  # AD抽取比例，1,2,4,8
@@ -79,6 +79,7 @@ class Driver(BaseDriver):
         self.handle = None
         self.model = 'NS_MCI'  # 默认为设备名字
         self.srate = 6e9
+        self.has_start_capture = False
 
     @solve_rpc_exception
     def open(self, **kw):
@@ -94,10 +95,10 @@ class Driver(BaseDriver):
         self.fast_rpc = FastRPC(self.addr)
 
         # 判断是否更改ip
-        rfs_ip = kw.get('rfs_ip', None)
-        if rfs_ip is not None:
-            self.handle.start_command(rfs_ip)
-            # self.handle.change_rfs_addr(rfs_ip)
+        # rfs_ip = kw.get('rfs_ip', None)
+        # if rfs_ip is not None:
+        #     self.handle.start_command(rfs_ip)
+        #     # self.handle.change_rfs_addr(rfs_ip)
         # else:
         #     # 此时会连接rfsoc的指令接收tcp server
         #     self.handle.start_command()
@@ -161,10 +162,15 @@ class Driver(BaseDriver):
         :param channel：通道号
         """
         value = RPCValueParser.dump(value)
-        if name in {'Waveform', 'GenWave'}:
+        if name in {'Waveform', 'GenWave', 'GenWaveIQ', 'DemodulationParam', 'Coefficient'}:
+            name = 'GenWave' if name == 'Waveform' and value[0] == 'waveform.Waveforms' else name
             func = self.fast_rpc.rpc_set
         else:
             func = self.handle.rpc_set
+
+        if self.has_start_capture and name == 'StartCapture':
+            return
+        self.has_start_capture = name == 'StartCapture'
 
         if not func(name, value, channel):
             raise xmlrpc.client.Fault(400, '指令执行失败, 请重新open板卡')
@@ -180,6 +186,8 @@ class Driver(BaseDriver):
             func = self.fast_rpc.rpc_get
         else:
             func = self.handle.rpc_get
+
+        self.has_start_capture = name == 'StartCapture'
 
         tmp = func(name, channel, value)
         # tmp = self.handle.rpc_get(name, channel, value)
@@ -205,7 +213,6 @@ class FastRPC:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.addr, 10800))
         sock.settimeout(10)
-        # sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         # sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, True)
         # sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 60 * 1000, 30 * 1000))
         # sock.close()
@@ -216,7 +223,7 @@ class FastRPC:
         a = pickle.dumps(param)
         head = struct.pack('=IIII', *[0x5F5F5F5F, 0x32000001, 0, 16 + len(a)])
         sock.sendall(head)
-        sock.sendall(memoryview(a))
+        sock.sendall(a)
         head = struct.unpack("=IIIII", sock.recv(20))
         # print(head)
         data = sock.recv(head[3] - 20)

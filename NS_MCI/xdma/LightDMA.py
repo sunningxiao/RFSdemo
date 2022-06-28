@@ -77,7 +77,7 @@ class LightDMAMixin:
         self.xdma_opening = True
 
         # 初始化dma下行内存
-        channel_size = round(self.da_channel_width * self.qubit_solver.DArate)
+        channel_size = round(self.da_channel_width * 6e9)
         down_size = int(self.da_channel_num * channel_size / 2)
         fd = xdma_base.fpga_alloc_dma(0, down_size)
         self.down_fd_list.append(fd)
@@ -85,7 +85,7 @@ class LightDMAMixin:
         buffer = buffer.reshape((self.da_channel_num, channel_size))
         self.da_cache = buffer
         self.down_buffer_list.append(buffer)
-        self.buffer_memset()
+        # self.buffer_memset()
 
         print('xdma初始化成功')
 

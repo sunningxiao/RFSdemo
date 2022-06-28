@@ -83,6 +83,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         :param channel：通道号
         :param execute: 是否立即生效
         """
+        printDebug(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] __________rpc_set: {name}_________')
         result = True
         channel = channel - 1
         print(f'channel: {channel}')
@@ -110,6 +111,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         self.config_params[f'waveform_{i}'] = value
                         self.rfs_kit.set_param_value(f'BIT移位DAC{i}', valid_bit)
                         # result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+                    self.rfs_kit.execute_command('复位')
+                    self.stop_event.clear()
+                    self._download_da_data()
+                    self.stop_event.set()
                 else:
                     # channel //= 2
                     # self.da_cache[channel, :] = 0
@@ -118,6 +123,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.config_params[f'waveform_{channel}'] = value
                     self.rfs_kit.set_param_value(f'BIT移位DAC{channel}', valid_bit)
                     # result = self.rfs_kit.execute_command('DAC数据更新', True, value.tobytes())
+                    self.rfs_kit.execute_command('复位')
+                    self.stop_event.clear()
+                    self._download_da_data()
+                    self.stop_event.set()
             case 'GenWave':
                 if not isinstance(value, waveforms.Waveform):
                     raise ValueError(f'value类型应为{waveforms.Waveform}, 而不是{type(value)}')
@@ -139,6 +148,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                         self.config_params[f'waveform_{i}'] = data
                         self.rfs_kit.set_param_value(f'BIT移位DAC{i}', valid_bit)
                         # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
+                    self.rfs_kit.execute_command('复位')
+                    self.stop_event.clear()
+                    self._download_da_data()
+                    self.stop_event.set()
                 else:
                     if value.start is not None and value.stop is not None:
                         data = value.sample(rate)
@@ -155,6 +168,10 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.da_cache[channel, :data.size] = data
                     self.config_params[f'waveform_{channel}'] = data
                     self.rfs_kit.set_param_value(f'BIT移位DAC{channel}', valid_bit)
+                    self.rfs_kit.execute_command('复位')
+                    self.stop_event.clear()
+                    self._download_da_data()
+                    self.stop_event.set()
                     # result = self.rfs_kit.execute_command('DAC数据更新', True, data.tobytes())
             case 'GenWaveIQ':
                 if not isinstance(value, list) and len(value) == 2 and isinstance(value[0], waveforms.Waveform):
@@ -225,6 +242,14 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
             case 'DArate':
                 print(f'DA采样率: {value}')
                 self.qubit_solver.DArate = value
+                try:
+                    self.da_cache[:, :] = 0
+                    self.rfs_kit.execute_command('复位')
+                    self.stop_event.clear()
+                    self._download_da_data()
+                    self.stop_event.set()
+                except:
+                    pass
                 self.rfs_kit.set_param_value('DAC采样率', value * 1e-6)
                 self.config_params[f'{name}'] = value
             case 'KeepAmp':
@@ -241,26 +266,37 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                 #                                       f'当前ddr深度 {self.sig_fpga_current_deep}, ' \
                 #                                       f'进入ddr数据量 {self.sig_fpga_recv_count}, ' \
                 #                                       f'ddr流出数据两 {self.sig_fpga_send_count}'
+                # if self.recv_lock.locked():
+                #     return
+                st = time.time()
                 self.stop_event.set()
                 self.rfs_kit.execute_command('复位')
+                printDebug(f'复位指令耗时: {time.time()-st}')
+                st = time.time()
                 if not self.sig_fpga_reset_trig:
                     raise RuntimeError('清空trig计数出错')
+                printDebug(f'清空trig耗时: {time.time() - st}')
                 # self.compute_cache.clear()
+                st = time.time()
                 self.clear_ad_cache()
+                printDebug(f'清空缓存耗时: {time.time() - st}')
 
+                st = time.time()
                 self.stop_event.clear()
                 self._download_da_data()
                 self.stop_event.set()
+                printDebug(f'下发波形耗时: {time.time() - st}')
+                st = time.time()
                 while self.recv_lock.locked():
                     time.sleep(0.1)
                     # raise RuntimeError('上次dma未结束')
-                # points = int((self.qubit_solver.pointnum+15)//16*16)
                 thread = Thread(target=self._cache_dma_size,
                                 args=(self.qubit_solver.pointnum * 4,
                                       self.qubit_solver.shots,
                                       self._compute_data),
                                 daemon=True)
                 thread.start()
+                printDebug(f'开启采集耗时: {time.time() - st}')
 
                 # self.config_params['StartCapture后'] = f'时钟锁定 {self.sig_fpga_clk_online}, ' \
                 #                                       f'接收触发数 {self.sig_fpga_trig_count}, ' \
@@ -350,11 +386,13 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                     self.config_params[f'{name}_{channel}'] = value
 
             case 'GenerateTrig':
+                st = time.time()
                 printInfo('内部触发开启')
                 self.rfs_kit.set_param_value('基准PRF周期', value)
                 self.rfs_kit.set_param_value('基准PRF数量', self.qubit_solver.shots)
                 if execute:
                     result = self.rfs_kit.execute_command('内部PRF产生')
+                printDebug(f'开启触发耗时: {time.time() - st}')
 
                 # def __test():
                 #     self.config_params['GenerateTrig后'] = {
@@ -391,6 +429,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
         查询设备属性，获取数据
 
         """
+        printDebug(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] __________rpc_get: {name}_________')
         channel = channel - 1
         print(f'channel: {channel}')
         if name == 'TraceIQ':
@@ -441,6 +480,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
     @solve_exception
     def fast_adc_data(self, channel=0, solve=True, no_complex=0):
         printInfo('获取数据')
+        st = time.time()
         if self.recv_lock.acquire(timeout=3):
             self.recv_lock.release()
         else:
@@ -459,6 +499,7 @@ class RFSKitRPCServer(SimpleXMLRPCServer, LightDMAMixin):
                                    f'进入ddr数据量 {self.sig_fpga_recv_count}\n'
                                    f'ddr流出数据两 {self.sig_fpga_send_count}')
             # return RPCValueParser.dump(np.array([]))
+        printDebug(f'channle: {channel} 等待上行耗时: {time.time() - st}')
         if solve:
             data = self.compute_cache[channel][1]
             if data.size == 0:
@@ -554,7 +595,7 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
                 self.wfile.write(data)
                 printInfo('-------rpc_set反馈完成-------')
             case (0x5F5F5F5F, 0x32000002, _id, _length):
-                printInfo('-------接收指令rpc_get-------')
+                printDebug(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] -------接收指令rpc_get-------')
                 param = pickle.loads(self.rfile.read(_length - 16))
                 try:
                     data = self.rpc_server.rpc_get(*param)
@@ -566,7 +607,7 @@ class LightTCPHandler(socketserver.StreamRequestHandler):
                 head = struct.pack('=IIIII', *[0xCFCFCFCF, 0x32000002, 0, 20 + len(data), error])
                 self.wfile.write(head)
                 self.wfile.write(data)
-                printInfo('-------rpc_get反馈完成-------')
+                printInfo(f'[{time.strftime("%Y-%m-%d %H:%M:%S")}] -------rpc_get反馈完成-------')
             case (0x5F5F5F5F, 0x32000003, _id, _length):
                 printInfo('-------接收指令get_debug_status-------')
                 param = pickle.loads(self.rfile.read(_length - 16))
@@ -603,10 +644,6 @@ class ICDispenserHandler(socketserver.StreamRequestHandler):
 
 
 class UDPScannHandler(socketserver.DatagramRequestHandler):
-    """
-    回应UDP扫描
-    """
-
     flag_data = b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00"
     feedback_data = b"\xcf\xcf\xcf\xcf\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00"
 
@@ -620,7 +657,7 @@ if __name__ == '__main__':
     import sys
     time.sleep(5)
 
-    with RFSKitRPCServer(rfs_addr='192.168.1.181', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
+    with RFSKitRPCServer(rfs_addr='192.168.1.176', addr=("0.0.0.0", 10801), use_builtin_types=True) as server:
         server.register_instance(server.rfs_kit, allow_dotted_names=True)
         server.register_function(server.change_rfs_addr)
 

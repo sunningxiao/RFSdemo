@@ -15,6 +15,7 @@ from ui.频谱显示 import SpectrumScreen
 from ui.QMC配置 import QMCConfig
 from ui.RF配置 import RFConfig
 from ui.连接界面 import LinkSystemUI
+from ui.RCM控制 import RCMConfigUI
 
 from tools.printLog import *
 
@@ -54,6 +55,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.qmc_config_ui = QMCConfig(self)
         self.rf_config_ui = RFConfig(self)
         self.link_system_ui = LinkSystemUI(self)
+        self.rcm_config_ui = RCMConfigUI(self)
 
         self.enable_chk_channels = []
         self.slave_rfs = []
@@ -118,6 +120,10 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.linking_button('QMC配置', need_feedback=True, need_file=False)
         )
         self.link_qmc_config_ui()
+
+        # RCM相关
+        self.ui.btn_rcm_cfg.clicked.connect(self.rcm_config_ui.show)
+        self.rcm_config_ui.link_rcm_config_ui()
 
         self.ui.btn_start.clicked.connect(self.start_ui.show)
         self.start_ui.btn_config.clicked.connect(
@@ -391,7 +397,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         # 记录状态
         elif state == 2:
             self.ui.label_status.setText("开始记录")
-            self.set_btn([False, False, True, False, False, True, False, True])
+            self.set_btn([True, False, True, False, False, True, False, True])
         self._status = state
 
     def set_btn(self, state):

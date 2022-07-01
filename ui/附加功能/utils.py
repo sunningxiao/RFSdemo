@@ -6,7 +6,6 @@
 """
 import numpy as np
 from scipy.fftpack import fft, ifft
-import matplotlib.pyplot as plt
 
 
 class Custom:

@@ -9,7 +9,12 @@ a = Analysis(
     pathex=[],
     binaries=[('.\\core\\xdma\\xdma_api.dll', './core/xdma')],
     datas=[('.\\VERSION', './')],
-    hiddenimports=[],
+    hiddenimports=[
+    "pyqtgraph.graphicsItems.ViewBox.axisCtrlTemplate_pyqt5",
+    "pyqtgraph.graphicsItems.PlotItem.plotConfigTemplate_pyqt5",
+    "pyqtgraph.imageview.ImageViewTemplate_pyqt5"
+    ],
+
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

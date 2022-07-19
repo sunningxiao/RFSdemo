@@ -1,8 +1,11 @@
 import os
 import socket
 import time
+import threading
+
 import serial
 from typing import TYPE_CHECKING
+import re
 from serial.tools import list_ports
 from threading import Thread, Lock, Event
 from tools.printLog import *
@@ -34,6 +37,14 @@ class SerialUIMixin:
         self._serial_stop_event = Event()
         self._serial_stopped_event = Event()
         self._serial_scan_timer = QTimer(self)
+        self.temp_sign = 0
+        self.ADC_adel_adjust = [1, 1, 1, 1]
+        self.DAC_adel_adjust = [1, 1, 1, 1]
+        self.change_done_0 = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.change_done_1 = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.cache = ''
+        self._lock = threading.Lock()
+        self.list = []
 
     def init_serial_ui(self):
         self._serial_scan_timer.timeout.connect(self.scanning_com)
@@ -91,13 +102,219 @@ class SerialUIMixin:
 
             try:
                 self.device_serial: serial.Serial
-                data = self.device_serial.read(1024).decode('ascii')
+                data = self.device_serial.read(19500).decode('ascii')
                 if data != '':
                     printColor(data, '#DEB887')
+                    self.cache += data
+                    if self.calibration:
+                        thread = threading.Thread(target=self.read_cachedata, daemon=True)
+                        thread.start()
+
             except UnicodeDecodeError as e:
                 printException(e)
 
         self._serial_stopped_event.set()
+
+    def read_cachedata(self):
+
+        if self.cache is None:
+            pass
+        else:
+            self.read_str(self.cache)
+
+    def read_str(self, cache_data):
+        temp = re.findall(r"Temp:(\d(\d)?(\d)?)", cache_data)
+        match_sign = re.findall(r"Zynq Server : Send feedback to Client done", cache_data)
+        if temp:
+            for i in range(len(temp)):
+                if int(temp[i][0]) + 5 < int(self.temp_sign) or int(temp[i][0]) - 5 > int(
+                        self.temp_sign):
+                    self.temp_sign = temp[i][0]
+                    self.linking_button('RF配置', need_feedback=True, need_file=False)()
+                else:
+                    pass
+        if match_sign:
+            self.deal_clock_data(self.cache)
+            self.match_sign = False
+
+        # if self.change_done != 16:
+        #     self.linking_button('RF配置', need_feedback=True, need_file=False)()
+
+    def deal_clock_data(self, match_data):
+        self.clock_data = re.findall(
+            r"(metal: info:      (ADC|DAC)(\d): \d...............................................................................................................................)",
+            match_data)
+        self.list += self.clock_data
+        self.cache = ''
+        if len(self.list) >= 16:
+            self.DAC0_dtc0 = self.list[0][0]
+            self.DAC1_dtc0 = self.list[1][0]
+            self.DAC2_dtc0 = self.list[2][0]
+            self.DAC3_dtc0 = self.list[3][0]
+            self.DAC0_dtc1 = self.list[4][0]
+            self.DAC1_dtc1 = self.list[5][0]
+            self.DAC2_dtc1 = self.list[6][0]
+            self.DAC3_dtc1 = self.list[7][0]
+            self.ADC0_dtc0 = self.list[8][0]
+            self.ADC1_dtc0 = self.list[9][0]
+            self.ADC2_dtc0 = self.list[10][0]
+            self.ADC3_dtc0 = self.list[11][0]
+            self.ADC0_dtc1 = self.list[12][0]
+            self.ADC1_dtc1 = self.list[13][0]
+            self.ADC2_dtc1 = self.list[14][0]
+            self.ADC3_dtc1 = self.list[15][0]
+            self.clock_data = None
+            self.list = self.list[16:]
+            self.ADC_dtc0 = [self.ADC0_dtc0, self.ADC1_dtc0, self.ADC2_dtc0, self.ADC3_dtc0]
+            self.ADC_dtc1 = [self.ADC0_dtc1, self.ADC1_dtc1, self.ADC2_dtc1, self.ADC3_dtc1]
+            self.DAC_dtc0 = [self.DAC0_dtc0, self.DAC1_dtc0, self.DAC2_dtc0, self.DAC3_dtc0]
+            self.DAC_dtc1 = [self.DAC0_dtc1, self.DAC1_dtc1, self.DAC2_dtc1, self.DAC3_dtc1]
+            self.judge()
+
+    # def adel_adjust(self, former_adel, dtc_code0, dtc_code1, dtc_code2, dtc_code3, step):
+    #     position_of_hash = 88
+    # # 首先确认调整范围
+    # span_right = former_adel
+    # span_left = 30 - former_adel
+    # ##确定警号和星号的位置
+    # position_of_hash = 0
+    # position_of_star = 0
+    # while (dtc_code[position_of_hash] != '#') & (position_of_hash < len(dtc_code) - 3):
+    #     position_of_hash += 1
+    # if position_of_hash == len(dtc_code) - 3:
+    #     adjust_adel = former_adel
+    #     return adjust_adel
+    #
+    # while dtc_code[position_of_star] != '*':
+    #     position_of_star += 1
+    # adjust = position_of_hash - position_of_star
+    # if (adjust > 0):
+    #     dir = +1
+    # else:
+    #     dir = -1
+    # adjust = adjust / step
+    # if (former_adel + adjust > 0) & (former_adel + adjust < 30):
+    #     adjust_adel = former_adel + adjust
+    # else:
+    #     position_of_zero_near = position_of_hash - 1
+    #     while 1:
+    #         if (dtc_code[position_of_zero_near] != '0') & (
+    #                 dtc_code[position_of_zero_near + 1 * dir] == '0'):
+    #             break
+    #         else:
+    #             position_of_zero_near += 1 * dir
+    #     position_of_zero_beyond = position_of_zero_near
+    #     while 1:
+    #         if (dtc_code[position_of_zero_beyond] == '0') & (
+    #                 dtc_code[position_of_zero_beyond + 1 * dir] != '0'):
+    #             break
+    #         else:
+    #             position_of_zero_beyond += 1 * dir
+    #     adjust = (position_of_hash - (position_of_zero_beyond + position_of_zero_near) / 2) / step
+    #     adjust_adel = adjust + former_adel
+    #     if (adjust_adel < 0) & (adjust_adel > 30):
+    #         adjust_adel = -999
+    # adjust_adel = int(adjust_adel)
+
+    def judge(self):
+        print(self.DAC_adel_adjust)
+        print(self.ADC_adel_adjust)
+        self.rfs_kit.set_param_value('DAC0延迟', int(self.DAC_adel_adjust[0]))
+        self.rfs_kit.set_param_value('DAC2延迟', int(self.DAC_adel_adjust[2]))
+        self.rfs_kit.set_param_value('ADC0延迟', int(self.ADC_adel_adjust[0]))
+        self.rfs_kit.set_param_value('ADC1延迟', int(self.ADC_adel_adjust[1]))
+        self.rfs_kit.set_param_value('ADC2延迟', int(self.ADC_adel_adjust[2]))
+        self.rfs_kit.set_param_value('ADC3延迟', int(self.ADC_adel_adjust[3]))
+
+        self.change_done_0[0] = self.adel_detect(self.DAC_dtc0[0])
+        self.change_done_0[1] = self.adel_detect(self.DAC_dtc1[0])
+        self.change_done_0[2] = self.adel_detect(self.DAC_dtc0[2])
+        self.change_done_0[3] = self.adel_detect(self.DAC_dtc1[2])
+        self.change_dac0_sign = self.change_done_0[0] + self.change_done_0[1]
+        self.change_dac1_sign = self.change_done_0[2] + self.change_done_0[3]
+        for i in range(4):
+            self.change_done_1[i] = self.adel_detect(self.ADC_dtc0[i])
+        for i in range(4):
+            self.change_done_1[i + 4] = self.adel_detect(self.ADC_dtc1[i])
+        self.change_adc0_sign = self.change_done_1[0] + self.change_done_1[4]
+        self.change_adc1_sign = self.change_done_1[1] + self.change_done_1[5]
+        self.change_adc2_sign = self.change_done_1[2] + self.change_done_1[6]
+        self.change_adc3_sign = self.change_done_1[3] + self.change_done_1[7]
+
+        if self.change_dac0_sign != 2 and self.DAC_adel_adjust[0] < 30:
+            self.DAC_adel_adjust[0] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        elif self.change_dac1_sign != 2 and self.DAC_adel_adjust[2] < 30:
+            self.DAC_adel_adjust[2] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        elif self.change_adc0_sign != 2 and self.ADC_adel_adjust[0] < 30:
+            self.ADC_adel_adjust[0] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        elif self.change_adc1_sign != 2 and self.ADC_adel_adjust[1] < 30:
+            self.ADC_adel_adjust[1] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        elif self.change_adc2_sign != 2 and self.ADC_adel_adjust[2] < 30:
+            self.ADC_adel_adjust[2] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        elif self.change_adc3_sign != 2 and self.ADC_adel_adjust[3] < 30:
+            self.ADC_adel_adjust[3] += 1
+            self.linking_button('RF配置', need_feedback=True, need_file=False)()
+        if self.change_adc3_sign == 2:
+            self.write_txt(self.temp_sign, self.DAC_adel_adjust[0], self.DAC_adel_adjust[2], self.ADC_adel_adjust[0],
+                           self.ADC_adel_adjust[1], self.ADC_adel_adjust[2], self.ADC_adel_adjust[3])
+            self.DAC_adel_adjust[0] = 1
+            self.DAC_adel_adjust[2] = 1
+            self.ADC_adel_adjust[0] = 1
+            self.ADC_adel_adjust[1] = 1
+            self.ADC_adel_adjust[2] = 1
+            self.ADC_adel_adjust[3] = 1
+
+    def adel_detect(self, dtc_code):
+        change_done = 0
+        position_of_hash = 0
+        position_of_star = 0
+        while (dtc_code[position_of_hash] != '#') & (position_of_hash < len(dtc_code) - 3):
+            position_of_hash += 1
+        if position_of_hash == len(dtc_code) - 3:
+            change_done = 1
+            return change_done
+        position_of_zuo = position_of_hash
+        position_of_you = position_of_hash
+        while 1:
+            if (dtc_code[position_of_zuo] == '1') | (dtc_code[position_of_zuo] == '2') | (
+                    dtc_code[position_of_zuo] == '3'):
+                break
+            if (position_of_zuo == 0):
+                break
+            position_of_zuo -= 1
+        while 1:
+            if (dtc_code[position_of_you] == '1') | (dtc_code[position_of_you] == '2') | (
+                    dtc_code[position_of_you] == '3'):
+                break
+            if (position_of_you == len(dtc_code) - 3):
+                break
+            position_of_you += 1
+        if (position_of_hash - position_of_zuo) > (position_of_you - position_of_hash):
+            adjust = position_of_you - position_of_hash
+        else:
+            adjust = position_of_hash - position_of_zuo
+        if adjust > 3:
+            change_done = 1
+        return change_done
+
+    def write_txt(self, tempa, DAC_adel_adjust0, DAC_adel_adjust2, ADC_adel_adjust0, ADC_adel_adjust1, ADC_adel_adjust2,
+                  ADC_adel_adjust3):
+        full_path = fr'./handled.txt'
+        file = open(full_path, 'a')
+        file.write(str("%04d" % int(tempa)))
+        file.write(str("%04d" % int(DAC_adel_adjust0)))
+        file.write(str("%04d" % int(DAC_adel_adjust2)))
+        file.write(str("%04d" % int(ADC_adel_adjust0)))
+        file.write(str("%04d" % int(ADC_adel_adjust1)))
+        file.write(str("%04d" % int(ADC_adel_adjust2)))
+        file.write(str("%04d" % int(ADC_adel_adjust3)))
+        file.write("\r\n")
+        file.close()
 
 
 def center_move2_point(widget: QtWidgets.QWidget, point: QtCore.QPoint) -> None:

@@ -64,6 +64,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
 
         self.status_trigger.connect(self.show_unload_status)
         self.link_system_ui.show()
+        self.calibration = False
 
     def init_system(self, cmd_interface=CommandTCPInterface, data_interface=DataTCPInterface, **kwargs):
         self.rfs_kit = RFSKit(
@@ -99,6 +100,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.splitter_log.moveSplitter(0, 1)
         self.ui.chk_port_follow_ip.setHidden(True)
         self.ui.btn_connect_com.clicked.connect(self.click_connect_com)
+        self.ui.btn_start_calibration.clicked.connect(self.click_start_calibration)
 
         print_wheel.txt_trigger.connect(self.update_textlog)
 
@@ -179,7 +181,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.btn_framwork_up.clicked.connect(
             self.linking_button('固件更新', need_feedback=True, need_file=True, wait=20)
         )
-
+        self.ui.btn_clock_up.clicked.connect(
+            self.linking_button('时钟校准', need_feedback=True, need_file=True, wait=20)
+        )
         # 关联界面参数与json
         self.ui.select_clock.currentIndexChanged.connect(
             self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
@@ -255,6 +259,14 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         stop_bit = self.ui.select_com_stop_bit.currentText()
         stream_str = self.ui.select_com_stream.currentText()
         self.connect_com(port, baud, check_sum, byte_size, stop_bit, stream_str)
+
+    def click_start_calibration(self):
+        if self.calibration == False:
+            self.calibration = True
+            self.ui.btn_start_calibration.setStyleSheet("background-color: rgb(255, 0, 0);")
+        else:
+            self.calibration = False
+            self.ui.btn_start_calibration.setStyleSheet("background-color: None;")
 
     def update_textlog(self, msg):
         try:

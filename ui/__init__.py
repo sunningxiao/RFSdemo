@@ -7,7 +7,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
 import ui.main_frame as ui
-from ui.utils import SerialUIMixin, get_git_version, send_command
+from ui.utils import SerialUIMixin, get_git_version, send_command, save_data_by_timer
 from ui.DDS配置 import DDSConfig
 from ui.开启工作 import StartConfig
 from ui.波形预置 import WaveFileConfig
@@ -290,7 +290,29 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
     def click_start(self):
         self.gui_state(2)
         ip = self.ui.select_link_addr.currentText()
-        self.rfs_kit.start_stream(write_file=self.ui.chk_write_file.isChecked(), file_name=ip.split('.')[3])
+        split_time = self.ui.txt_split_file_step.text()
+        if not self.ui.chk_write_file.isChecked():
+            self.rfs_kit.start_stream(auto_write_file=True,
+                                      write_file=False,
+                                      file_name=ip.split('.')[3])
+        elif split_time in {'', 'inf', '0'}:
+            self.rfs_kit.start_stream(auto_write_file=True,
+                                      write_file=self.ui.chk_write_file.isChecked(),
+                                      file_name=ip.split('.')[3])
+        else:
+            self.rfs_kit.start_stream(auto_write_file=False)
+            try:
+                split_time = float(split_time)
+            except ValueError as e:
+                split_time = 1
+            package_num = split_time // (self.rfs_kit.get_param_value('基准PRF周期', 1e6, float) * 1e-6)
+            _thread = threading.Thread(
+                target=save_data_by_timer,
+                args=(self.rfs_kit, package_num),
+                daemon=True
+            )
+            _thread.start()
+
         self.start_ui.close()
         self.status_timer.start(1000)
 

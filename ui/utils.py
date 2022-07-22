@@ -1,10 +1,17 @@
+import os
 import socket
+import time
 import serial
+from typing import TYPE_CHECKING
 from serial.tools import list_ports
 from threading import Thread, Lock, Event
 from tools.printLog import *
 from PyQt5.QtCore import QTimer
 from PyQt5 import QtWidgets, QtCore
+import numpy as np
+
+if TYPE_CHECKING:
+    from core import RFSKit
 
 
 class SerialUIMixin:
@@ -143,3 +150,47 @@ def send_command(ip, port, command):
         return False
 
     return True
+
+
+def save_data_by_timer(rfskit: "RFSKit", package_num: int):
+    self = rfskit._data_solve
+    file_path = 0
+    while os.path.exists(str(file_path)):
+        file_path += 1
+    os.mkdir(str(file_path))
+    file_name = 0
+    file = open(os.path.join(fr'./{file_path}', f'{file_name}.data'), 'wb')
+    while not self.has_data_upload_event.wait(1):
+        ...
+    try:
+        start_time = time.time()
+        recv_length = data_length = 0
+        split_length = max(self.once_package*package_num, self.once_package)
+        self.write_speed = 0
+        while not self.upload_stop_event.is_set():
+            _data = rfskit.get_stream_data()
+            if isinstance(_data, np.ndarray):
+                file.write(_data)
+                data_size = _data.size * 4
+                recv_length += data_size
+                data_length += data_size
+                end_time = time.time()
+                if recv_length >= split_length:
+                    file.close()
+                    file_name += 1
+                    file = open(os.path.join(fr'./{file_path}', f'{file_name}.data'), 'wb')
+                    recv_length = 0
+                if end_time - start_time > 1:
+                    self.write_speed = data_length / (end_time - start_time) / 1024 ** 2
+                    start_time = time.time()
+                    data_length = 0
+    except AssertionError as e:
+        printDebug(e)
+        file.close()
+    except Exception as e:
+        printException(e)
+        file.close()
+    finally:
+        file.close()
+        printColor("文件保存完成", 'green')
+        # us_signal.status_trigger.emit((0, 0))

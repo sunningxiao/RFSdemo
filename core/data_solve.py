@@ -32,6 +32,7 @@ class DataSolve:
         self.rfs_kit = rfs_kit
         self.server = server
         self._files = []
+        self.once_package = 0
         self.__upload_data_length = 0
         self.__prev_data_length = 0
         self.__start_upload_time = 0
@@ -40,6 +41,7 @@ class DataSolve:
         # self._cache = Queue(1024)
         self.upload_stop_event = upload_event
         self.download_stop_event = download_event
+        self.has_data_upload_event = threading.Event()
 
     def upload_status(self):
         now = time.time()
@@ -93,6 +95,8 @@ class DataSolve:
                 printWarning('解析包长过大，按16M接收')
                 once_package = 1024**2*16
             printInfo(f'包长度{once_package}')
+            self.once_package = once_package
+            self.has_data_upload_event.set()
             while not self.upload_stop_event.is_set():
                 if self.server.pre_read(once_package-1024):
                     break
@@ -112,9 +116,12 @@ class DataSolve:
                 self.__upload_data_length += result
         except Exception as e:
             self.upload_stop_event.set()
+            self.has_data_upload_event.clear()
             self.server.close()
             printException(e)
         self.upload_stop_event.set()
+        self.has_data_upload_event.clear()
+        self.once_package = 0
 
     def write(self, file, write_file):
         """
@@ -147,3 +154,11 @@ class DataSolve:
             file.close()
             printColor("文件保存完成", 'green')
             # us_signal.status_trigger.emit((0, 0))
+
+    @property
+    def write_speed(self):
+        return self.__write_speed
+
+    @write_speed.setter
+    def write_speed(self, value):
+        self.__write_speed = value

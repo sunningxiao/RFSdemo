@@ -171,51 +171,6 @@ class SerialUIMixin:
             self.DAC_dtc1 = [self.DAC0_dtc1, self.DAC1_dtc1, self.DAC2_dtc1, self.DAC3_dtc1]
             self.judge()
 
-    # def adel_adjust(self, former_adel, dtc_code0, dtc_code1, dtc_code2, dtc_code3, step):
-    #     position_of_hash = 88
-    # # 首先确认调整范围
-    # span_right = former_adel
-    # span_left = 30 - former_adel
-    # ##确定警号和星号的位置
-    # position_of_hash = 0
-    # position_of_star = 0
-    # while (dtc_code[position_of_hash] != '#') & (position_of_hash < len(dtc_code) - 3):
-    #     position_of_hash += 1
-    # if position_of_hash == len(dtc_code) - 3:
-    #     adjust_adel = former_adel
-    #     return adjust_adel
-    #
-    # while dtc_code[position_of_star] != '*':
-    #     position_of_star += 1
-    # adjust = position_of_hash - position_of_star
-    # if (adjust > 0):
-    #     dir = +1
-    # else:
-    #     dir = -1
-    # adjust = adjust / step
-    # if (former_adel + adjust > 0) & (former_adel + adjust < 30):
-    #     adjust_adel = former_adel + adjust
-    # else:
-    #     position_of_zero_near = position_of_hash - 1
-    #     while 1:
-    #         if (dtc_code[position_of_zero_near] != '0') & (
-    #                 dtc_code[position_of_zero_near + 1 * dir] == '0'):
-    #             break
-    #         else:
-    #             position_of_zero_near += 1 * dir
-    #     position_of_zero_beyond = position_of_zero_near
-    #     while 1:
-    #         if (dtc_code[position_of_zero_beyond] == '0') & (
-    #                 dtc_code[position_of_zero_beyond + 1 * dir] != '0'):
-    #             break
-    #         else:
-    #             position_of_zero_beyond += 1 * dir
-    #     adjust = (position_of_hash - (position_of_zero_beyond + position_of_zero_near) / 2) / step
-    #     adjust_adel = adjust + former_adel
-    #     if (adjust_adel < 0) & (adjust_adel > 30):
-    #         adjust_adel = -999
-    # adjust_adel = int(adjust_adel)
-
     def judge(self):
         print(self.DAC_adel_adjust)
         print(self.ADC_adel_adjust)

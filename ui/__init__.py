@@ -307,10 +307,15 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.rfs_kit.start_stream(auto_write_file=True,
                                       write_file=False,
                                       file_name=ip.split('.')[3])
-        elif split_time in {'', 'inf', '0'}:
+        elif split_time in {'', 'inf', '0', None}:
+            path_id = 1
+            rfs_ip = ip.split('.')[3]
+            while os.path.exists(f'{path_id}_{rfs_ip}'):
+                path_id += 1
+            file_name = f'{path_id}_{rfs_ip}'
             self.rfs_kit.start_stream(auto_write_file=True,
                                       write_file=self.ui.chk_write_file.isChecked(),
-                                      file_name=ip.split('.')[3])
+                                      file_name=file_name)
         else:
             self.rfs_kit.start_stream(auto_write_file=False)
             try:
@@ -369,7 +374,12 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         thread.start()
 
     def show_unpack(self, data):
-        # data = UnPackage.solve_source_data(data, [True]*16)
+        """每次解包成功后都会调用此方法
+
+        :param data: 解包后的数据，data结构为
+
+        :return:
+        """
         chk_info = [chk.isChecked() for chk in self.channel_plots]
         for index, (chk, chnl_pen) in enumerate(self.channel_plots.items()):
             if chk_info[index]:

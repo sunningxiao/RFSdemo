@@ -452,14 +452,17 @@ class UnPackage:
                 data = data.transpose((1, 0, 2)).reshape(chnl_count, ceil_total_cut_length)
 
         data = data[..., step_index].astype("i8")
-        # if is_complex:
-        #     data = cls.unpack_complex(data)
+        if is_complex:
+            data = cls.unpack_complex(data)
         return head_data.tolist(), data
 
-    # @classmethod
-    # def unpack_complex(cls, data):
-    #     data = np.array(Custom.unpack_complex(data))
-    #     return np.einsum("abc->bac", data)
+    @classmethod
+    def unpack_complex(cls, _data):
+        real_part, imaginary_part = _data & (2 ** 16 - 1), _data >> 16
+        real_part = real_part - 2 ** 16 * (real_part > 2 ** (16 - 1))
+        imaginary_part = imaginary_part - 2 ** 16 * (imaginary_part > 2 ** (16 - 1))
+        data = real_part + imaginary_part * 1j
+        return data
 
 
 if __name__ == '__main__':

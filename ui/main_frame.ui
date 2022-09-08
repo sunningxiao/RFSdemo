@@ -1298,6 +1298,9 @@
                 </item>
                 <item row="2" column="3">
                  <widget class="QLabel" name="label_8">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;仅支持为2、3、5的整倍数&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
                   <property name="text">
                    <string>ADC抽取倍数</string>
                   </property>
@@ -1363,42 +1366,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="4">
-                 <widget class="QComboBox" name="select_adc_extract">
-                  <property name="minimumSize">
-                   <size>
-                    <width>100</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>130</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>2</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>4</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>8</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
                 <item row="1" column="2" rowspan="4">
                  <widget class="Line" name="line_6">
                   <property name="orientation">
@@ -1457,42 +1424,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="4">
-                 <widget class="QComboBox" name="select_dac_extract">
-                  <property name="minimumSize">
-                   <size>
-                    <width>100</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>130</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>2</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>4</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>8</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
                 <item row="3" column="4">
                  <widget class="QLineEdit" name="txt_dac_sample">
                   <property name="maximumSize">
@@ -1508,6 +1439,9 @@
                 </item>
                 <item row="4" column="3">
                  <widget class="QLabel" name="label_9">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;仅支持为2或3或5的整倍数&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
                   <property name="text">
                    <string>DAC内插倍数</string>
                   </property>
@@ -1570,6 +1504,38 @@
                   </property>
                   <property name="text">
                    <string>协同配置</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="4">
+                 <widget class="QLineEdit" name="txt_dac_extract">
+                  <property name="maximumSize">
+                   <size>
+                    <width>130</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>1</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="4">
+                 <widget class="QLineEdit" name="txt_adc_extract">
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>130</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>1</string>
                   </property>
                  </widget>
                 </item>

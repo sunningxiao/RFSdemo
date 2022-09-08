@@ -189,14 +189,14 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.change_param('系统参考时钟选择', self.ui.select_clock, int, 'index'))
         self.ui.txt_adc_sample.editingFinished.connect(
             self.change_param('ADC采样率', self.ui.txt_adc_sample, int))
-        self.ui.select_adc_extract.currentIndexChanged.connect(
-            self.change_param('ADC 抽取倍数', self.ui.select_adc_extract, int))
+        self.ui.txt_adc_extract.editingFinished.connect(
+            self.change_param('ADC 抽取倍数', self.ui.txt_adc_extract, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
         self.ui.txt_dac_sample.editingFinished.connect(
             self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
-        self.ui.select_dac_extract.currentIndexChanged.connect(
-            self.change_param('DAC 抽取倍数', self.ui.select_dac_extract, int))
+        self.ui.txt_dac_extract.editingFinished.connect(
+            self.change_param('DAC 抽取倍数', self.ui.txt_dac_extract, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
         self.ui.txt_pll_f.editingFinished.connect(self.change_param('PLL参考时钟频率', self.ui.txt_pll_f, int))
@@ -468,11 +468,11 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.action_is_master_changed('主机' if int(self.rfs_kit.get_param_value('脱机工作', 0)) == 0 else '单机')
         self.ui.select_clock.setCurrentIndex(int(self.rfs_kit.get_param_value('系统参考时钟选择', 0)))
         self.ui.txt_adc_sample.setText(self.rfs_kit.get_param_value('ADC采样率', 1000, str))
-        self.ui.select_adc_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('ADC 抽取倍数', 1)])
+        self.ui.txt_adc_extract.setText(self.rfs_kit.get_param_value('ADC 抽取倍数', 1, str))
         self.ui.txt_adc_noc_f.setText(self.rfs_kit.get_param_value('ADC NCO频率', 0, str))
         self.ui.txt_adc_nyq.setText(self.rfs_kit.get_param_value('ADC 奈奎斯特区', 1, str))
         self.ui.txt_dac_sample.setText(self.rfs_kit.get_param_value('DAC采样率', 1000, str))
-        self.ui.select_dac_extract.setCurrentIndex({1: 0, 2: 1, 4: 2, 8: 3}[self.rfs_kit.get_param_value('DAC 抽取倍数', 1)])
+        self.ui.txt_dac_extract.setText(self.rfs_kit.get_param_value('DAC 抽取倍数', 1, str))
         self.ui.txt_dac_noc_f.setText(self.rfs_kit.get_param_value('DAC NCO频率', 0, str))
         self.ui.txt_dac_nyq.setText(self.rfs_kit.get_param_value('DAC 奈奎斯特区', 1, str))
         self.ui.txt_pll_f.setText(self.rfs_kit.get_param_value('PLL参考时钟频率', 250, str))
@@ -602,7 +602,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
 
         def _dds_sample(*args, **kwargs):
             dac_sample = self.ui.txt_dac_sample.text()
-            multi = self.ui.select_dac_extract.currentText()
+            multi = self.ui.txt_dac_extract.text()
             dds_sample = int(float(dac_sample)/float(multi))
             self.rfs_kit.set_param_value('DDS采样率', dds_sample)
 
@@ -617,7 +617,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                 _func(self.dds_config_ui, edit, param)
 
         self.ui.txt_dac_sample.editingFinished.connect(_dds_sample)
-        self.ui.select_dac_extract.currentIndexChanged.connect(_dds_sample)
+        self.ui.txt_dac_extract.editingFinished.connect(_dds_sample)
 
     def show_qmc_config_ui(self):
         def _func(_ui, edit_name, param_name):

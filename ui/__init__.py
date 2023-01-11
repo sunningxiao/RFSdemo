@@ -16,6 +16,7 @@ from ui.QMC配置 import QMCConfig
 from ui.RF配置 import RFConfig
 from ui.连接界面 import LinkSystemUI
 from ui.RCM控制 import RCMConfigUI
+from ui.core_pack_test import CorePackTestUI
 
 from tools.printLog import *
 
@@ -56,6 +57,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.rf_config_ui = RFConfig(self)
         self.link_system_ui = LinkSystemUI(self)
         self.rcm_config_ui = RCMConfigUI(self)
+        self.core_pack_ui = CorePackTestUI(self)
 
         self.enable_chk_channels = []
         self.slave_rfs = []
@@ -107,6 +109,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.select_is_master.currentTextChanged.connect(self.action_is_master_changed)
 
         # 关联按钮
+        self.ui.btn_cail_from_file.clicked.connect(self.core_pack_ui.show)
+
         self.ui.btn_rf_collaboration.clicked.connect(self.action_click_collaboration)
 
         self.ui.btn_auto_command.clicked.connect(self.linking_auto_button)
@@ -239,7 +243,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.gui_state(0)
         self.ui.tabWidget.setCurrentIndex(0)
         # self.ui.tabWidget.setTabEnabled(1, False)
-        self.show()
+        # self.show()
+        self.core_pack_ui.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         # self.close(程序退出)触发

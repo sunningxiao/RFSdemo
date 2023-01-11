@@ -2,6 +2,7 @@ import socket
 from serial.tools import list_ports
 import threading
 import re
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -11,6 +12,9 @@ from ui.连接界面.link_system import Ui_Form
 from ui.utils import center_move2_point
 from tools.printLog import *
 
+if TYPE_CHECKING:
+    from ui import RFSControl
+
 
 ip_match = r'^(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)$'
 
@@ -19,7 +23,7 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
     def __init__(self, parent=None):
         super(LinkSystemUI, self).__init__(None)
 
-        self.__parent = parent
+        self.__parent: "RFSControl" = parent
 
         self.setupUi(self)
         self.setWindowTitle('连接RFS')
@@ -47,6 +51,7 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
 
         self.chk_follow.stateChanged.connect(self.action_port_state)
         self.select_tcp_addr.currentTextChanged.connect(self.action_port_state)
+        self.chk_serial_cmd.setDisabled(True)
         # self.chk_use_serial.stateChanged.connect(self.action_port_state)
         self.btn_open.clicked.connect(self.action_click_open)
 

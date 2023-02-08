@@ -1,6 +1,13 @@
 import datetime
+import os
+import struct
+import time
+import zipfile
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, TYPE_CHECKING
+
+from serial.tools import list_ports
+
 from tools.printLog import *
 
 if TYPE_CHECKING:
@@ -15,9 +22,9 @@ class Record:
     """RFSoc DNA"""
     reports: "List[Report]" = field(default_factory=list)
     """各项测试的报告储存类"""
-    start_time: datetime.datetime = datetime.datetime.now()
+    start_time: datetime.datetime = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
     """测试开始时间"""
-    end_time: datetime.datetime = datetime.datetime.now()
+    end_time: datetime.datetime = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
     """测试结束时间"""
 
     def get_dna(self, rfs_kit: "RFSKit"):
@@ -34,11 +41,11 @@ class Record:
 
 @dataclass
 class Report:
-    cmd_name: "str" = ''
-    cmd_result: "bytes" = b''
-    cmd_run_right: "bool" = True
-    log_data: "List[str]" = field(init=False, default_factory=list)
-    serial_data: "List[bytes]" = field(init=False, default_factory=list)
+    cmd_name: "str" = ''  # 指令
+    cmd_result: "bytes" = b''  # 指令返回数据
+    cmd_run_right: "bool" = False  # 测试执行结果
+    log_data: "List[str]" = field(init=False, default_factory=list)  # log
+    serial_data: "List[bytes]" = field(init=False, default_factory=list)  # 串口打印
 
     def run(self, rfs_kit: "RFSKit"):
         ...
@@ -46,8 +53,315 @@ class Report:
     def result(self):
         ...
 
-    def show_result(self, widget):
-        ...
-
     def report(self):
         ...
+
+
+def append_log(log, serial_data, cmd_name, cmd_result, cmd_run_right):
+    log.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}指令名称：{cmd_name}")
+    log.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}串口打印：{serial_data}")
+    log.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}指令返回数据：{cmd_result}")
+    log.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}指令执行结果：{cmd_run_right}")
+
+
+def scan_coms():
+    coms = {}
+    for com in list_ports.comports():
+        coms[str(com)] = com.device
+    return coms
+
+
+class serial_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = '串口测试，无指令'
+            time.sleep(15)
+            if len(self.serial_data) != 0:
+                self.cmd_run_right = True
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class rf_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = 'RF配置'
+            self.cmd_run_right = True
+            self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            if self.cmd_result[0] == '':
+                self.cmd_result[2] = struct.unpack('=I', self.cmd_result[2])[0]
+                status = self.cmd_result[2]
+                if status == 0:
+                    self.cmd_run_right = True
+                    self.log_data.append("RF配置成功")
+                elif status == 1:
+                    self.cmd_run_right = False
+                    self.log_data.append("ltc6952状态异常")
+                elif status == 2:
+                    self.cmd_run_right = False
+                    self.log_data.append("PL_CLOCK未锁定")
+                elif status == 3:
+                    self.cmd_run_right = False
+                    self.log_data.append("ADC启动失败")
+                elif status == 4:
+                    self.cmd_run_right = False
+                    self.log_data.append("DAC启动失败")
+                elif status == 5:
+                    self.cmd_run_right = False
+                    self.log_data.append("SYSREF没检测到")
+                elif status == 6:
+                    self.cmd_run_right = False
+                    self.log_data.append("MTS失败")
+            else:
+                self.cmd_run_right = False
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class chnl_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = 'AD/DA自测试'
+            self.cmd_run_right = True
+            # self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            rfs_kit.start_stream(filepath='_data/', file_name='adda')
+            for ch in range(8):
+                rfs_kit.set_param_value(f'dds{ch}脉宽', 500)
+                rfs_kit.set_param_value(f'DAC{ch}播放波门宽度', 500 * 1000)
+                rfs_kit.set_param_value(f'ADC{ch}采样延迟', 80002000)
+                rfs_kit.set_param_value(f'DAC{ch}播放波门延迟', 80000000)
+
+                rfs_kit.set_param_value(f'dds{ch}中心频率', 100)
+                rfs_kit.set_param_value(f'dds{ch}频率扫描步进', 500*1000)
+                rfs_kit.set_param_value(f'dds{ch}频率扫描范围', 8000)
+            rfs_kit.set_param_value('基准PRF数量', 17)
+
+            rfs_kit.execute_command('DDS配置')
+            self.cmd_result = rfs_kit.execute_command('系统开启')
+            time.sleep(25)
+            rfs_kit.execute_command('系统停止')
+
+            # 数据处理-------------->
+
+            # 将结果写入到self.cmd_result[2]中
+            # 结果数据说明 0:正确  1:错误  每一个数字代表一组adda的分析结果
+            # 结果类型(int,int,int,int,int,int,int,int) 例如(0,0,0,0,0,1,1,1)
+            # if self.cmd_result[0] == '':
+            #     for index, result in enumerate(self.cmd_result[2]):
+            #         if result == 0:
+            #             self.log_data.append(f'频点{index}结果正确')
+            #         elif result == 1:
+            #             self.log_data.append(f'频点{index}结果错误')
+            #             self.cmd_run_right = False
+            #
+            # else:
+            #     self.cmd_run_right = False
+            #     self.log_data.append(self.cmd_result[0])
+            # <--------------数据处理结束
+            #
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class ddr_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = 'DDR测试'
+            self.cmd_run_right = True
+            self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            if self.cmd_result[0] == '':
+                self.cmd_result[2] = struct.unpack('=I', self.cmd_result[2])[0]
+                status = self.cmd_result[2]
+                if status == 0:
+                    self.cmd_run_right = True
+                    self.log_data.append("DDR测试成功")
+                elif status == 1:
+                    self.cmd_run_right = False
+                    self.log_data.append("DDR初始化失败")
+                elif status == 2:
+                    self.cmd_run_right = False
+                    self.log_data.append("DDR数据读写校验失败")
+            else:
+                self.cmd_run_right = False
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class gty_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = 'GTY测试'
+            self.cmd_run_right = True
+            self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            if self.cmd_result[0] == '':
+                self.cmd_result[2] = struct.unpack('=I', self.cmd_result[2])[0]
+                status = self.cmd_result[2]
+                if status == 0:
+                    self.cmd_run_right = True
+                    self.log_data.append("GTY测试成功")
+                elif status == 1:
+                    self.cmd_run_right = False
+                    self.log_data.append("GTY没有link")
+                elif status == 2:
+                    self.cmd_run_right = False
+                    self.log_data.append("GTY数据传输校验失败")
+            else:
+                self.cmd_run_right = False
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class gpio_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = 'GPIO测试'
+            self.cmd_run_right = True
+            self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            if self.cmd_result[0] == '':
+                self.cmd_result[2] = struct.unpack('=' + 'I' * (len(self.cmd_result[2]) // 4), self.cmd_result[2])
+                for index, result in enumerate(self.cmd_result[2]):
+                    if result == 0:
+                        self.log_data.append(f'GPIO{index},收发均正常')
+                    elif result == 1:
+                        self.log_data.append(f'GPIO{index},异常')
+                        self.cmd_run_right = False
+            else:
+                self.cmd_run_right = False
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class emmc_report(Report):
+
+    def run(self, rfs_kit: "RFSKit"):
+        try:
+            self.cmd_name = '固件更新'
+            self.cmd_run_right = True
+            self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True,
+                                                      file_name='emmc/BOOT-krfs1156gen3_demoV3_autotest.bin', wait=30)
+            if self.cmd_result[0] == '':
+                self.cmd_result[2] = struct.unpack('=I', self.cmd_result[2])[0]
+                status = self.cmd_result[2]
+                if status == 0:
+                    self.cmd_run_right = True
+                    self.log_data.append("固件更新成功")
+                elif status == 1:
+                    self.cmd_run_right = False
+                    self.log_data.append("固件更新失败")
+            else:
+                self.cmd_run_right = False
+            append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
+        except Exception as e:
+            self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
+
+    def result(self):
+        return self.cmd_result
+
+    def report(self):
+        return self.log_data
+
+
+class test_record(Record):
+    rfs_kit = None
+
+    def __init__(self, rfs_kit):
+        self.serial_report = serial_report()
+        self.rf_report = rf_report()
+        self.chnl_report = chnl_report()
+        self.ddr_report = ddr_report()
+        self.gty_report = gty_report()
+        self.gpio_report = gpio_report()
+        self.emmc_report = emmc_report()
+
+        self.serial_number = None
+        self.rfs_kit = rfs_kit
+        # self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report, self.emmc_report]
+        self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report]
+        self.start_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+
+    def get_dna(self, rfs_kit: "RFSKit"):
+        self.dna = rfs_kit.execute_command('DNA查询', need_feedback=True, check_feedback=True)
+        if self.dna[0] == '':
+            _result = ''
+            self.dna = struct.unpack('=III', self.dna[2])
+            for result in self.dna:
+                _result += (str(result) + ',')
+            self.dna = _result
+        else:
+            self.dna = self.dna[0]
+
+    def export(self, path='export/'):
+        with open(f"_data/{self.serial_number}_{self.start_time}----{self.end_time}.txt", 'w', encoding='utf-8') as wf:
+            wf.write(f"核心板编号：{self.serial_number}\n")
+            wf.write(f"核心板dna：{self.dna}\n")
+            wf.write(f"测试开始时间：{self.start_time}\n")
+            wf.write(f"测试结束时间：{self.end_time}\n")
+            for report in self.reports:
+                wf.write(f"\t\t指令名称：{report.cmd_name}\n")
+                wf.write(f"\t\t测试返回数据：{report.cmd_result}\n")
+                wf.write(f"\t\t测试结果：{report.cmd_run_right}\n")
+                wf.write(f"\t\t测试日志----------------------->\n")
+                for log in report.log_data:
+                    wf.write(f"\t\t\t\t{log}\n")
+                wf.write(f"\t\t测试日志<-----------------------\n\n")
+        with open(f"_data/{self.serial_number}_{self.start_time}----{self.end_time}_serial_data.txt", 'w',
+                  encoding='utf-8') as wf:
+            wf.write(f'{self.start_time}\n')
+            for report in self.reports:
+                for serial_data in report.serial_data:
+                    wf.write(serial_data)
+            wf.write(f'{self.end_time}')
+        filelist = os.listdir('_data/')
+        with zipfile.ZipFile(f'{path}{self.serial_number}_{self.start_time}----{self.end_time}.zip', 'w',
+                             compression=zipfile.ZIP_STORED) as zip_file:
+            for file in filelist:
+                with open(f'_data/{file}', "rb") as datafile:
+                    zip_file.writestr(f'{file}', datafile.read())

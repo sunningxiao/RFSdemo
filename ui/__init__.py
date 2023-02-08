@@ -243,7 +243,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.gui_state(0)
         self.ui.tabWidget.setCurrentIndex(0)
         # self.ui.tabWidget.setTabEnabled(1, False)
-        # self.show()
+        self.show()
         self.core_pack_ui.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:

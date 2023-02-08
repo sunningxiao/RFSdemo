@@ -130,18 +130,22 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
         :param wait:
         :return:
         """
+        status = ''
         if not self._connected:
             printWarning('未连接板卡')
-            return False
+            status = '未连接板卡'
+            return [status, '', '']
         # self.server: CommandInterface
         _commands = self.icd_param.button.get(button_name, None)
         if _commands is None:
-            printWarning(f'没有此按钮')
-            return False
+            printWarning(f'没有此按钮 {button_name}')
+            status = f'没有此按钮 {button_name}'
+            return [status, '', '']
         for _command_name in _commands:
             if _command_name not in self.icd_param.command:
                 printWarning(f'指令{_command_name}未找到')
-                return False
+                status = f'指令{_command_name}未找到'
+                return [status, '', '']
             command_bak = command = self.icd_param.fmt_command(_command_name, file_name)
             command_len = len(command)
             try:
@@ -152,29 +156,40 @@ class RFSKit(metaclass=__RFSDevelopKit, _root=True):
                     # printColor(f'未发送{command_len}字节', 'green')
             except interface.CmdInterfaceBusy as e:
                 printColor(e, 'yellow')
-                return False
+                status = e
+                return [status, '', '']
             except Exception as e:
                 printException(e, f'指令({_command_name})发送失败')
-                return False
+                status = f'指令({_command_name})发送失败'
+                return [status, '', '']
             printInfo(f'指令({_command_name})已发送')
             try:
                 if need_feedback:
                     time.sleep(wait)
-                    _feedback = self.cmd_interface.recv_cmd(20)
+                    _feedback = self.cmd_interface.recv_cmd(16)
+                    _feedback_result = self.cmd_interface.recv_cmd(struct.unpack('=I', _feedback[12:16])[0]-16)
                     if check_feedback:
+                        # if not _feedback.startswith(self.icd_param.recv_header):
+                        #     printWarning('返回指令包头错误')
+                        #     return False
+                        # if command_bak[4:8] != _feedback[4:8]:
+                        #     printWarning('返回指令ID错误')
+                        #     return False
+                        # _feedback = struct.unpack(self.icd_param.fmt_mode + 'IIIII', _feedback)
+                        # if _feedback[4] != 0:
+                        #     printWarning('指令成功下发，但执行失败')
+                        #     return False
                         if not _feedback.startswith(self.icd_param.recv_header):
                             printWarning('返回指令包头错误')
-                            return False
+                            status += '返回指令包头错误'
                         if command_bak[4:8] != _feedback[4:8]:
                             printWarning('返回指令ID错误')
-                            return False
-                        _feedback = struct.unpack(self.icd_param.fmt_mode + 'IIIII', _feedback)
-                        if _feedback[4] != 0:
-                            printWarning('指令成功下发，但执行失败')
-                            return False
+                            status += '返回指令ID错误'
+                        return [status, _feedback, _feedback_result]
             except Exception as e:
                 printException(e, f'指令({_command_name})无应答')
-                return False
+                status = f'指令({_command_name})无应答'
+                return [status, '', '']
         printColor(f'成功执行指令{_commands}', 'green')
         # # 优化回调机制，防止出现在其他线程操作qtimer的情况
         callback()

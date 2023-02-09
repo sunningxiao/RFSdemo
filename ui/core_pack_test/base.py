@@ -50,8 +50,6 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         self.test_status_Signal.connect(self.change_test_status)
         self._scan_timer.timeout.connect(self.scanning)
         self._scan_timer.start(2000)
-        # self.core_pack_ui.label_status_serial.setStyleSheet("background-color: rgba(0, 255, 0, 0.25)")
-        # self.core_pack_ui.label_status_rf.setStyleSheet("background-color: rgba(255, 0, 0, 0.25)")
         self.record = None
 
     def scanning(self):
@@ -130,9 +128,6 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                     item.setTextAlignment(QtCore.Qt.AlignCenter)
                 self.table_status_gpio.setItem(row, col, item)
                 col += 1
-                # if col == 8:
-                #     row += 1
-                #     col = 0
             self.btn_chnl_detial.setEnabled(True)
         elif status == 3:
             if value:
@@ -190,7 +185,6 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         self.label_status_serial.clear()
         self.label_status_rf.setStyleSheet("background-color: none")
         self.label_status_rf.clear()
-        # self.table_status_chnl
         self.label_status_ddr.setStyleSheet("background-color: none")
         self.label_status_ddr.clear()
         self.label_status_gty.setStyleSheet("background-color: none")
@@ -230,8 +224,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
             os.makedirs('export')
         if edit_pack_number == '':
             self.text_log_print.append("err：請輸入核心板編號")
-        # elif com_name == '' or com_name is None:
-        #     self.text_log_print.append("err：未選擇串口")
+        elif com_name == '' or com_name is None:
+            self.text_log_print.append("err：未選擇串口")
         else:
             self.btn_start.setEnabled(False)
             self.select_comm.setEnabled(False)

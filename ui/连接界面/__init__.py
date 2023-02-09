@@ -52,7 +52,6 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
         self.chk_follow.stateChanged.connect(self.action_port_state)
         self.select_tcp_addr.currentTextChanged.connect(self.action_port_state)
         self.select_tcp_addr.addItem('192.168.1.152')
-        self.select_tcp_addr.addItem('127.0.0.1')
         self.chk_serial_cmd.setDisabled(True)
         # self.chk_use_serial.stateChanged.connect(self.action_port_state)
         self.btn_open.clicked.connect(self.action_click_open)

@@ -6,8 +6,10 @@ import zipfile
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, TYPE_CHECKING
 
+import numpy as np
 from serial.tools import list_ports
 
+from tools.data_unpacking import UnPackage
 from tools.printLog import *
 
 if TYPE_CHECKING:
@@ -140,42 +142,53 @@ class chnl_report(Report):
         try:
             self.cmd_name = 'AD/DA自测试'
             self.cmd_run_right = True
-            # self.cmd_result = rfs_kit.execute_command(self.cmd_name, need_feedback=True, check_feedback=True)
+            _pd = 17
+            _td = 8
+            _data = []
+
             rfs_kit.start_stream(filepath='_data/', file_name='adda')
-            for ch in range(8):
+            for ch in _td:
                 rfs_kit.set_param_value(f'dds{ch}脉宽', 500)
                 rfs_kit.set_param_value(f'DAC{ch}播放波门宽度', 500 * 1000)
                 rfs_kit.set_param_value(f'ADC{ch}采样延迟', 80002000)
                 rfs_kit.set_param_value(f'DAC{ch}播放波门延迟', 80000000)
-
                 rfs_kit.set_param_value(f'dds{ch}中心频率', 100)
                 rfs_kit.set_param_value(f'dds{ch}频率扫描步进', 500*1000)
                 rfs_kit.set_param_value(f'dds{ch}频率扫描范围', 8000)
-            rfs_kit.set_param_value('基准PRF数量', 17)
-
+            rfs_kit.set_param_value('基准PRF数量', _pd)
             rfs_kit.execute_command('DDS配置')
             self.cmd_result = rfs_kit.execute_command('系统开启')
             time.sleep(25)
             rfs_kit.execute_command('系统停止')
 
             # 数据处理-------------->
+            with open('_data/data-adda_0.data', 'rb') as fp:
+                data: np.ndarray = np.frombuffer(fp.read(), dtype='u4')
+            unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
+            for pd in range(_pd):
+                td_list = []
+                for td in range(_td):
+                    td_list.append(unpack_data[0][pd][td])
+                _data.append(td_list)
+            _data = np.array(_data)
 
             # 将结果写入到self.cmd_result[2]中
             # 结果数据说明 0:正确  1:错误  每一个数字代表一组adda的分析结果
             # 结果类型(int,int,int,int,int,int,int,int) 例如(0,0,0,0,0,1,1,1)
-            # if self.cmd_result[0] == '':
-            #     for index, result in enumerate(self.cmd_result[2]):
-            #         if result == 0:
-            #             self.log_data.append(f'频点{index}结果正确')
-            #         elif result == 1:
-            #             self.log_data.append(f'频点{index}结果错误')
-            #             self.cmd_run_right = False
-            #
-            # else:
-            #     self.cmd_run_right = False
-            #     self.log_data.append(self.cmd_result[0])
+            # self.cmd_result[2] =
+
+            if self.cmd_result[0] == '':
+                for index, result in enumerate(self.cmd_result[2]):
+                    if result == 0:
+                        self.log_data.append(f'频点{index}结果正确')
+                    elif result == 1:
+                        self.log_data.append(f'频点{index}结果错误')
+                        self.cmd_run_right = False
+
+            else:
+                self.cmd_run_right = False
+                self.log_data.append(self.cmd_result[0])
             # <--------------数据处理结束
-            #
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
         except Exception as e:
             self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
@@ -323,8 +336,8 @@ class test_record(Record):
 
         self.serial_number = None
         self.rfs_kit = rfs_kit
-        # self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report, self.emmc_report]
-        self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report]
+        self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report, self.emmc_report]
+        # self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report]
         self.start_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
 
     def get_dna(self, rfs_kit: "RFSKit"):

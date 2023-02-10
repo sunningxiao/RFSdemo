@@ -10,6 +10,7 @@ import numpy as np
 from serial.tools import list_ports
 
 from tools.data_unpacking import UnPackage
+from tools.get_snr import get_snr, to_csv
 from tools.printLog import *
 
 if TYPE_CHECKING:
@@ -175,17 +176,35 @@ class chnl_report(Report):
             # 将结果写入到self.cmd_result[2]中
             # 结果数据说明 0:正确  1:错误  每一个数字代表一组adda的分析结果
             # 结果类型(int,int,int,int,int,int,int,int) 例如(0,0,0,0,0,1,1,1)
-            # self.cmd_result[2] =
+            res = []
+            for freq in _data:
+                _res = []
+                for ch in freq:
+                    _res.append(get_snr(ch, samplerate=5e9))
+                res.append(_res)
+            res = np.array(res)
+            band_snr, band_power, band_noise = res[:, :, 0].T, res[:, :, 1].T, res[:, :, 2].T
+            np.savetxt(f'_data/band_snr.csv', band_snr, delimiter=',')
+            np.savetxt(f'_data/band_power.csv', band_power, delimiter=',')
+            np.savetxt(f'_data/band_noise.csv', band_noise, delimiter=',')
+            standard_signal = rfs_kit.icd_param.icd_data.get('standard_signal', None)
+            if not standard_signal:
+                raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
+            standard_noise = rfs_kit.icd_param.icd_data.get('standard_noise', None)
+            if not standard_noise:
+                raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
+
+            self.cmd_result[2] = np.any(np.abs(band_power-np.array(standard_signal))>3, axis=1)
 
             if self.cmd_result[0] == '':
                 for index, result in enumerate(self.cmd_result[2]):
                     if result == 0:
-                        self.log_data.append(f'频点{index}结果正确')
+                        self.log_data.append(f'通道{index}结果正确')
                     elif result == 1:
-                        self.log_data.append(f'频点{index}结果错误')
+                        self.log_data.append(f'通道{index}结果错误')
                         self.cmd_run_right = False
                 # 将处理后结果放入此处加入报告--->
-                self.log_data.append(f'处理后结果为:{}')
+                self.log_data.append(f'处理后结果为:{to_csv(band_snr)}\n\n{to_csv(band_power)}\n\n{to_csv(band_noise)}')
                 # <---将处理后结果放入此处加入报告
             else:
                 self.cmd_run_right = False

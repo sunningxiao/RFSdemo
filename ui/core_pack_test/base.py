@@ -56,6 +56,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         coms = core_testutil.scan_coms()
         if self.available_com != coms:
             self.select_comm.clear()
+            self.select_comm.addItem(str(''))
             for com in coms:
                 self.select_comm.addItem(str(com))
             self.available_com = coms

@@ -16,7 +16,7 @@ class Ui_CorePackTest(object):
 
     def setupUi(self, CorePackTest):
         CorePackTest.setObjectName("CorePackTest")
-        CorePackTest.resize(960, 683)
+        CorePackTest.resize(960, 850)
         self.gridLayout_2 = QtWidgets.QGridLayout(CorePackTest)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.gridLayout_4 = QtWidgets.QGridLayout()

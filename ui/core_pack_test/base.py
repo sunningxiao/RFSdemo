@@ -126,7 +126,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                     item = QtWidgets.QTableWidgetItem('异常')
                     item.setBackground(QColor(255, 0, 0, 63))
                     item.setTextAlignment(QtCore.Qt.AlignCenter)
-                self.table_status_gpio.setItem(row, col, item)
+                self.table_status_chnl.setItem(row, col, item)
                 col += 1
             self.btn_chnl_detial.setEnabled(True)
         elif status == 3:
@@ -269,6 +269,11 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
             else:
                 self.record.get_dna(self.ui_parent.rfs_kit)
                 for index, report in enumerate(self.record.reports):
+                    res = self.ui_parent.rfs_kit.start_command()
+                    if res is not True:
+                        self.test_status_Signal.emit(-3, '请检查目标设备网络是否连通')
+                        self.test_status_Signal.emit(-7, True)
+                        break
                     self.test_status_Signal.emit(-5, index)
                     self.test_status_Signal.emit(-4, index)
                     report.run(self.ui_parent.rfs_kit)

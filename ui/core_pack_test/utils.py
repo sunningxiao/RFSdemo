@@ -148,24 +148,29 @@ class chnl_report(Report):
             _data = []
 
             rfs_kit.start_stream(filepath='_data/', file_name='adda')
-            for ch in _td:
+            for ch in range(_td):
                 rfs_kit.set_param_value(f'dds{ch}脉宽', 500)
                 rfs_kit.set_param_value(f'DAC{ch}播放波门宽度', 500 * 1000)
                 rfs_kit.set_param_value(f'ADC{ch}采样延迟', 80002000)
                 rfs_kit.set_param_value(f'DAC{ch}播放波门延迟', 80000000)
                 rfs_kit.set_param_value(f'dds{ch}中心频率', 100)
-                rfs_kit.set_param_value(f'dds{ch}频率扫描步进', 500*1000)
+                rfs_kit.set_param_value(f'dds{ch}频率扫描步进', 500 * 1000)
                 rfs_kit.set_param_value(f'dds{ch}频率扫描范围', 8000)
-            rfs_kit.set_param_value('基准PRF数量', _pd)
+            rfs_kit.set_param_value('基准PRF数量', _pd+3)
             rfs_kit.execute_command('DDS配置')
             self.cmd_result = rfs_kit.execute_command('系统开启')
-            time.sleep(25)
+            time.sleep(40)
             rfs_kit.execute_command('系统停止')
+            time.sleep(5)
+            rfs_kit.stop_stream()
 
             # 数据处理-------------->
             with open('_data/data-adda_0.data', 'rb') as fp:
                 data: np.ndarray = np.frombuffer(fp.read(), dtype='u4')
-            unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
+            try:
+                unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
+            except Exception as e:
+                raise RuntimeError(f'数据不全:{e}')
             for pd in range(_pd):
                 td_list = []
                 for td in range(_td):
@@ -194,7 +199,7 @@ class chnl_report(Report):
             if not standard_noise:
                 raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
 
-            self.cmd_result[2] = np.any(np.abs(band_power-np.array(standard_signal))>3, axis=1)
+            self.cmd_result[2] = np.any(np.abs(band_power - np.array(standard_signal)) > 3, axis=1)
 
             if self.cmd_result[0] == '':
                 for index, result in enumerate(self.cmd_result[2]):
@@ -204,7 +209,10 @@ class chnl_report(Report):
                         self.log_data.append(f'通道{index}结果错误')
                         self.cmd_run_right = False
                 # 将处理后结果放入此处加入报告--->
-                self.log_data.append(f'处理后结果为:{to_csv(band_snr)}\n\n{to_csv(band_power)}\n\n{to_csv(band_noise)}')
+                self.log_data.append(f'处理后结果为:\n'
+                                     f'{to_csv(band_snr, "%.9f", ",")}\n\n'
+                                     f'{to_csv(band_power, "%.9f", ",")}\n\n'
+                                     f'{to_csv(band_noise, "%.9f", ",")}')
                 # <---将处理后结果放入此处加入报告
             else:
                 self.cmd_run_right = False
@@ -357,7 +365,8 @@ class test_record(Record):
 
         self.serial_number = None
         self.rfs_kit = rfs_kit
-        self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report, self.emmc_report]
+        self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report,
+                        self.gpio_report, self.emmc_report]
         # self.reports = [self.serial_report, self.rf_report, self.chnl_report, self.ddr_report, self.gty_report, self.gpio_report]
         self.start_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
 

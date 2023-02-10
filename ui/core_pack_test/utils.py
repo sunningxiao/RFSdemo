@@ -184,7 +184,9 @@ class chnl_report(Report):
                     elif result == 1:
                         self.log_data.append(f'频点{index}结果错误')
                         self.cmd_run_right = False
-
+                # 将处理后结果放入此处加入报告--->
+                self.log_data.append(f'处理后结果为:{}')
+                # <---将处理后结果放入此处加入报告
             else:
                 self.cmd_run_right = False
                 self.log_data.append(self.cmd_result[0])

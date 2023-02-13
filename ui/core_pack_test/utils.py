@@ -159,7 +159,7 @@ class chnl_report(Report):
             rfs_kit.set_param_value('基准PRF数量', _pd+3)
             rfs_kit.execute_command('DDS配置')
             self.cmd_result = rfs_kit.execute_command('系统开启')
-            time.sleep(20)
+            time.sleep(6)
             rfs_kit.execute_command('系统停止')
             time.sleep(5)
             rfs_kit.stop_stream()
@@ -199,7 +199,7 @@ class chnl_report(Report):
             if not standard_noise:
                 raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
 
-            self.cmd_result[2] = np.any(np.abs(band_power - np.array(standard_signal)) > 3, axis=1)
+            self.cmd_result[2] = np.any(np.array(standard_signal) - band_power > 3, axis=1)
 
             if self.cmd_result[0] == '':
                 for index, result in enumerate(self.cmd_result[2]):

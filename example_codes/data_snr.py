@@ -1,6 +1,7 @@
 import numpy as np
 
 from tools.data_unpacking import UnPackage
+from tools.get_snr import get_db
 
 _pd = 17
 _td = 8
@@ -8,7 +9,9 @@ _data = []
 
 with open(r"C:\Users\56585\Downloads\data-adda_0.data", 'rb') as fp:
     data: np.ndarray = np.frombuffer(fp.read(), dtype='u4')
+
 unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
+
 for pd in range(_pd):
     td_list = []
     for td in range(_td):
@@ -16,86 +19,26 @@ for pd in range(_pd):
     _data.append(td_list)
 _data = np.array(_data)
 
-print(_data.shape)
+# 将结果写入到self.cmd_result[2]中
+# 结果数据说明 0:正确  1:错误  每一个数字代表一组adda的分析结果
+# 结果类型(int,int,int,int,int,int,int,int) 例如(0,0,0,0,0,1,1,1)
+res = []
+for freq in _data:
+    _res = []
+    for ch in freq:
+        _res.append(get_db(ch, 1))
+    res.append(_res)
+res = np.array(res)
 
-
-def csv(X, fmt='%.18e', delimiter=' ', newline='\n', header='', footer='', comments='# ', encoding=None):
-    def asstr(s):
-        if isinstance(s, bytes):
-            return s.decode('latin1')
-        return str(s)
-
-    if isinstance(fmt, bytes):
-        fmt = asstr(fmt)
-    delimiter = asstr(delimiter)
-
-    data_list = []
-
-    X = np.asarray(X)
-
-    # Handle 1-dimensional arrays
-    if X.ndim == 0 or X.ndim > 2:
-        raise ValueError(
-            "Expected 1D or 2D array, got %dD array instead" % X.ndim)
-    elif X.ndim == 1:
-        # Common case -- 1d array of numbers
-        if X.dtype.names is None:
-            X = np.atleast_2d(X).T
-            ncol = 1
-
-        # Complex dtype -- each field indicates a separate column
-        else:
-            ncol = len(X.dtype.names)
-    else:
-        ncol = X.shape[1]
-
-    iscomplex_X = np.iscomplexobj(X)
-    # `fmt` can be a string with multiple insertion points or a
-    # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
-    if type(fmt) in (list, tuple):
-        if len(fmt) != ncol:
-            raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
-        format = asstr(delimiter).join(map(asstr, fmt))
-    elif isinstance(fmt, str):
-        n_fmt_chars = fmt.count('%')
-        error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
-        if n_fmt_chars == 1:
-            if iscomplex_X:
-                fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
-            else:
-                fmt = [fmt, ] * ncol
-            format = delimiter.join(fmt)
-        elif iscomplex_X and n_fmt_chars != (2 * ncol):
-            raise error
-        elif ((not iscomplex_X) and n_fmt_chars != ncol):
-            raise error
-        else:
-            format = fmt
-    else:
-        raise ValueError('invalid fmt: %r' % (fmt,))
-
-    if len(header) > 0:
-        header = header.replace('\n', '\n' + comments)
-        data_list.append(comments + header + newline)
-    if iscomplex_X:
-        for row in X:
-            row2 = []
-            for number in row:
-                row2.append(number.real)
-                row2.append(number.imag)
-            s = format % tuple(row2) + newline
-            data_list.append(s.replace('+-', '-'))
-    else:
-        for row in X:
-            try:
-                v = format % tuple(row) + newline
-            except TypeError as e:
-                raise TypeError("Mismatch between array dtype ('%s') and "
-                                "format specifier ('%s')"
-                                % (str(X.dtype), format)) from e
-            data_list.append(v)
-
-    if len(footer) > 0:
-        footer = footer.replace('\n', '\n' + comments)
-        data_list.append(comments + footer + newline)
-    return ''.join(data_list)
+standard_signal = [
+    [85.63706486, 84.33821298, 84.83262966, 83.47855133, 83.44610464, 83.37962213, 82.89502035, 82.19603298, 80.82963684, 80.26125352],
+    [85.61519498, 84.20103289, 84.63488179, 83.5696279, 82.87449181, 82.61534764, 81.74295387, 81.03813991, 79.70705928, 76.95028126],
+    [85.58159715, 84.27269676, 84.81891785, 83.40011916, 83.57374956, 83.56959438, 83.0860739, 82.65826351, 81.26920941, 80.69755561],
+    [85.56760136, 84.14091691, 84.62752148, 83.52664871, 82.99606922, 82.85297491, 82.34746259, 81.89226611, 80.93809342, 79.32566772],
+    [85.60071587, 84.2831173, 84.82961334, 83.49429634, 83.66303899, 83.38622477, 82.75366184, 81.91619546, 80.16657407, 80.05354637],
+    [85.65811612, 84.29051687, 84.79589116, 83.82286485, 83.39031481, 83.35730717, 82.76315077, 82.09714449, 81.39459286, 80.7136994],
+    [85.60657198, 84.31656786, 84.84655036, 83.67313114, 83.77819468, 83.55961011, 83.09160653, 82.41122009, 80.53709699, 80.56000723],
+    [85.60557799, 84.31915151, 84.73248253, 83.92962919, 83.52650684, 83.46233988, 83.02037595, 82.5844581, 81.68596529, 80.12961759]
+]
+standard_signal = np.array(standard_signal)
+compare_res = res.T[:standard_signal.shape[0], :standard_signal.shape[1]]

@@ -203,13 +203,17 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         stream_str = {'xonxoff': False, 'rtscts': False, 'dsrdtr': False}
         if self.device_serial is not None:
             self.device_serial.close()
-        self.device_serial = serial.Serial(port=com,
-                                           baudrate=int(baud),
-                                           bytesize=byte_size,
-                                           parity=check_sum,
-                                           stopbits=stop_bit,
-                                           **stream_str,
-                                           timeout=1)
+        try:
+            self.device_serial = serial.Serial(port=com,
+                                               baudrate=int(baud),
+                                               bytesize=byte_size,
+                                               parity=check_sum,
+                                               stopbits=stop_bit,
+                                               **stream_str,
+                                               timeout=1)
+        except Exception as e:
+            self.test_status_Signal.emit(-3, f'err: {com}不正确，请选择其它串口')
+            raise e
 
     def btn_start_click(self):
         edit_pack_number = self.edit_pack_number.text()

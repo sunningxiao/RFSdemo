@@ -4,6 +4,12 @@ import numpy as np
 import copy
 
 
+def get_db(data, freq, sample_rate=5e9):
+    fft_res = np.fft.fft(data)
+    fft_db: "np.ndarray" = 10*np.log10(np.abs(fft_res))
+    return fft_db.max()
+
+
 def get_snr(data, nHarmonics=6, samplerate=4e9):
     """获取信号的snr，信号功率，噪声功率
 

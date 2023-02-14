@@ -10,7 +10,7 @@ import numpy as np
 from serial.tools import list_ports
 
 from tools.data_unpacking import UnPackage
-from tools.get_snr import get_snr, to_csv
+from tools.get_snr import get_db, get_snr, to_csv
 from tools.printLog import *
 
 if TYPE_CHECKING:
@@ -191,28 +191,28 @@ class chnl_report(Report):
             # 结果数据说明 0:正确  1:错误  每一个数字代表一组adda的分析结果
             # 结果类型(int,int,int,int,int,int,int,int) 例如(0,0,0,0,0,1,1,1)
             res = []
+            snr = []
             for freq in _data:
-                _res = []
+                _snr, _res = [], []
                 for ch in freq:
-                    _res.append(get_snr(ch, samplerate=5e9))
+                    _res.append(get_db(ch, 1))
+                    _snr.append(get_snr(data, samplerate=5e9)[0])
                 res.append(_res)
-            res = np.array(res)
-            band_snr, band_power, band_noise = res[:, :, 0].T, res[:, :, 1].T, res[:, :, 2].T
-            np.savetxt(f'_data/band_snr.csv', band_snr, delimiter=',')
-            np.savetxt(f'_data/band_power.csv', band_power, delimiter=',')
-            np.savetxt(f'_data/band_noise.csv', band_noise, delimiter=',')
+                snr.append(_snr)
+            snr, res = np.array(snr), np.array(res)
+            # band_snr, band_power, band_noise = res[:, :, 0].T, res[:, :, 1].T, res[:, :, 2].T
+            np.savetxt(f'_data/band_snr.csv', snr, delimiter=',')
+            # np.savetxt(f'_data/band_power.csv', band_power, delimiter=',')
+            # np.savetxt(f'_data/band_noise.csv', band_noise, delimiter=',')
+            np.savetxt(f'_data/sample_db.csv', res, delimiter=',')
             standard_signal = rfs_kit.icd_param.icd_data.get('standard_signal', None)
             if not standard_signal:
                 self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
-                self.result_detail.append(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
-                raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
-            standard_noise = rfs_kit.icd_param.icd_data.get('standard_noise', None)
-            if not standard_noise:
-                self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
-                self.result_detail.append(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
-                raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
-
-            self.cmd_result[2] = np.any(np.array(standard_signal) - band_power > 3, axis=1)
+                self.result_detail.append(f'icd.json中不存在标准带内信号功率')
+                raise RuntimeError(f'請聯繫我方，在icd.json中加入標準帶內信號功率')
+            standard_signal = np.array(standard_signal)
+            compare_res = res.T[:standard_signal.shape[0], :standard_signal.shape[1]]
+            self.cmd_result[2] = np.any(standard_signal - compare_res > 2, axis=1)
 
             if self.cmd_result[0] == '':
                 for index, result in enumerate(self.cmd_result[2]):
@@ -226,9 +226,8 @@ class chnl_report(Report):
                         self.cmd_run_right = False
                 # 将处理后结果放入此处加入报告--->
                 self.log_data.append(f'处理后结果为:\n'
-                                     f'{to_csv(band_snr, "%.9f", ",")}\n\n'
-                                     f'{to_csv(band_power, "%.9f", ",")}\n\n'
-                                     f'{to_csv(band_noise, "%.9f", ",")}')
+                                     f'{to_csv(res, "%.9f", ",")}\n\n'
+                                     f'{to_csv(snr, "%.9f", ",")}\n\n')
                 # <---将处理后结果放入此处加入报告
             else:
                 self.cmd_run_right = False

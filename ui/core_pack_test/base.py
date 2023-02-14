@@ -56,9 +56,9 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         coms = core_testutil.scan_coms()
         if self.available_com != coms:
             self.select_comm.clear()
-            self.select_comm.addItem(str(''))
             for com in coms:
                 self.select_comm.addItem(str(com))
+            self.select_comm.addItem(str(''))
             self.available_com = coms
 
     def change_test_status(self, status, value):
@@ -277,10 +277,14 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                         break
                     self.test_status_Signal.emit(-5, index)
                     self.test_status_Signal.emit(-4, index)
-                    report.run(self.ui_parent.rfs_kit)
                     self.bar_process_value += 14.5
                     if self.bar_process_value > 100:
                         self.bar_process_value = 100
+                    if index == 2:
+                        if self.record.reports[1].cmd_run_right is not True:
+                            self.test_status_Signal.emit(-3, f'RF配置错误，不执行AD/DA测试')
+                            continue
+                    report.run(self.ui_parent.rfs_kit)
                     self.test_status_Signal.emit(-1, self.bar_process_value)
                     if index == 0:  # 串口
                         self.test_status_Signal.emit(-3, f'指令名:{report.cmd_name}')
@@ -297,7 +301,9 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                     self.test_status_Signal.emit(-3, f'指令名:{report.cmd_name}')
 
                     if report.cmd_result[0] == '':
-                        self.test_status_Signal.emit(-3, f'结果数据:{report.cmd_result[2]}')
+                        self.test_status_Signal.emit(-3, "结果数据:")
+                        for detail in report.result_detail:
+                            self.test_status_Signal.emit(-3, f'{detail}')
                     else:
                         self.test_status_Signal.emit(-3, f'错误:{report.cmd_result[0]}')
                     self.test_status_Signal.emit(-3, f'是否通过:{report.cmd_run_right}')
@@ -316,7 +322,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_rf_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[1].cmd_name}')
         if self.record.reports[1].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[1].cmd_result[2]}')
+            for detail in self.record.reports[1].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[1].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[1].cmd_run_right}')
@@ -324,7 +331,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_chnl_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[2].cmd_name}')
         if self.record.reports[2].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[2].cmd_result[2]}')
+            for detail in self.record.reports[2].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[2].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[2].cmd_run_right}')
@@ -332,7 +340,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_ddr_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[3].cmd_name}')
         if self.record.reports[3].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[3].cmd_result[2]}')
+            for detail in self.record.reports[3].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[3].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[3].cmd_run_right}')
@@ -340,7 +349,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_gty_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[4].cmd_name}')
         if self.record.reports[4].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[4].cmd_result[2]}')
+            for detail in self.record.reports[4].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[4].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[4].cmd_run_right}')
@@ -348,7 +358,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_gpio_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[5].cmd_name}')
         if self.record.reports[5].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[5].cmd_result[2]}')
+            for detail in self.record.reports[5].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[5].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[5].cmd_run_right}')
@@ -356,7 +367,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def btn_emmc_detial_click(self):
         self.text_log_print.append(f'指令名:{self.record.reports[6].cmd_name}')
         if self.record.reports[6].cmd_result[0] == '':
-            self.text_log_print.append(f'结果数据:{self.record.reports[6].cmd_result[2]}')
+            for detail in self.record.reports[6].result_detail:
+                self.text_log_print.append(f'结果数据:{detail}')
         else:
             self.text_log_print.append(f'错误:{self.record.reports[6].cmd_result[0]}')
         self.text_log_print.append(f'是否通过:{self.record.reports[6].cmd_run_right}')

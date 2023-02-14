@@ -49,6 +49,7 @@ class Report:
     cmd_run_right: "bool" = False  # 测试执行结果
     log_data: "List[str]" = field(init=False, default_factory=list)  # log
     serial_data: "List[bytes]" = field(init=False, default_factory=list)  # 串口打印
+    result_detail: "List[str]" = field(init=False, default_factory=list)  # 测试结果详情
 
     def run(self, rfs_kit: "RFSKit"):
         ...
@@ -106,24 +107,31 @@ class rf_report(Report):
                 if status == 0:
                     self.cmd_run_right = True
                     self.log_data.append("RF配置成功")
+                    self.result_detail.append("RF配置成功")
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("ltc6952状态异常")
+                    self.result_detail.append("ltc6952状态异常")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("PL_CLOCK未锁定")
+                    self.result_detail.append("PL_CLOCK未锁定")
                 elif status == 3:
                     self.cmd_run_right = False
                     self.log_data.append("ADC启动失败")
+                    self.result_detail.append("ADC启动失败")
                 elif status == 4:
                     self.cmd_run_right = False
                     self.log_data.append("DAC启动失败")
+                    self.result_detail.append("DAC启动失败")
                 elif status == 5:
                     self.cmd_run_right = False
                     self.log_data.append("SYSREF没检测到")
+                    self.result_detail.append("SYSREF没检测到")
                 elif status == 6:
                     self.cmd_run_right = False
                     self.log_data.append("MTS失败")
+                    self.result_detail.append("MTS失败")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -142,7 +150,6 @@ class chnl_report(Report):
     def run(self, rfs_kit: "RFSKit"):
         try:
             self.cmd_name = 'AD/DA自测试'
-            self.cmd_run_right = True
             _pd = 17
             _td = 8
             _data = []
@@ -170,7 +177,9 @@ class chnl_report(Report):
             try:
                 unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
             except Exception as e:
-                raise RuntimeError(f'数据不全:{e}')
+                self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
+                self.result_detail.append(f'数据不全:{e}')
+                raise RuntimeError(f'数据不全,{e}')
             for pd in range(_pd):
                 td_list = []
                 for td in range(_td):
@@ -194,9 +203,13 @@ class chnl_report(Report):
             np.savetxt(f'_data/band_noise.csv', band_noise, delimiter=',')
             standard_signal = rfs_kit.icd_param.icd_data.get('standard_signal', None)
             if not standard_signal:
+                self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
+                self.result_detail.append(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
                 raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
             standard_noise = rfs_kit.icd_param.icd_data.get('standard_noise', None)
             if not standard_noise:
+                self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
+                self.result_detail.append(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
                 raise RuntimeError(f'请联系我方，在icd.json中加入标准带内信号功率和带内噪声功率')
 
             self.cmd_result[2] = np.any(np.array(standard_signal) - band_power > 3, axis=1)
@@ -205,8 +218,11 @@ class chnl_report(Report):
                 for index, result in enumerate(self.cmd_result[2]):
                     if result == 0:
                         self.log_data.append(f'通道{index}结果正确')
+                        self.result_detail.append(f'通道{index}结果正确')
+                        self.cmd_run_right = True
                     elif result == 1:
                         self.log_data.append(f'通道{index}结果错误')
+                        self.result_detail.append(f'通道{index}结果错误')
                         self.cmd_run_right = False
                 # 将处理后结果放入此处加入报告--->
                 self.log_data.append(f'处理后结果为:\n'
@@ -242,12 +258,15 @@ class ddr_report(Report):
                 if status == 0:
                     self.cmd_run_right = True
                     self.log_data.append("DDR测试成功")
+                    self.result_detail.append("DDR测试成功")
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("DDR初始化失败")
+                    self.result_detail.append("DDR初始化失败")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("DDR数据读写校验失败")
+                    self.result_detail.append("DDR数据读写校验失败")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -274,12 +293,15 @@ class gty_report(Report):
                 if status == 0:
                     self.cmd_run_right = True
                     self.log_data.append("GTY测试成功")
+                    self.result_detail.append("GTY测试成功")
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("GTY没有link")
+                    self.result_detail.append("GTY没有link")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("GTY数据传输校验失败")
+                    self.result_detail.append("GTY数据传输校验失败")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -305,8 +327,10 @@ class gpio_report(Report):
                 for index, result in enumerate(self.cmd_result[2]):
                     if result == 0:
                         self.log_data.append(f'GPIO{index},收发均正常')
+                        self.result_detail.append(f'GPIO{index},收发均正常')
                     elif result == 1:
                         self.log_data.append(f'GPIO{index},异常')
+                        self.result_detail.append(f'GPIO{index},异常')
                         self.cmd_run_right = False
             else:
                 self.cmd_run_right = False
@@ -335,9 +359,11 @@ class emmc_report(Report):
                 if status == 0:
                     self.cmd_run_right = True
                     self.log_data.append("固件更新成功")
+                    self.result_detail.append("固件更新成功")
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("固件更新失败")
+                    self.result_detail.append("固件更新失败")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)

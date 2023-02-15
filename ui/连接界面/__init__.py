@@ -56,7 +56,7 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
         # self.chk_use_serial.stateChanged.connect(self.action_port_state)
         self.btn_open.clicked.connect(self.action_click_open)
 
-        self.scanning_board()
+        # self.scanning_board()
 
     def action_click_open(self):
         if self.chk_serial_cmd.isChecked():

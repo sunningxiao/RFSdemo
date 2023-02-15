@@ -80,7 +80,7 @@ class serial_report(Report):
     def run(self, rfs_kit: "RFSKit"):
         try:
             self.cmd_name = '串口测试，无指令'
-            time.sleep(15)
+            time.sleep(10)
             if len(self.serial_data) != 0:
                 self.cmd_run_right = True
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -111,27 +111,27 @@ class rf_report(Report):
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("ltc6952状态异常")
-                    self.result_detail.append("ltc6952状态异常")
+                    self.result_detail.append("<font color=red>ltc6952状态异常</font>")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("PL_CLOCK未锁定")
-                    self.result_detail.append("PL_CLOCK未锁定")
+                    self.result_detail.append("<font color=red>PL_CLOCK未锁定</font>")
                 elif status == 3:
                     self.cmd_run_right = False
                     self.log_data.append("ADC启动失败")
-                    self.result_detail.append("ADC启动失败")
+                    self.result_detail.append("<font color=red>ADC启动失败</font>")
                 elif status == 4:
                     self.cmd_run_right = False
                     self.log_data.append("DAC启动失败")
-                    self.result_detail.append("DAC启动失败")
+                    self.result_detail.append("<font color=red>DAC启动失败</font>")
                 elif status == 5:
                     self.cmd_run_right = False
                     self.log_data.append("SYSREF没检测到")
-                    self.result_detail.append("SYSREF没检测到")
+                    self.result_detail.append("<font color=red>SYSREF没检测到</font>")
                 elif status == 6:
                     self.cmd_run_right = False
                     self.log_data.append("MTS失败")
-                    self.result_detail.append("MTS失败")
+                    self.result_detail.append("<font color=red>MTS失败</font>")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -178,8 +178,8 @@ class chnl_report(Report):
                 unpack_data = UnPackage.channel_data_filter(data, list(range(_pd)), list(range(_td)))
             except Exception as e:
                 self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
-                self.result_detail.append(f'数据不全:{e}')
-                raise RuntimeError(f'数据不全,{e}')
+                self.result_detail.append(f'<font color=red>数据不全:{e}</font>')
+                raise RuntimeError(f'<font color=red>数据不全,{e}</font>')
             for pd in range(_pd):
                 td_list = []
                 for td in range(_td):
@@ -196,7 +196,7 @@ class chnl_report(Report):
                 _snr, _res = [], []
                 for ch in freq:
                     _res.append(get_db(ch, 1))
-                    _snr.append(get_snr(data, samplerate=5e9)[0])
+                    _snr.append(get_snr(ch, samplerate=5e9)[0])
                 res.append(_res)
                 snr.append(_snr)
             snr, res = np.array(snr), np.array(res)
@@ -208,8 +208,8 @@ class chnl_report(Report):
             standard_signal = rfs_kit.icd_param.icd_data.get('standard_signal', None)
             if not standard_signal:
                 self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
-                self.result_detail.append(f'icd.json中不存在标准带内信号功率')
-                raise RuntimeError(f'請聯繫我方，在icd.json中加入標準帶內信號功率')
+                self.result_detail.append(f'<font color=red>icd.json中不存在标准带内信号功率</font>')
+                raise RuntimeError(f'<font color=red>請聯繫我方，在icd.json中加入標準帶內信號功率</font>')
             standard_signal = np.array(standard_signal)
             compare_res = res.T[:standard_signal.shape[0], :standard_signal.shape[1]]
             self.cmd_result[2] = np.any(standard_signal - compare_res > 2, axis=1)
@@ -222,7 +222,7 @@ class chnl_report(Report):
                         self.cmd_run_right = True
                     elif result == 1:
                         self.log_data.append(f'通道{index}结果错误')
-                        self.result_detail.append(f'通道{index}结果错误')
+                        self.result_detail.append(f'<font color=red>通道{index}结果错误</font>')
                         self.cmd_run_right = False
                 # 将处理后结果放入此处加入报告--->
                 self.log_data.append(f'处理后结果为:\n'
@@ -235,6 +235,7 @@ class chnl_report(Report):
             # <--------------数据处理结束
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
         except Exception as e:
+            self.cmd_result[2] = (1, 1, 1, 1, 1, 1, 1, 1)
             self.log_data.append(f"{datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}:err：{e}")
 
     def result(self):
@@ -261,11 +262,11 @@ class ddr_report(Report):
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("DDR初始化失败")
-                    self.result_detail.append("DDR初始化失败")
+                    self.result_detail.append("<font color=red>DDR初始化失败</font>")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("DDR数据读写校验失败")
-                    self.result_detail.append("DDR数据读写校验失败")
+                    self.result_detail.append("<font color=red>DDR数据读写校验失败</font>")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -296,11 +297,11 @@ class gty_report(Report):
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("GTY没有link")
-                    self.result_detail.append("GTY没有link")
+                    self.result_detail.append("<font color=red>GTY没有link</font>")
                 elif status == 2:
                     self.cmd_run_right = False
                     self.log_data.append("GTY数据传输校验失败")
-                    self.result_detail.append("GTY数据传输校验失败")
+                    self.result_detail.append("<font color=red>GTY数据传输校验失败</font>")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)
@@ -329,7 +330,7 @@ class gpio_report(Report):
                         self.result_detail.append(f'GPIO{index},收发均正常')
                     elif result == 1:
                         self.log_data.append(f'GPIO{index},异常')
-                        self.result_detail.append(f'GPIO{index},异常')
+                        self.result_detail.append(f'<font color=red>GPIO{index},异常</font>')
                         self.cmd_run_right = False
             else:
                 self.cmd_run_right = False
@@ -362,7 +363,7 @@ class emmc_report(Report):
                 elif status == 1:
                     self.cmd_run_right = False
                     self.log_data.append("固件更新失败")
-                    self.result_detail.append("固件更新失败")
+                    self.result_detail.append("<font color=red>固件更新失败</font>")
             else:
                 self.cmd_run_right = False
             append_log(self.log_data, self.serial_data, self.cmd_name, self.cmd_result, self.cmd_run_right)

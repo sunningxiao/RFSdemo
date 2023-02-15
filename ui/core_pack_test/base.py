@@ -2,6 +2,7 @@ import datetime
 import locale
 import os
 import shutil
+import socket
 import threading
 import time
 from typing import List, Dict, Any, TYPE_CHECKING
@@ -52,14 +53,31 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         self._scan_timer.start(2000)
         self.record = None
 
+
+        threading.Thread(target=self.test, daemon=True).start()
+
     def scanning(self):
         coms = core_testutil.scan_coms()
         if self.available_com != coms:
             self.select_comm.clear()
             for com in coms:
                 self.select_comm.addItem(str(com))
-            self.select_comm.addItem(str(''))
             self.available_com = coms
+
+    def test(self):
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_socket.bind(('192.168.1.100', 15000))
+        self.udp_socket.settimeout(3)
+        while True:
+            try:
+                self.udp_socket.sendto(b"____\x10\x00\x002\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00", ('<broadcast>', 5003))
+                (_, addr) = self.udp_socket.recvfrom(2048)
+                if '192.168.1.152' in addr:
+                    self.network.setStyleSheet("background-color: rgba(0, 255, 0, 0.3)")
+            except Exception as e:
+                self.network.setStyleSheet("background-color: rgba(255, 0, 0, 0.3)")
+            time.sleep(4)
 
     def change_test_status(self, status, value):
         # -7目标设备网络不通 -6测试完成 -4测试记录 -3日志 -2串口 -1进度条
@@ -67,7 +85,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
             self.bar_process.setProperty("value", value)
         elif status == -2:
             if value == '串口连接已断开':
-                self.text_serial_print.append(str(value))
+                self.text_serial_print.append(str(f'<font color=red>{value}</font>'))
             elif value != '':
                 self.text_serial_print.append(str(value))
                 self.record.reports[self.now_test].serial_data.append(value)
@@ -83,6 +101,8 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
             self.select_comm.setEnabled(value)
             self.device_serial.close()
             self.btn_output.setEnabled(True)
+            self.process_test_status.setMaximum(1)
+            self.text_log_print.append(f'<font color=green>测试完成</font>')
         elif status == -7:
             self.is_listen = False
             self.btn_start.setEnabled(value)
@@ -96,6 +116,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
             self.btn_emmc_detial.setEnabled(True)
             self.btn_chnl_detial.setEnabled(True)
             self.btn_output.setEnabled(True)
+            self.process_test_status.setMaximum(1)
         # 0:串口状态    1:射频状态、RF配置   2:AD/DA回环    3:DDR状态   4:GTY状态   5:GPIO状态  6:EMMC状态
         elif status == 0:
             if value:
@@ -212,7 +233,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                                                **stream_str,
                                                timeout=1)
         except Exception as e:
-            self.test_status_Signal.emit(-3, f'err: {com}不正确，请选择其它串口')
+            self.test_status_Signal.emit(-3, f'<font color=red>err: {com}不正确，请选择其它串口</font>')
             raise e
 
     def btn_start_click(self):
@@ -228,10 +249,11 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
         if os.path.exists('export') is False:
             os.makedirs('export')
         if edit_pack_number == '':
-            self.text_log_print.append("err：請輸入核心板編號")
+            self.text_log_print.append("<font color=red>err：請輸入核心板編號</font>")
         elif com_name == '' or com_name is None:
-            self.text_log_print.append("err：未選擇串口")
+            self.text_log_print.append("<font color=red>err：未選擇串口</font>")
         else:
+            self.process_test_status.setMaximum(0)
             self.btn_start.setEnabled(False)
             self.select_comm.setEnabled(False)
             self.btn_serial_detial.setEnabled(False)
@@ -286,7 +308,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                         self.bar_process_value = 100
                     if index == 2:
                         if self.record.reports[1].cmd_run_right is not True:
-                            self.test_status_Signal.emit(-3, f'RF配置错误，不执行AD/DA测试')
+                            self.test_status_Signal.emit(-3, f'<font color=red>RF配置错误，不执行AD/DA测试</font>')
                             continue
                     report.run(self.ui_parent.rfs_kit)
                     self.test_status_Signal.emit(-1, self.bar_process_value)
@@ -309,14 +331,14 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                         for detail in report.result_detail:
                             self.test_status_Signal.emit(-3, f'{detail}')
                     else:
-                        self.test_status_Signal.emit(-3, f'错误:{report.cmd_result[0]}')
+                        self.test_status_Signal.emit(-3, f'<font color=red>错误:{report.cmd_result[0]}</font>')
                     self.test_status_Signal.emit(-3, f'是否通过:{report.cmd_run_right}')
 
                 self.record.end_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
                 self.record.export('export/')
                 self.test_status_Signal.emit(-6, True)
         except Exception as e:
-            self.test_status_Signal.emit(-3, f'请检查待测设备:{e}')
+            self.test_status_Signal.emit(-3, f'<font color=red>请检查目标设备网络是否连通</font>')
             self.test_status_Signal.emit(-7, True)
 
     def btn_serial_detial_click(self):

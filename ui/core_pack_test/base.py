@@ -67,7 +67,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
     def test(self):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.udp_socket.bind(('192.168.1.100', 15000))
+        self.udp_socket.bind(('0.0.0.0', 15000))
         self.udp_socket.settimeout(3)
         while True:
             try:
@@ -234,6 +234,7 @@ class CorePackTestUI(QtWidgets.QWidget, Ui_CorePackTest):
                                                timeout=1)
         except Exception as e:
             self.test_status_Signal.emit(-3, f'<font color=red>err: {com}不正确，请选择其它串口</font>')
+            self.test_status_Signal.emit(-7, True)
             raise e
 
     def btn_start_click(self):

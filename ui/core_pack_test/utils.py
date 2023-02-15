@@ -166,9 +166,9 @@ class chnl_report(Report):
             rfs_kit.set_param_value('基准PRF数量', _pd+3)
             rfs_kit.execute_command('DDS配置')
             self.cmd_result = rfs_kit.execute_command('系统开启')
-            time.sleep(6)
+            time.sleep(3)
             rfs_kit.execute_command('系统停止')
-            time.sleep(5)
+            time.sleep(1)
             rfs_kit.stop_stream()
 
             # 数据处理-------------->

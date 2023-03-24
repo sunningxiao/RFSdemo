@@ -32,9 +32,9 @@ class SpectrumScreen(QtWidgets.QDialog, spectrum_ui.Ui_Dialog):
 
     def show_data(self, index, need_show, data=(), _pen='w'):
         if need_show:
-            # window = windows.hamming(len(data))
-            # chirp = data * fft.ifftshift(window)   # 加窗
-            self.channel_plots[index].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(data)))), pen=_pen)
+            window = np.hamming(len(data))
+            wdata = window*data
+            self.channel_plots[index].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(wdata)))), pen=_pen)
             self.channel_plots[index].show()
         else:
             self.channel_plots[index].hide()

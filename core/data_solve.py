@@ -52,7 +52,7 @@ class DataSolve:
         self.__prev_data_length = upload_data_length
         return [upload_speed, self.__write_speed, upload_data_length]
 
-    def start_solve(self, auto_write_file=True, filepath=None, write_file=True, file_name=''):
+    def start_solve(self, auto_write_file=True, filepath=None, write_file=True, file_name='', path_tag='kit'):
         # self._cache = Queue(1024)
         # 启动数据接收线程
         _thread = threading.Thread(target=self.wait_connect, daemon=True)
@@ -62,7 +62,7 @@ class DataSolve:
             return True
 
         if filepath is None:
-            filepath = f"{file_name}_{time.strftime('%Y%m%d_%H-%M-%S', time.localtime())}"
+            filepath = f"{file_name}_{path_tag}_{time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())}"
         if not os.path.exists(filepath):
             os.mkdir(filepath)
 

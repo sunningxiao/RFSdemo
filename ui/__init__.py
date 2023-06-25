@@ -192,13 +192,17 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.ui.txt_adc_extract.editingFinished.connect(
             self.change_param('ADC 抽取倍数', self.ui.txt_adc_extract, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
-        self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
-        self.ui.txt_dac_sample.editingFinished.connect(
-            self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
-        self.ui.txt_dac_extract.editingFinished.connect(
-            self.change_param('DAC 抽取倍数', self.ui.txt_dac_extract, int))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
+        self.ui.txt_adc_noc_f.editingFinished.connect(self.linking_button('NCO频率配置', need_feedback=True, need_file=False))
+        self.ui.txt_dac_noc_f.editingFinished.connect(self.linking_button('NCO频率配置', need_feedback=True, need_file=False))
+
+        self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
+        self.ui.txt_adc_nyq.editingFinished.connect(self.linking_button('奈奎斯特区配置', need_feedback=True, need_file=False))
+        self.ui.txt_dac_nyq.editingFinished.connect(self.linking_button('奈奎斯特区配置', need_feedback=True, need_file=False))
+
+        self.ui.txt_dac_sample.editingFinished.connect(self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
+        self.ui.txt_dac_extract.editingFinished.connect(self.change_param('DAC 抽取倍数', self.ui.txt_dac_extract, int))
         self.ui.txt_pll_f.editingFinished.connect(self.change_param('PLL参考时钟频率', self.ui.txt_pll_f, int))
         self.ui.chk_pll_adc.stateChanged.connect(self.change_param('ADC PLL使能', self.ui.chk_pll_adc, int))
         self.ui.chk_pll_dac.stateChanged.connect(self.change_param('DAC PLL使能', self.ui.chk_pll_dac, int))
@@ -555,7 +559,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
             select_source.setCurrentIndex(self.rfs_kit.get_param_value(f'DAC{dds}播放数据来源', 0, int))
             txt_gate_width: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_width_{dds}')
-            txt_gate_width.setText(self.rfs_kit.get_param_value(f'DAC{dds}播放波门宽度', 0, str))
+            txt_gate_width.setText(self.rfs_kit.get_param_value(f'DAC{dds}RAM播放时宽', 0, str))
             txt_gate_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_delay_{dds}')
             txt_gate_delay.setText(self.rfs_kit.get_param_value(f'DAC{dds}播放波门延迟', 0, str))
             txt_sampling_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_delay_{dds}')
@@ -572,7 +576,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
             select_source.currentIndexChanged.connect(self.change_param(f'DAC{dds}播放数据来源', select_source, int, 'index'))
             txt_gate_width: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_width_{dds}')
-            txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}播放波门宽度', txt_gate_width))
+            txt_gate_width.editingFinished.connect(self.change_param(f'DAC{dds}RAM播放时宽', txt_gate_width))
             txt_gate_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_gate_delay_{dds}')
             txt_gate_delay.editingFinished.connect(self.change_param(f'DAC{dds}播放波门延迟', txt_gate_delay))
             txt_sampling_delay: QtWidgets.QLineEdit = getattr(self.start_ui, f'txt_sampling_delay_{dds}')
@@ -588,10 +592,10 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         for chl in range(8):
             edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
                      f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
-                     f'txt_dds_phase_{chl}', f'txt_dds_phase_step_{chl}', f'txt_dds_phase_range_{chl}']
+                     f'txt_dds_phase_{chl}']
             params = [f'dds{chl}中心频率', f'dds{chl}频率扫描步进', f'dds{chl}频率扫描范围',
                       f'dds{chl}带宽', f'dds{chl}脉宽',
-                      f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
+                      f'dds{chl}初始相位']
             for edit, param in zip(edits, params):
                 _func(self.dds_config_ui, edit, param)
 
@@ -609,10 +613,10 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         for chl in range(8):
             edits = [f'txt_dds_fc_{chl}', f'txt_dds_fc_step_{chl}', f'txt_dds_fc_range_{chl}',
                      f'txt_dds_band_{chl}', f'txt_dds_pulse_{chl}',
-                     f'txt_dds_phase_{chl}', f'txt_dds_phase_step_{chl}', f'txt_dds_phase_range_{chl}']
+                     f'txt_dds_phase_{chl}']
             params = [f'dds{chl}中心频率', f'dds{chl}频率扫描步进', f'dds{chl}频率扫描范围',
                       f'dds{chl}带宽', f'dds{chl}脉宽',
-                      f'dds{chl}初始相位', f'dds{chl}相位扫描步进', f'dds{chl}相位扫描范围']
+                      f'dds{chl}初始相位']
             for edit, param in zip(edits, params):
                 _func(self.dds_config_ui, edit, param)
 
@@ -625,12 +629,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             txt.setText(self.rfs_kit.get_param_value(param_name, 0, str))
 
         for chl in range(8):
-            edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
-                     f'txt_dac_gain_{chl}', f'txt_dac_gain_step_{chl}', f'txt_dac_gain_target_{chl}',
-                     f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
-            params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
-                      f'DAC{chl}增益', f'DAC{chl}衰减步进', f'DAC{chl}衰减截止',
-                      f'DAC{chl}偏置', f'DAC{chl}相位']
+            edits = [f'txt_adc_gain_{chl}', f'txt_dac_gain_{chl}']
+            params = [f'ADC{chl}增益', f'DAC{chl}衰减']
             for edit, param in zip(edits, params):
                 _func(self.qmc_config_ui, edit, param)
 
@@ -640,12 +640,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             txt.editingFinished.connect(self.change_param(param_name, txt))
 
         for chl in range(8):
-            edits = [f'txt_adc_gain_{chl}', f'txt_adc_offset_{chl}', f'txt_adc_phase_{chl}',
-                     f'txt_dac_gain_{chl}', f'txt_dac_gain_step_{chl}', f'txt_dac_gain_target_{chl}',
-                     f'txt_dac_offset_{chl}', f'txt_dac_phase_{chl}']
-            params = [f'ADC{chl}增益', f'ADC{chl}偏置', f'ADC{chl}相位',
-                      f'DAC{chl}增益', f'DAC{chl}衰减步进', f'DAC{chl}衰减截止',
-                      f'DAC{chl}偏置', f'DAC{chl}相位']
+            edits = [f'txt_adc_gain_{chl}', f'txt_dac_gain_{chl}']
+            params = [f'ADC{chl}增益', f'DAC{chl}衰减']
             for edit, param in zip(edits, params):
                 _func(self.qmc_config_ui, edit, param)
 

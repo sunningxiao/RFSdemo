@@ -99,7 +99,6 @@ class SerialUIMixin:
         while True:
             if self._serial_stop_event.is_set():
                 break
-
             try:
                 self.device_serial: serial.Serial
                 data = self.device_serial.read(19500).decode('ascii')
@@ -107,16 +106,18 @@ class SerialUIMixin:
                     printColor(data, '#DEB887')
                     self.cache += data
                     if self.calibration:
+                        printColor(threading.current_thread().native_id, '#DE1287')
+                        # self.read_cachedata()
                         thread = threading.Thread(target=self.read_cachedata, daemon=True)
                         thread.start()
-
+                        printDebug(f'开启read_{thread.native_id}')
+                        thread.join()
+                        printDebug(f'结束read_{thread.native_id}')
             except UnicodeDecodeError as e:
                 printException(e)
-
         self._serial_stopped_event.set()
 
     def read_cachedata(self):
-
         if self.cache is None:
             pass
         else:
@@ -126,11 +127,14 @@ class SerialUIMixin:
         temp = re.findall(r"Temp:(\d(\d)?(\d)?)", cache_data)
         match_sign = re.findall(r"Zynq Server : Send feedback to Client done", cache_data)
         if temp:
+            printColor(str(temp), 'yellow')
+            printColor(threading.current_thread().native_id, 'yellow')
             for i in range(len(temp)):
-                if int(temp[i][0]) + 5 < int(self.temp_sign) or int(temp[i][0]) - 5 > int(
-                        self.temp_sign):
+                if (int(self.temp_sign) < int(temp[i][0])-5) or (int(temp[i][0])+5 < int(self.temp_sign)):
                     self.temp_sign = temp[i][0]
+                    printDebug(f'temp_sign: {self.temp_sign}')
                     self.linking_button('RF配置', need_feedback=True, need_file=False)()
+                    break
                 else:
                     pass
         if match_sign:
@@ -145,31 +149,60 @@ class SerialUIMixin:
             r"(metal: info:      (ADC|DAC)(\d): \d...............................................................................................................................)",
             match_data)
         self.list += self.clock_data
+        printColor(len(self.list), 'red')
         self.cache = ''
-        if len(self.list) >= 16:
-            self.DAC0_dtc0 = self.list[0][0]
-            self.DAC1_dtc0 = self.list[1][0]
-            self.DAC2_dtc0 = self.list[2][0]
-            self.DAC3_dtc0 = self.list[3][0]
-            self.DAC0_dtc1 = self.list[4][0]
-            self.DAC1_dtc1 = self.list[5][0]
-            self.DAC2_dtc1 = self.list[6][0]
-            self.DAC3_dtc1 = self.list[7][0]
-            self.ADC0_dtc0 = self.list[8][0]
-            self.ADC1_dtc0 = self.list[9][0]
-            self.ADC2_dtc0 = self.list[10][0]
-            self.ADC3_dtc0 = self.list[11][0]
-            self.ADC0_dtc1 = self.list[12][0]
-            self.ADC1_dtc1 = self.list[13][0]
-            self.ADC2_dtc1 = self.list[14][0]
-            self.ADC3_dtc1 = self.list[15][0]
-            self.clock_data = None
-            self.list = self.list[16:]
-            self.ADC_dtc0 = [self.ADC0_dtc0, self.ADC1_dtc0, self.ADC2_dtc0, self.ADC3_dtc0]
-            self.ADC_dtc1 = [self.ADC0_dtc1, self.ADC1_dtc1, self.ADC2_dtc1, self.ADC3_dtc1]
-            self.DAC_dtc0 = [self.DAC0_dtc0, self.DAC1_dtc0, self.DAC2_dtc0, self.DAC3_dtc0]
-            self.DAC_dtc1 = [self.DAC0_dtc1, self.DAC1_dtc1, self.DAC2_dtc1, self.DAC3_dtc1]
-            self.judge()
+        is_16tile = self.ui.chk_is_16tile.isChecked()
+        if is_16tile:
+            if len(self.list) >= 16:
+                self.DAC0_dtc0 = self.list[0][0]
+                self.DAC1_dtc0 = self.list[1][0]
+                self.DAC2_dtc0 = self.list[2][0]
+                self.DAC3_dtc0 = self.list[3][0]
+                self.DAC0_dtc1 = self.list[4][0]
+                self.DAC1_dtc1 = self.list[5][0]
+                self.DAC2_dtc1 = self.list[6][0]
+                self.DAC3_dtc1 = self.list[7][0]
+                self.ADC0_dtc0 = self.list[8][0]
+                self.ADC1_dtc0 = self.list[9][0]
+                self.ADC2_dtc0 = self.list[10][0]
+                self.ADC3_dtc0 = self.list[11][0]
+                self.ADC0_dtc1 = self.list[12][0]
+                self.ADC1_dtc1 = self.list[13][0]
+                self.ADC2_dtc1 = self.list[14][0]
+                self.ADC3_dtc1 = self.list[15][0]
+                self.clock_data = None
+                self.list = self.list[16:]
+                self.ADC_dtc0 = [self.ADC0_dtc0, self.ADC1_dtc0, self.ADC2_dtc0, self.ADC3_dtc0]
+                self.ADC_dtc1 = [self.ADC0_dtc1, self.ADC1_dtc1, self.ADC2_dtc1, self.ADC3_dtc1]
+                self.DAC_dtc0 = [self.DAC0_dtc0, self.DAC1_dtc0, self.DAC2_dtc0, self.DAC3_dtc0]
+                self.DAC_dtc1 = [self.DAC0_dtc1, self.DAC1_dtc1, self.DAC2_dtc1, self.DAC3_dtc1]
+                self.judge()
+        else:
+            if len(self.list) >= 12:
+                print(self.list)
+                self.DAC0_dtc0 = self.list[0][0]
+                self.DAC1_dtc0 = self.list[1][0]
+                self.DAC2_dtc0 = self.DAC0_dtc0
+                self.DAC3_dtc0 = self.DAC1_dtc0
+                self.DAC0_dtc1 = self.list[2][0]
+                self.DAC1_dtc1 = self.list[3][0]
+                self.DAC2_dtc1 = self.DAC0_dtc1
+                self.DAC3_dtc1 = self.DAC1_dtc1
+                self.ADC0_dtc0 = self.list[4][0]
+                self.ADC1_dtc0 = self.list[5][0]
+                self.ADC2_dtc0 = self.list[6][0]
+                self.ADC3_dtc0 = self.list[7][0]
+                self.ADC0_dtc1 = self.list[8][0]
+                self.ADC1_dtc1 = self.list[9][0]
+                self.ADC2_dtc1 = self.list[10][0]
+                self.ADC3_dtc1 = self.list[11][0]
+                self.clock_data = None
+                self.list = self.list[12:]
+                self.ADC_dtc0 = [self.ADC0_dtc0, self.ADC1_dtc0, self.ADC2_dtc0, self.ADC3_dtc0]
+                self.ADC_dtc1 = [self.ADC0_dtc1, self.ADC1_dtc1, self.ADC2_dtc1, self.ADC3_dtc1]
+                self.DAC_dtc0 = [self.DAC0_dtc0, self.DAC1_dtc0, self.DAC2_dtc0, self.DAC3_dtc0]
+                self.DAC_dtc1 = [self.DAC0_dtc1, self.DAC1_dtc1, self.DAC2_dtc1, self.DAC3_dtc1]
+                self.judge()
 
     def judge(self):
         print(self.DAC_adel_adjust)
@@ -223,12 +256,14 @@ class SerialUIMixin:
             self.ADC_adel_adjust[1] = 1
             self.ADC_adel_adjust[2] = 1
             self.ADC_adel_adjust[3] = 1
+            printDebug(f'写入文件{threading.current_thread().native_id}')
+            time.sleep(3)
 
     def adel_detect(self, dtc_code):
         change_done = 0
         position_of_hash = 0
         position_of_star = 0
-        while (dtc_code[position_of_hash] != '#') & (position_of_hash < len(dtc_code) - 3):
+        while (dtc_code[position_of_hash] != '#') and (position_of_hash < len(dtc_code) - 3):
             position_of_hash += 1
         if position_of_hash == len(dtc_code) - 3:
             change_done = 1
@@ -236,24 +271,20 @@ class SerialUIMixin:
         position_of_zuo = position_of_hash
         position_of_you = position_of_hash
         while 1:
-            if (dtc_code[position_of_zuo] == '1') | (dtc_code[position_of_zuo] == '2') | (
+            if (dtc_code[position_of_zuo] == '1') or (dtc_code[position_of_zuo] == '2') or (
                     dtc_code[position_of_zuo] == '3'):
                 break
             if (position_of_zuo == 0):
                 break
             position_of_zuo -= 1
         while 1:
-            if (dtc_code[position_of_you] == '1') | (dtc_code[position_of_you] == '2') | (
+            if (dtc_code[position_of_you] == '1') or (dtc_code[position_of_you] == '2') or (
                     dtc_code[position_of_you] == '3'):
                 break
             if (position_of_you == len(dtc_code) - 3):
                 break
             position_of_you += 1
-        if (position_of_hash - position_of_zuo) > (position_of_you - position_of_hash):
-            adjust = position_of_you - position_of_hash
-        else:
-            adjust = position_of_hash - position_of_zuo
-        if adjust > 3:
+        if (position_of_hash - position_of_zuo) > 1 and (position_of_you - position_of_hash) > 1:
             change_done = 1
         return change_done
 

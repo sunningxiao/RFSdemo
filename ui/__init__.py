@@ -2,6 +2,7 @@ import threading
 import time
 import os
 
+import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
@@ -213,14 +214,15 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.lplt = self.plot_win.addPlot()
         # self.ui.grid_graph.addWidget(self.lplt)
         # self.lplt.setYRange(-1.5, 1.5)
-        self.lplt.setLabel('top', '回波数据')
+        self.lplt.setLabel('top', '回波数据', 's')
+        self.lplt.setLabel('bottom', 'Time', 's')
 
         # 全波形总览
         self.plot_win.nextRow()
         self.lplt_all = self.plot_win.addPlot()
         self.lplt_all.setMaximumHeight(60)
-        self.lplt_all.setXRange(0, 35000)
-        lr = pg.LinearRegionItem([0, 4096])
+        self.lplt_all.setXRange(0, 32768 / 4e9)
+        lr = pg.LinearRegionItem([0, 32768 / 4e9])
         lr.setZValue(-10)
         self.lplt_all.addItem(lr)
 
@@ -234,7 +236,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.lplt.sigXRangeChanged.connect(updateRegion)
         updatePlot()
 
-        self.plot_color = ['r', 'g', 'b', 'c', 'm', 'y', (128, 200, 20), 'w']
+        self.plot_color = ['#fc8251', '#5470c6', '#91cd77', '#ef6567', '#f9c956', '#AF9D99', '#8fd6f5', '#46e2a6']
         self.chk_channels = [self.ui.chk1, self.ui.chk2, self.ui.chk3, self.ui.chk4, self.ui.chk5, self.ui.chk6,
                              self.ui.chk7, self.ui.chk8]
         self.channel_plots = {self.chk_channels[i]: [self.lplt.plot(name=f'chnl{i}'), self.lplt_all.plot(name=f'chnl{i}'), self.plot_color[i]]
@@ -314,12 +316,12 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         elif split_time in {'', 'inf', '0', None}:
             path_id = 1
             rfs_ip = ip.split('.')[3]
-            while os.path.exists(f'{path_id}_{rfs_ip}'):
+            while os.path.exists(f'{path_id}-{rfs_ip}'):
                 path_id += 1
-            file_name = f'{path_id}_{rfs_ip}'
+            file_name = f'{path_id}-{rfs_ip}'
             self.rfs_kit.start_stream(auto_write_file=True,
                                       write_file=self.ui.chk_write_file.isChecked(),
-                                      file_name=file_name)
+                                      file_name=rfs_ip)
         else:
             self.rfs_kit.start_stream(auto_write_file=False)
             try:
@@ -340,7 +342,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         def _func():
             while self._status == 2:
                 data = self.rfs_kit.view_stream_data()
-                data = UnPackage.solve_source_data(data, [True]*16, 16384)
+                data = UnPackage.solve_source_data(data, [True]*16, 32768)
                 if data:
                     self.status_trigger.emit([1, 2, data])
                     time.sleep(1)
@@ -391,11 +393,23 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
                     _data = data[data['head'][index]['name']]
                 except:
                     _data = [0] * 4096
-                chnl_pen[0].setData(_data, pen=chnl_pen[2])
+                srate = self.rfs_kit.get_param_value('ADC采样率') * 1e6
+                multi = self.rfs_kit.get_param_value('ADC 抽取倍数')
+                _rate = srate / multi
+                points = len(_data)
+                chnl_pen[0].setData(
+                    x=np.linspace(0, points / _rate, points),
+                    y=_data,
+                    pen=chnl_pen[2]
+                )
                 # 频谱（未归一化）
                 # chnl_pen[0].setData(20*np.log10(np.abs(fft.fftshift(fft.fft(_data)))), pen=chnl_pen[2])
                 chnl_pen[0].show()
-                chnl_pen[1].setData(_data, pen=chnl_pen[2])
+                chnl_pen[1].setData(
+                    x=np.linspace(0, points / _rate, points),
+                    y=_data,
+                    pen=chnl_pen[2]
+                )
                 chnl_pen[1].show()
                 if self.spectrum_screen.isVisible():
                     self.spectrum_screen.show_data(index, True, _data, chnl_pen[2])
@@ -504,8 +518,8 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
 
         return _func
 
-    def linking_button(self, button_name, need_feedback=True, check_feedback=True, need_file=False, callback=lambda *args: None,
-                       wait: int = 0):
+    def linking_button(self, button_name, need_feedback=True, check_feedback=True, need_file=False,
+                       callback=lambda *args: None, wait: int = 0):
         def _func(*args, **kwargs):
             if need_file:
                 filename = QFileDialog.getOpenFileName(self, '请选择文件')[0]
@@ -555,6 +569,10 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.start_ui.select_prf_src.setCurrentIndex(self.rfs_kit.get_param_value('基准PRF来源', 0))
         self.start_ui.txt_prf_cyc.setText(self.rfs_kit.get_param_value('基准PRF周期', 0, str))
         self.start_ui.txt_prf_cnt.setText(self.rfs_kit.get_param_value('基准PRF数量', 1000, str))
+        self.start_ui.select_jq.setCurrentIndex(self.rfs_kit.get_param_value('ADC数据截取使能', 0, int))
+        self.start_ui.select_lx.setCurrentIndex(self.rfs_kit.get_param_value('ADC打包数据类型', 0, int))
+        self.start_ui.select_cq.setCurrentIndex(self.rfs_kit.get_param_value('ADC逻辑抽取倍数', 0, int))
+        self.start_ui.select_sc.setCurrentIndex(self.rfs_kit.get_param_value('ADC数据输出方式', 0, int))
         for dds in range(8):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
             select_source.setCurrentIndex(self.rfs_kit.get_param_value(f'DAC{dds}播放数据来源', 0, int))
@@ -572,6 +590,14 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.change_param('基准PRF来源', self.start_ui.select_prf_src, int, 'index'))
         self.start_ui.txt_prf_cyc.editingFinished.connect(self.change_param('基准PRF周期', self.start_ui.txt_prf_cyc))
         self.start_ui.txt_prf_cnt.editingFinished.connect(self.change_param('基准PRF数量', self.start_ui.txt_prf_cnt))
+        self.start_ui.select_jq.currentIndexChanged.connect(
+            self.change_param('ADC数据截取使能', self.start_ui.select_jq, int, 'index'))
+        self.start_ui.select_lx.currentIndexChanged.connect(
+            self.change_param('ADC打包数据类型', self.start_ui.select_lx, int, 'index'))
+        self.start_ui.select_cq.currentIndexChanged.connect(
+            self.change_param('ADC逻辑抽取倍数', self.start_ui.select_cq, int, 'index'))
+        self.start_ui.select_sc.currentIndexChanged.connect(
+            self.change_param('ADC数据输出方式', self.start_ui.select_sc, int, 'index'))
         for dds in range(8):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')
             select_source.currentIndexChanged.connect(self.change_param(f'DAC{dds}播放数据来源', select_source, int, 'index'))

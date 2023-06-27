@@ -118,7 +118,7 @@
           <item row="2" column="4">
            <widget class="QLabel" name="label_16">
             <property name="text">
-             <string>播放波门宽度(ns)</string>
+             <string>播放波门宽度(μs)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -128,7 +128,7 @@
           <item row="2" column="3">
            <widget class="QLabel" name="label_15">
             <property name="text">
-             <string>播放波门延迟(ns)</string>
+             <string>播放波门延迟(μs)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -382,7 +382,7 @@
           <item row="0" column="5">
            <widget class="QLabel" name="label_21">
             <property name="text">
-             <string>基准PRF周期(ns)</string>
+             <string>基准PRF周期(μs)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -819,7 +819,7 @@
           <item row="2" column="5">
            <widget class="QLabel" name="label_17">
             <property name="text">
-             <string>采样延迟(ns)</string>
+             <string>采样延迟(μs)</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>

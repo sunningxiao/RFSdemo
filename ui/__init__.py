@@ -123,7 +123,12 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.linking_button('QMC配置', need_feedback=True, need_file=False)
         )
         self.link_qmc_config_ui()
-
+        self.ui.btn_noc_cfg.clicked.connect(
+            self.linking_button('NCO频率配置', need_feedback=True, need_file=False)
+        )
+        self.ui.btn_nyq_cfg.clicked.connect(
+            self.linking_button('奈奎斯特区配置', need_feedback=True, need_file=False)
+        )
         # RCM相关
         self.ui.btn_rcm_cfg.clicked.connect(self.rcm_config_ui.show)
         self.rcm_config_ui.link_rcm_config_ui()
@@ -194,13 +199,9 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
             self.change_param('ADC 抽取倍数', self.ui.txt_adc_extract, int))
         self.ui.txt_adc_noc_f.editingFinished.connect(self.change_param('ADC NCO频率', self.ui.txt_adc_noc_f))
         self.ui.txt_dac_noc_f.editingFinished.connect(self.change_param('DAC NCO频率', self.ui.txt_dac_noc_f))
-        self.ui.txt_adc_noc_f.editingFinished.connect(self.linking_button('NCO频率配置', need_feedback=True, need_file=False))
-        self.ui.txt_dac_noc_f.editingFinished.connect(self.linking_button('NCO频率配置', need_feedback=True, need_file=False))
 
         self.ui.txt_adc_nyq.editingFinished.connect(self.change_param('ADC 奈奎斯特区', self.ui.txt_adc_nyq, int))
         self.ui.txt_dac_nyq.editingFinished.connect(self.change_param('DAC 奈奎斯特区', self.ui.txt_dac_nyq, int))
-        self.ui.txt_adc_nyq.editingFinished.connect(self.linking_button('奈奎斯特区配置', need_feedback=True, need_file=False))
-        self.ui.txt_dac_nyq.editingFinished.connect(self.linking_button('奈奎斯特区配置', need_feedback=True, need_file=False))
 
         self.ui.txt_dac_sample.editingFinished.connect(self.change_param('DAC采样率', self.ui.txt_dac_sample, int))
         self.ui.txt_dac_extract.editingFinished.connect(self.change_param('DAC 抽取倍数', self.ui.txt_dac_extract, int))

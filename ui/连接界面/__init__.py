@@ -60,7 +60,7 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
             self.__parent.init_system(CommandSerialInterface, DataTCPInterface)
         elif self.chk_tcp_cmd.isChecked():
             CommandTCPInterface._target_id = self.select_tcp_addr.currentText()
-            CommandTCPInterface._timeout = 10
+            CommandTCPInterface._timeout = 30
             DataTCPInterface._local_port = int(self.txt_tcp_port.text())
 
             addrs = []

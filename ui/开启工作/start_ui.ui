@@ -54,11 +54,6 @@
             </item>
             <item>
              <property name="text">
-              <string>新建项目</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
               <string>截取高8位</string>
              </property>
             </item>

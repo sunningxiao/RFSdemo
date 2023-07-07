@@ -683,22 +683,27 @@
            <widget class="QComboBox" name="select_cq">
             <item>
              <property name="text">
-              <string>1x</string>
+              <string>1</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>2x</string>
+              <string>2</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>3x</string>
+              <string>4</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>4x</string>
+              <string>8</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>16</string>
              </property>
             </item>
            </widget>

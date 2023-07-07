@@ -596,7 +596,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.start_ui.select_lx.currentIndexChanged.connect(
             self.change_param('ADC打包数据类型', self.start_ui.select_lx, int, 'index'))
         self.start_ui.select_cq.currentIndexChanged.connect(
-            self.change_param('ADC逻辑抽取倍数', self.start_ui.select_cq, int, 'index'))
+            self.change_param('ADC逻辑抽取倍数', self.start_ui.select_cq, int, 'text'))
         self.start_ui.select_sc.currentIndexChanged.connect(
             self.change_param('ADC数据输出方式', self.start_ui.select_sc, int, 'index'))
         for dds in range(8):

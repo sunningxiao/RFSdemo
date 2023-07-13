@@ -572,7 +572,7 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.start_ui.txt_prf_cnt.setText(self.rfs_kit.get_param_value('基准PRF数量', 1000, str))
         self.start_ui.select_jq.setCurrentIndex(self.rfs_kit.get_param_value('ADC数据截取使能', 0, int))
         self.start_ui.select_lx.setCurrentIndex(self.rfs_kit.get_param_value('ADC打包数据类型', 0, int))
-        self.start_ui.select_cq.setCurrentIndex(self.rfs_kit.get_param_value('ADC逻辑抽取倍数', 0, int))
+        self.start_ui.select_cq.setCurrentText(str(self.rfs_kit.get_param_value('ADC逻辑抽取倍数', 0, str)))
         self.start_ui.select_sc.setCurrentIndex(self.rfs_kit.get_param_value('ADC数据输出方式', 0, int))
         for dds in range(8):
             select_source: QtWidgets.QLineEdit = getattr(self.start_ui, f'select_source_{dds}')

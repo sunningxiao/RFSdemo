@@ -25,11 +25,13 @@ class LinkSystemUI(QtWidgets.QDialog, Ui_Form):
         self.setWindowTitle('连接RFS')
 
         pix = QtGui.QPixmap("static/logo.png")
+        self.label_logo.setMinimumSize(QtCore.QSize(80, 80))
+        self.label_logo.setMaximumSize(QtCore.QSize(80, 80))
         self.label_logo.setPixmap(pix)
         self.label_logo.setScaledContents(True)
 
         ico = QtGui.QIcon()
-        ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        ico.addPixmap(QtGui.QPixmap('static/app_angle.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
 
         self.chk_udp_cmd.setDisabled(True)

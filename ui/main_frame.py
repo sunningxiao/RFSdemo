@@ -634,7 +634,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "RFSOC Demo"))
+        Form.setWindowTitle(_translate("Form", "NSU Demo"))
         self.btn_auto_command.setText(_translate("Form", "自定义指令"))
         self.btn_reload_icd.setText(_translate("Form", "重载ICD"))
         self.label_27.setText(_translate("Form", "波特率"))

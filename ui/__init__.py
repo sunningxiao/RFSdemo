@@ -88,10 +88,12 @@ class RFSControl(QtWidgets.QWidget, SerialUIMixin):
         self.init_serial_ui()
         pix = QtGui.QPixmap("static/logo.png")
         self.ui.lab_logo.setPixmap(pix)
+        self.ui.lab_logo.setMinimumSize(QtCore.QSize(55, 55))
+        self.ui.lab_logo.setMaximumSize(QtCore.QSize(55, 55))
         self.ui.lab_logo.setScaledContents(True)
 
         ico = QtGui.QIcon()
-        ico.addPixmap(QtGui.QPixmap('static/logo.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        ico.addPixmap(QtGui.QPixmap('static/app_angle.png'), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(ico)
 
         self.ui.select_is_master.setVisible(False)
